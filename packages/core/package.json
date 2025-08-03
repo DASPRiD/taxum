@@ -1,0 +1,75 @@
+{
+  "name": "@taxum/core",
+  "version": "1.0.0",
+  "type": "module",
+  "author": "Ben Scholzen 'DASPRiD'",
+  "license": "BSD-3-Clause",
+  "keywords": [
+    "node",
+    "typescript",
+    "server",
+    "http"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dasprid/taxum.git"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "tsx --test --test-reporter=spec",
+    "test:ci": "c8 --reporter=lcov pnpm test",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    "./extract": {
+      "types": [
+        "./dist/extract/index.d.ts",
+        "./src/extract/index.ts"
+      ],
+      "taxum": "./src/extract/index.ts",
+      "default": "./dist/extract/index.js"
+    },
+    "./http": {
+      "types": [
+        "./dist/http/index.d.ts",
+        "./src/http/index.ts"
+      ],
+      "taxum": "./src/http/index.ts",
+      "default": "./dist/http/index.js"
+    },
+    "./layer": {
+      "types": [
+        "./dist/layer/index.d.ts",
+        "./src/layer/index.ts"
+      ],
+      "taxum": "./src/layer/index.ts",
+      "default": "./dist/layer/index.js"
+    },
+    "./routing": {
+      "types": [
+        "./dist/routing/index.d.ts",
+        "./src/routing/index.ts"
+      ],
+      "taxum": "./src/routing/index.ts",
+      "default": "./dist/routing/index.js"
+    },
+    "./server": {
+      "types": [
+        "./dist/server/index.d.ts",
+        "./src/server/index.ts"
+      ],
+      "taxum": "./src/server/index.ts",
+      "default": "./dist/server/index.js"
+    }
+  },
+  "dependencies": {
+    "@standard-schema/spec": "^1.0.0",
+    "find-my-way": "^9.3.0",
+    "nested-search-params": "^1.0.0",
+    "ts-pattern": "^5.8.0",
+    "whatwg-mimetype": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/whatwg-mimetype": "^3.0.2"
+  }
+}
