@@ -1,0 +1,10 @@
+{
+    "name": "taxum",
+    "entryPointStrategy": "packages",
+    "entryPoints": ["packages/*"],
+    "exclude": ["packages/examples"],
+    "includeVersion": false,
+    "packageOptions": {
+        "includeVersion": true
+    }
+}

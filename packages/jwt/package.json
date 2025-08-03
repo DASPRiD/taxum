@@ -1,0 +1,43 @@
+{
+  "name": "@taxum/jwt",
+  "version": "1.0.0",
+  "type": "module",
+  "author": "Ben Scholzen 'DASPRiD'",
+  "license": "BSD-3-Clause",
+  "keywords": [
+    "node",
+    "typescript",
+    "server",
+    "http",
+    "jwt"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dasprid/taxum.git"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "tsx -C taxum --test --test-reporter=spec --experimental-test-module-mocks",
+    "test:ci": "c8 --reporter=lcov pnpm test",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    ".": {
+      "types": [
+        "./dist/index.d.ts",
+        "./src/index.ts"
+      ],
+      "taxum": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@taxum/core": "workspace:*"
+  },
+  "devDependencies": {
+    "jose": "^6.0.12"
+  },
+  "peerDependencies": {
+    "jose": "^6.0.12"
+  }
+}
