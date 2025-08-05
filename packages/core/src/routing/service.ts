@@ -6,6 +6,7 @@ import {
     type ReadonlyHttpResponse,
     type SizeHint,
 } from "../http/index.js";
+import { Method } from "../http/method.js";
 import type { HandlerFn } from "./handler.js";
 
 /**
@@ -42,19 +43,19 @@ export const serviceFromHandler =
     async (req: HttpRequest) => {
         const res = HttpResponse.from(await handler(req)).toOwned();
 
-        if (req.method === "connect" && res.status.isSuccess()) {
+        if (req.method.equals(Method.CONNECT) && res.status.isSuccess()) {
             if (
                 res.headers.containsKey("content-length") ||
                 res.headers.containsKey("transfer-encoding") ||
                 res.body.sizeHint.lower !== 0
             ) {
-                console.error("response to CONNECT with nonempty body");
+                console.warn("response to CONNECT with nonempty body");
                 res.body = Body.from(null);
             }
         } else {
             setContentLength(res.headers, res.body.sizeHint);
 
-            if (req.method === "head") {
+            if (req.method.equals(Method.HEAD)) {
                 res.body = Body.from(null);
             }
         }

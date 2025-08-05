@@ -24,6 +24,10 @@
  * ```
  */
 
+/**
+ * @internal
+ */
+export * from "./fallback.js";
 export * from "./handler.js";
 export * from "./layer.js";
 export * from "./method-filter.js";

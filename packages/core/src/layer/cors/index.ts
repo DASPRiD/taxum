@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { HeaderMap } from "../../http/headers.js";
 import { HttpResponse } from "../../http/index.js";
+import { Method } from "../../http/method.js";
 import type { Layer } from "../../routing/index.js";
 import type { ServiceFn } from "../../routing/service.js";
 import { AllowCredentials } from "./allow-credentials.js";
@@ -100,7 +101,7 @@ export class CorsLayer implements Layer {
 
             const allowOriginPromise = this.allowOrigin_.toHeader(origin, req.head);
 
-            if (req.method === "OPTIONS") {
+            if (req.method.equals(Method.OPTIONS)) {
                 headers.extend(maybeHeader(this.allowMethods_.toHeader(req.head)));
                 headers.extend(maybeHeader(this.allowHeaders_.toHeader(req.head)));
                 headers.extend(maybeHeader(this.maxAge_.toHeader(origin, req.head)));

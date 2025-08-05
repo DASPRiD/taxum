@@ -1,21 +1,23 @@
 import type { IncomingMessage } from "node:http";
 import type { Readable } from "node:stream";
-import { Extensions } from "./extensions.js";
+import { Body, type BodyLike } from "./body.js";
+import { type ExtensionKey, Extensions } from "./extensions.js";
 import { HeaderMap } from "./headers.js";
+import { Method } from "./method.js";
 
 /**
  * Represents the components of an HTTP request, encapsulating method, URI,
  * version, headers, and optional extensions.
  */
 export class Parts {
-    public readonly method: string;
+    public readonly method: Method;
     public readonly uri: URL;
     public readonly version: string;
     public readonly headers: HeaderMap;
     public readonly extensions: Extensions;
 
     public constructor(
-        method: string,
+        method: Method,
         uri: URL,
         version: string,
         headers: HeaderMap,
@@ -52,7 +54,12 @@ export class Parts {
 
         const uri = new URL(`${protocol}://${host}${message.url}`);
 
-        return new Parts(message.method ?? "", uri, message.httpVersion, headers);
+        return new Parts(
+            Method.fromString(message.method ?? ""),
+            uri,
+            message.httpVersion,
+            headers,
+        );
     }
 }
 
@@ -69,11 +76,15 @@ export class HttpRequest {
         this.body = body;
     }
 
+    public static builder(): HttpRequestBuilder {
+        return new HttpRequestBuilder();
+    }
+
     public static fromIncomingMessage(message: IncomingMessage, trustProxy: boolean): HttpRequest {
         return new HttpRequest(Parts.fromIncomingMessage(message, trustProxy), message);
     }
 
-    public get method(): string {
+    public get method(): Method {
         return this.head.method;
     }
 
@@ -91,5 +102,63 @@ export class HttpRequest {
 
     public get extensions(): Extensions {
         return this.head.extensions;
+    }
+}
+
+/**
+ * Builder for creating HTTP requests.
+ */
+export class HttpRequestBuilder {
+    private method_ = Method.GET;
+    private uri_ = new URL("http://localhost/");
+    private version_ = "1.1";
+    private headers_ = new HeaderMap();
+    private extensions_ = new Extensions();
+
+    public method(method: Method | string): this {
+        this.method_ = typeof method === "string" ? Method.fromString(method) : method;
+        return this;
+    }
+
+    public uri(uri: URL): this {
+        this.uri_ = uri;
+        return this;
+    }
+
+    public path(path: string): this {
+        this.uri_.pathname = path;
+        return this;
+    }
+
+    public version(version: string): this {
+        this.version_ = version;
+        return this;
+    }
+
+    public headers(headers: HeaderMap): this {
+        this.headers_ = headers;
+        return this;
+    }
+
+    public header(key: string, value: string): this {
+        this.headers_.append(key, value);
+        return this;
+    }
+
+    public extensions(extensions: Extensions): this {
+        this.extensions_ = extensions;
+        return this;
+    }
+
+    public extension<T>(key: ExtensionKey<T>, value: T): this {
+        this.extensions_.insert(key, value);
+        return this;
+    }
+
+    public body(body: BodyLike) {
+        return new HttpRequest(
+            new Parts(this.method_, this.uri_, this.version_, this.headers_, this.extensions_),
+            Body.from(body).read(),
+        );
     }
 }

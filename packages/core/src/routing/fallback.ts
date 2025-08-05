@@ -3,6 +3,8 @@ import type { ServiceFn } from "./service.js";
 
 /**
  * Represents a Fallback that wraps a service function and applies layers to it.
+ *
+ * @internal
  */
 export class Fallback {
     public service: ServiceFn;

@@ -64,9 +64,11 @@ export class Extensions {
         return this.map.size;
     }
 
-    public extend(other: Extensions): void {
+    public extend(other: Extensions): this {
         for (const [id, value] of other.map.entries()) {
             this.map.set(id, value);
         }
+
+        return this;
     }
 }

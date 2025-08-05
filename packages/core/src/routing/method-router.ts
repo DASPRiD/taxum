@@ -1,5 +1,6 @@
 import { match, P } from "ts-pattern";
 import { type HttpRequest, type ReadonlyHttpResponse, StatusCode } from "../http/index.js";
+import { Method } from "../http/method.js";
 import { Fallback } from "./fallback.js";
 import type { HandlerFn } from "./handler.js";
 import type { Layer } from "./layer.js";
@@ -59,19 +60,19 @@ export class MethodRouter {
     private traceEndpoint: MethodEndpoint = new MethodEndpoint();
     private connectEndpoint: MethodEndpoint = new MethodEndpoint();
     private fallbackEndpoint: Fallback = new Fallback(defaultFallbackService);
-    private allowHeader: Set<string> | null = null;
+    private allowHeader: Set<string> | null = new Set();
 
-    private readonly ENDPOINTS: [string, MethodEndpoint][] = [
-        ["HEAD", this.headEndpoint],
-        ["HEAD", this.getEndpoint],
-        ["GET", this.getEndpoint],
-        ["POST", this.postEndpoint],
-        ["OPTIONS", this.optionsEndpoint],
-        ["PATCH", this.patchEndpoint],
-        ["PUT", this.putEndpoint],
-        ["DELETE", this.deleteEndpoint],
-        ["TRACE", this.traceEndpoint],
-        ["CONNECT", this.connectEndpoint],
+    private readonly ENDPOINTS: [Method, MethodEndpoint][] = [
+        [Method.HEAD, this.headEndpoint],
+        [Method.HEAD, this.getEndpoint],
+        [Method.GET, this.getEndpoint],
+        [Method.POST, this.postEndpoint],
+        [Method.OPTIONS, this.optionsEndpoint],
+        [Method.PATCH, this.patchEndpoint],
+        [Method.PUT, this.putEndpoint],
+        [Method.DELETE, this.deleteEndpoint],
+        [Method.TRACE, this.traceEndpoint],
+        [Method.CONNECT, this.connectEndpoint],
     ];
 
     /**
@@ -214,7 +215,7 @@ export class MethodRouter {
      * @internal
      */
     public defaultFallback(handler: HandlerFn): void {
-        if (this.fallbackEndpoint.service !== defaultFallbackService) {
+        if (this.fallbackEndpoint.service === defaultFallbackService) {
             this.fallbackEndpoint.service = serviceFromHandler(handler);
         }
     }
@@ -255,60 +256,15 @@ export class MethodRouter {
      * @internal
      */
     public mergeForPath(path: string, other: MethodRouter): this {
-        this.getEndpoint = MethodRouter.mergeInner(
-            path,
-            "GET",
-            this.getEndpoint,
-            other.getEndpoint,
-        );
-        this.headEndpoint = MethodRouter.mergeInner(
-            path,
-            "HEAD",
-            this.headEndpoint,
-            other.headEndpoint,
-        );
-        this.deleteEndpoint = MethodRouter.mergeInner(
-            path,
-            "DELETE",
-            this.deleteEndpoint,
-            other.deleteEndpoint,
-        );
-        this.optionsEndpoint = MethodRouter.mergeInner(
-            path,
-            "OPTIONS",
-            this.optionsEndpoint,
-            other.optionsEndpoint,
-        );
-        this.patchEndpoint = MethodRouter.mergeInner(
-            path,
-            "PATCH",
-            this.patchEndpoint,
-            other.patchEndpoint,
-        );
-        this.postEndpoint = MethodRouter.mergeInner(
-            path,
-            "POST",
-            this.postEndpoint,
-            other.postEndpoint,
-        );
-        this.putEndpoint = MethodRouter.mergeInner(
-            path,
-            "PUT",
-            this.putEndpoint,
-            other.putEndpoint,
-        );
-        this.traceEndpoint = MethodRouter.mergeInner(
-            path,
-            "TRACE",
-            this.traceEndpoint,
-            other.traceEndpoint,
-        );
-        this.connectEndpoint = MethodRouter.mergeInner(
-            path,
-            "CONNECT",
-            this.connectEndpoint,
-            other.connectEndpoint,
-        );
+        MethodRouter.mergeInner(path, "GET", this.getEndpoint, other.getEndpoint);
+        MethodRouter.mergeInner(path, "HEAD", this.headEndpoint, other.headEndpoint);
+        MethodRouter.mergeInner(path, "DELETE", this.deleteEndpoint, other.deleteEndpoint);
+        MethodRouter.mergeInner(path, "OPTIONS", this.optionsEndpoint, other.optionsEndpoint);
+        MethodRouter.mergeInner(path, "PATCH", this.patchEndpoint, other.patchEndpoint);
+        MethodRouter.mergeInner(path, "POST", this.postEndpoint, other.postEndpoint);
+        MethodRouter.mergeInner(path, "PUT", this.putEndpoint, other.putEndpoint);
+        MethodRouter.mergeInner(path, "TRACE", this.traceEndpoint, other.traceEndpoint);
+        MethodRouter.mergeInner(path, "CONNECT", this.connectEndpoint, other.connectEndpoint);
 
         this.fallbackEndpoint.service = match([
             this.fallbackEndpoint.service,
@@ -341,24 +297,26 @@ export class MethodRouter {
     private static mergeInner(
         path: string,
         name: string,
-        first: MethodEndpoint,
-        second: MethodEndpoint,
-    ): MethodEndpoint {
-        if (first.service !== null && second.service !== null) {
+        own: MethodEndpoint,
+        other: MethodEndpoint,
+    ): void {
+        if (own.service !== null && other.service !== null) {
             throw new Error(
                 `Overlapping method route. Handler for \`${name} ${path}\` already exists`,
             );
         }
 
-        return first.service !== null ? first : second;
+        if (own.service === null) {
+            own.service = other.service;
+        }
     }
 
     private async callMethod(
         req: HttpRequest,
-        method: string,
+        method: Method,
         endpoint: MethodEndpoint,
     ): Promise<ReadonlyHttpResponse | null> {
-        if (req.method !== method || endpoint.service === null) {
+        if (!req.method.equals(method) || endpoint.service === null) {
             return null;
         }
 
@@ -382,7 +340,7 @@ export class MethodRouter {
             return;
         }
 
-        for (const method in methods) {
+        for (const method of methods) {
             this.allowHeader.add(method);
         }
     }

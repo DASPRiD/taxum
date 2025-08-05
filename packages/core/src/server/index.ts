@@ -69,7 +69,7 @@ export type ServeConfig = {
 };
 
 /**
- * Serve the router.
+ * Serve a router.
  *
  * This method of running a service is intentionally simple and only supports the minimally required configuration.
  * If you need to support HTTPS and/or HTTP2, you should create your own listener. In most cases this should not be
@@ -104,6 +104,7 @@ export const serve = async (router: Router, config?: ServeConfig): Promise<void>
             try {
                 res.statusCode = 500;
                 res.end();
+                /* node:coverage ignore next 3 */
             } catch {
                 // Noop
             }
@@ -115,21 +116,35 @@ export const serve = async (router: Router, config?: ServeConfig): Promise<void>
     }
 
     const abortController = new AbortController();
+    let closing = false;
 
     const closeServer = (): void => {
+        /* node:coverage ignore next 3 */
+        if (closing) {
+            return;
+        }
+
+        // It's important to clean up here so that Node.js will handle future signals.
+        process.removeAllListeners("SIGINT");
+        process.removeAllListeners("SIGQUIT");
+        process.removeAllListeners("SIGTERM");
+
+        closing = true;
         server.close();
 
         if (config?.shutdownTimeout) {
-            setTimeout(abortController.abort, config.shutdownTimeout);
+            setTimeout(() => {
+                abortController.abort();
+            }, config.shutdownTimeout);
         }
     };
 
     config?.abortSignal?.addEventListener("abort", closeServer);
 
     if (config?.catchCtrlC) {
-        process.on("SIGINT", closeServer);
-        process.on("SIGQUIT", closeServer);
-        process.on("SIGTERM", closeServer);
+        process.addListener("SIGINT", closeServer);
+        process.addListener("SIGQUIT", closeServer);
+        process.addListener("SIGTERM", closeServer);
     }
 
     return new Promise<void>((resolve, reject) => {

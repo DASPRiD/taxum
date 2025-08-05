@@ -73,7 +73,7 @@ export class HttpResponse {
         }
 
         headers.extend(response[0].headers);
-        extensions = response[0].extensions;
+        extensions = extensions ? extensions.extend(response[0].extensions) : extensions;
 
         return new HttpResponse(response[0].status, headers, result.body, extensions);
     }

@@ -8,6 +8,7 @@ import {
     StatusCode,
     type ToHttpResponse,
 } from "../http/index.js";
+import { Method } from "../http/method.js";
 import type { Extractor } from "./index.js";
 
 export class MissingFormDataContentTypeError implements ToHttpResponse {
@@ -37,7 +38,7 @@ export const form =
     async (req: HttpRequest): Promise<StandardSchemaV1.InferOutput<T>> => {
         let source: URLSearchParams;
 
-        if (req.method === "GET" || req.method === "HEAD") {
+        if (req.method.equals(Method.GET) || req.method.equals(Method.HEAD)) {
             source = req.uri.searchParams;
         } else {
             if (req.head.headers.get("content-type") !== "application/x-www-form-urlencoded") {

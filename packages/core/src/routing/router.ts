@@ -66,6 +66,31 @@ export class Router {
     }
 
     /**
+     * Adds a fallback handler for the case where a route exists, but the method
+     * of the request is not supported.
+     *
+     * Sets a fallback on all previously registered `MethodRouter`s to be called
+     * when no matching method handler is set.
+     *
+     * ```ts
+     * const router = new Router()
+     *     .route("/", m.get(helloWorld))
+     *     .fallback(handle404)
+     *     .methodNotAllowedFallback(handle405);
+     * ```
+     *
+     * The fallback only applies if there is a `MethodRouter` registered for a
+     * given path, but the method used in the request is not specified. In the
+     * example, a `GET` on `/` causes the `helloWorld` handler to react, while
+     * issuing a `POST` triggers `handle405`. Calling an entirely different
+     * route, like `/hello` causes `handle404` to run.
+     */
+    public methodNotAllowedFallback(handler: HandlerFn): this {
+        this.pathRouter.methodNotAllowedFallback(handler);
+        return this;
+    }
+
+    /**
      * Applies the specified layer to all previously registered routes.
      *
      * @param layer - the layer to be applied to the endpoints.

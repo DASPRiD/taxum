@@ -29,7 +29,7 @@ export class PathRouter {
     public route(path: string, methodRouter: MethodRouter): void {
         const existingRouteId = this.node.pathToRouteId.get(path);
 
-        if (existingRouteId) {
+        if (existingRouteId !== undefined) {
             const prevMethodRouter = this.routes.get(existingRouteId);
             assert(
                 prevMethodRouter,
@@ -175,6 +175,7 @@ type Match = {
     pathParams: PathParams;
 };
 
+/* node:coverage ignore next 3 */
 const NOOP_HANDLER = () => {
     // Noop handler for find-my-way
 };
