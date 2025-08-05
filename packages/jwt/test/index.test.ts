@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import { Readable } from "node:stream";
 import { before, describe, it, mock } from "node:test";
-import { Body, HeaderMap, HttpRequest, HttpResponse, Parts, StatusCode } from "@taxum/core/http";
+import {
+    Body,
+    HeaderMap,
+    HttpRequest,
+    HttpResponse,
+    Method,
+    Parts,
+    StatusCode,
+} from "@taxum/core/http";
 import type { JwtConfig } from "../src/index.js";
 
 const createRequest = (authorization?: string): HttpRequest => {
