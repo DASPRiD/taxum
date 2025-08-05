@@ -23,7 +23,7 @@ export class ExtensionKey<T> {
     }
 
     public toString(): string {
-        return `ExtensionKey(${this.id.toString()})`;
+        return `ExtensionKey(${this.id.description ?? "unknown"})`;
     }
 }
 

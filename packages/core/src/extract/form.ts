@@ -5,10 +5,10 @@ import {
     type HttpRequest,
     HttpResponse,
     jsonResponse,
+    Method,
     StatusCode,
     type ToHttpResponse,
 } from "../http/index.js";
-import { Method } from "../http/method.js";
 import type { Extractor } from "./index.js";
 
 export class MissingFormDataContentTypeError implements ToHttpResponse {

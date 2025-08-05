@@ -16,7 +16,7 @@ import { StatusCode } from "./status.js";
 export class Body implements ToHttpResponse {
     public readonly sizeHint: SizeHint;
     public readonly contentTypeHint: string | null;
-    private readonly inner: Readable;
+    private inner: Readable | null;
 
     public constructor(stream: Readable, sizeHint?: SizeHint, contentTypeHint?: string) {
         assert(stream.readable, "Body must be readable");
@@ -49,7 +49,7 @@ export class Body implements ToHttpResponse {
 
         if (Buffer.isBuffer(body) || body instanceof Uint8Array) {
             return new Body(
-                Readable.from(body),
+                Readable.from([body]),
                 SizeHint.exact(body.length),
                 "application/octet-stream",
             );
@@ -67,8 +67,10 @@ export class Body implements ToHttpResponse {
      * @throws {Error} if the body has already been consumed.
      */
     public read(): Readable {
-        assert(this.inner.readable, "Body has already been consumed");
-        return this.inner;
+        const inner = this.inner;
+        assert(inner, "Body has already been consumed");
+        this.inner = null;
+        return inner;
     }
 
     public toHttpResponse(): HttpResponse {

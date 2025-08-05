@@ -47,7 +47,7 @@ export class HttpResponse {
 
         let result: HttpResponse;
         let headers: HeaderMap;
-        let extensions: Extensions | undefined;
+        let extensions: Extensions;
 
         if (response.length === 3) {
             result = responseLikePartToResponse(response[2]);
@@ -73,7 +73,7 @@ export class HttpResponse {
         }
 
         headers.extend(response[0].headers);
-        extensions = extensions ? extensions.extend(response[0].extensions) : extensions;
+        extensions = extensions.extend(response[0].extensions);
 
         return new HttpResponse(response[0].status, headers, result.body, extensions);
     }

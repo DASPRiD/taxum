@@ -1,9 +1,6 @@
 import assert from "node:assert";
-import { HeaderMap } from "../../http/headers.js";
-import { HttpResponse } from "../../http/index.js";
-import { Method } from "../../http/method.js";
-import type { Layer } from "../../routing/index.js";
-import type { ServiceFn } from "../../routing/service.js";
+import { HeaderMap, HttpResponse, Method } from "../../http/index.js";
+import type { Layer, ServiceFn } from "../../routing/index.js";
 import { AllowCredentials } from "./allow-credentials.js";
 import { AllowHeaders } from "./allow-headers.js";
 import { AllowMethods } from "./allow-methods.js";

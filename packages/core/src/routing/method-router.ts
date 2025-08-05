@@ -1,6 +1,5 @@
 import { match, P } from "ts-pattern";
-import { type HttpRequest, type ReadonlyHttpResponse, StatusCode } from "../http/index.js";
-import { Method } from "../http/method.js";
+import { type HttpRequest, Method, type ReadonlyHttpResponse, StatusCode } from "../http/index.js";
 import { Fallback } from "./fallback.js";
 import type { HandlerFn } from "./handler.js";
 import type { Layer } from "./layer.js";

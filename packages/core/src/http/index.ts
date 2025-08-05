@@ -11,6 +11,7 @@ export * from "./body.js";
 export * from "./common.js";
 export * from "./extensions.js";
 export * from "./headers.js";
+export * from "./method.js";
 export * from "./request.js";
 export * from "./response.js";
 export * from "./size-hint.js";

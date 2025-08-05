@@ -40,3 +40,72 @@ export const htmlResponse = (html: string): ToHttpResponse => ({
             .body(JSON.stringify(html));
     },
 });
+
+/**
+ * Response that redirects the request to another location.
+ *
+ * @example
+ * ```ts
+ * import { Redirect } from "@taxum/core/http";
+ * import { m, Router } from "@taxum/core/routing";
+ *
+ * const router = new Router()
+ *     .route("/old", m.get(() => Redirect.permanent("/new")))
+ *     .route("/new", m.get(() => "Hello!"));
+ * ```
+ */
+export class Redirect implements ToHttpResponse {
+    private readonly statusCode: StatusCode;
+    private readonly uri: URL | string;
+
+    private constructor(statusCode: StatusCode, location: URL | string) {
+        this.statusCode = statusCode;
+        this.uri = location;
+    }
+
+    /**
+     * Create a new {@link Redirect} that uses `303 See Other` status code.
+     *
+     * This redirect instructs the client to change the method to GET for the
+     * subsequent request to the given `uri`, which is useful after successful
+     * form submission, file upload or when you generally don't want the
+     * redirected-to page to observe the original request method and body
+     * (if non-empty). If you want to preserve the request method and body,
+     * {@link Redirect.temporary} should be used instead.
+     *
+     * See [MDN: 303 See Other](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/303)
+     */
+    public static to(uri: URL | string): Redirect {
+        return new Redirect(StatusCode.SEE_OTHER, uri);
+    }
+
+    /**
+     * Create a new {@link Redirect} that uses `307 Temporary Redirect` status
+     * code.
+     *
+     * This has the same behavior as {@link Redirect.to}, except it will
+     * preserve the original HTTP method and body.
+     *
+     * See [MDN: 307 Temporary Redirect](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/307)
+     */
+    public static temporary(uri: URL | string): Redirect {
+        return new Redirect(StatusCode.TEMPORARY_REDIRECT, uri);
+    }
+
+    /**
+     * Create a new {@link Redirect} that uses `308 Permanent Redirect` status
+     * code.
+     *
+     * See [MDN: 308 Permanent Redirect](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308)
+     */
+    public static permanent(uri: URL | string): Redirect {
+        return new Redirect(StatusCode.PERMANENT_REDIRECT, uri);
+    }
+
+    public toHttpResponse(): HttpResponse {
+        return HttpResponse.builder()
+            .status(this.statusCode)
+            .header("location", this.uri.toString())
+            .body(null);
+    }
+}

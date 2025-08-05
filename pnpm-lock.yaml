@@ -60,6 +60,9 @@ importers:
       '@types/whatwg-mimetype':
         specifier: ^3.0.2
         version: 3.0.2
+      node-mock-http:
+        specifier: ^1.0.2
+        version: 1.0.2
 
   packages/examples:
     dependencies:
@@ -834,6 +837,9 @@ packages:
 
   nested-search-params@1.0.0:
     resolution: {integrity: sha512-IHgB8A+L2Fpuh8GHnFH7YqdqYFmKgNlsslVjyNrD5WJ6cUS8aXNISIprAV0XLIjZNpfGsF5DrcdcsB60CIrGeQ==}
+
+  node-mock-http@1.0.2:
+    resolution: {integrity: sha512-zWaamgDUdo9SSLw47we78+zYw/bDr5gH8pH7oRRs8V3KmBtu8GLgGIbV2p/gRPd3LWpEOpjQj7X1FOU3VFMJ8g==}
 
   p-limit@3.1.0:
     resolution: {integrity: sha512-TYOanM3wGwNGsZN2cVTYPArw454xnXj5qmWF1bEoAc4+cU/ol7GVh7odevjp1FNHduHc3KZMcFduxU5Xc6uJRQ==}
@@ -1735,6 +1741,8 @@ snapshots:
   minipass@7.1.2: {}
 
   nested-search-params@1.0.0: {}
+
+  node-mock-http@1.0.2: {}
 
   p-limit@3.1.0:
     dependencies:

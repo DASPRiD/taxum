@@ -11,7 +11,7 @@ const createRequest = (authorization?: string): HttpRequest => {
         headers.insert("authorization", authorization);
     }
 
-    const parts = new Parts("GET", new URL("http://localhost"), "1.1", headers);
+    const parts = new Parts(Method.GET, new URL("http://localhost"), "1.1", headers);
     return new HttpRequest(parts, Readable.from([]));
 };
 
