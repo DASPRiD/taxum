@@ -33,6 +33,49 @@ export class InvalidFormDataError implements ToHttpResponse {
     }
 }
 
+/**
+ * Extractor that will get form data from the request and parse it.
+ *
+ * The schema can be anything implementing the [Standard Schema](https://standardschema.dev/).
+ *
+ * The source of the form data depends on the request method:
+ *
+ * - If the request has a method of `GET` or `HEAD", the form data will be read
+ *   from the query string.
+ * - If the request has a different method, the form will be read from the body
+ *   of the request. It must have a `content-type` of
+ *   `application/x-www-form-urlencoded` for this to work.
+ *
+ * If the request is not `GET` or `HEAD` and is lacking a form data content
+ * type, it will reject the request with a `415 Unsupported Media Type`
+ * response.
+ *
+ * If the body is malformed, it will reject the request with a `400 Bad Request`
+ * response.
+ *
+ * If the form data cannot be parsed, it will reject the request with a
+ * `422 Unprocessable Content` response.
+ *
+ * @example
+ * ```ts
+ * import { form } from "@taxum/core/extract";
+ * import { m, Router } from "@taxum/core/routing";
+ * import { z } from "zod";
+ *
+ * const bodySchema = z.object({
+ *     foo: z.string(),
+ * });
+ *
+ * const handler = handler([form(bodySchema)], (body) => {
+ *     const foo = body.foo;
+ *
+ *     // ...
+ * });
+ *
+ * const router = new Router()
+ *     .route("/users", m.post(handler));
+ * ```
+ */
 export const form =
     <T extends StandardSchemaV1>(schema: T): Extractor<StandardSchemaV1.InferOutput<T>> =>
     async (req: HttpRequest): Promise<StandardSchemaV1.InferOutput<T>> => {

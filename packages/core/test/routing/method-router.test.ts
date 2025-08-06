@@ -31,7 +31,7 @@ describe("routing:method-router", () => {
 
             it(`handles ${method} with shortcut method`, async () => {
                 const router = new MethodRouter();
-                router[shortcutName](() => `${method} shortcut`);
+                router[shortcutName](() => "");
 
                 const res = await router.call(makeRequest(method));
                 assert(res.status.isSuccess());

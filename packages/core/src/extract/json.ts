@@ -45,6 +45,40 @@ export class InvalidJsonError implements ToHttpResponse {
     }
 }
 
+/**
+ * Extractor that will get JSON from the body and parse it.
+ *
+ * The schema can be anything implementing the [Standard Schema](https://standardschema.dev/).
+ *
+ * If the request is lacking a JSON content type, it will reject the request
+ * with a `415 Unsupported Media Type` response.
+ *
+ * If the body is malformed, it will reject the request with a `400 Bad Request`
+ * response.
+ *
+ * If the JSON cannot be parsed, it will reject the request with a
+ * `422 Unprocessable Content` response.
+ *
+ * @example
+ * ```ts
+ * import { json } from "@taxum/core/extract";
+ * import { m, Router } from "@taxum/core/routing";
+ * import { z } from "zod";
+ *
+ * const bodySchema = z.object({
+ *     foo: z.string(),
+ * });
+ *
+ * const handler = handler([json(bodySchema)], (body) => {
+ *     const foo = body.foo;
+ *
+ *     // ...
+ * });
+ *
+ * const router = new Router()
+ *     .route("/users", m.post(handler));
+ * ```
+ */
 export const json =
     <T extends StandardSchemaV1>(schema: T): Extractor<StandardSchemaV1.InferOutput<T>> =>
     async (req: HttpRequest): Promise<StandardSchemaV1.InferOutput<T>> => {
@@ -58,6 +92,7 @@ export const json =
             json = await consumers.json(req.body);
         } catch (error) {
             throw new MalformedJsonError(
+                /* node:coverage ignore next */
                 error instanceof Error ? error.message : "Malformed JSON body",
             );
         }

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { SocketAddress } from "node:net";
 import { Readable } from "node:stream";
 import { describe, it } from "node:test";
 import type { TLSSocket } from "node:tls";
@@ -97,6 +98,19 @@ describe("http:request", () => {
 
             assert.equal(req.head, parts);
             assert.equal(req.body, body);
+            assert.equal(req.connectInfo.address, "0.0.0.0");
+            assert.equal(req.connectInfo.port, 0);
+        });
+
+        it("constructs with connectInfo", () => {
+            const parts = new Parts(Method.GET, new URL("http://a"), "1.1", new HeaderMap());
+            const body = Readable.from(["test"]);
+            const req = new HttpRequest(parts, body, SocketAddress.parse("127.0.0.1:8080"));
+
+            assert.equal(req.head, parts);
+            assert.equal(req.body, body);
+            assert.equal(req.connectInfo.address, "127.0.0.1");
+            assert.equal(req.connectInfo.port, 8080);
         });
 
         it("fromIncomingMessage creates HttpRequest", () => {
@@ -209,6 +223,13 @@ describe("http:request", () => {
             builder.extension(key, "value");
             const req = builder.body(null);
             assert.equal(req.extensions.get(key), "value");
+        });
+
+        it("connectInfo() sets the connect info", () => {
+            const builder = new HttpRequestBuilder();
+            builder.connectInfo(new SocketAddress({ address: "127.0.0.1" }));
+            const req = builder.body(null);
+            assert.equal(req.connectInfo.address, "127.0.0.1");
         });
 
         it("body() sets body and returns HttpRequest", () => {

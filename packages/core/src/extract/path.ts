@@ -4,7 +4,7 @@ import { type HttpRequest, HttpResponse, StatusCode, type ToHttpResponse } from 
 import { PATH_PARAMS } from "../routing/index.js";
 import type { Extractor } from "./index.js";
 
-export class PathParamsError implements ToHttpResponse {
+export class InvalidPathParamsError implements ToHttpResponse {
     public readonly issues: readonly StandardSchemaV1.Issue[];
 
     public constructor(issues: readonly StandardSchemaV1.Issue[]) {
@@ -16,6 +16,14 @@ export class PathParamsError implements ToHttpResponse {
     }
 }
 
+/**
+ * Extractor that will get path params from the URL and parse them.
+ *
+ * The schema can be anything implementing the [Standard Schema](https://standardschema.dev/).
+ *
+ * If the params cannot be parsed, it will reject the request with a
+ * `400 Bad Request` response.
+ */
 export const pathParams =
     <T extends StandardSchemaV1>(schema: T): Extractor<StandardSchemaV1.InferOutput<T>> =>
     async (req: HttpRequest): Promise<StandardSchemaV1.InferOutput<T>> => {
@@ -25,7 +33,7 @@ export const pathParams =
         const parseResult = await schema["~standard"].validate(pathParams);
 
         if (parseResult.issues) {
-            throw new PathParamsError(parseResult.issues);
+            throw new InvalidPathParamsError(parseResult.issues);
         }
 
         return parseResult.value;

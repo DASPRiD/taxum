@@ -14,3 +14,5 @@ export * from "./extension.js";
 export * from "./form.js";
 export * from "./json.js";
 export * from "./path.js";
+export * from "./query.js";
+export * from "./raw-query.js";

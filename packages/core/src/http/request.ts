@@ -1,4 +1,5 @@
 import type { IncomingMessage } from "node:http";
+import { SocketAddress } from "node:net";
 import type { Readable } from "node:stream";
 import { Body, type BodyLike } from "./body.js";
 import { type ExtensionKey, Extensions } from "./extensions.js";
@@ -70,10 +71,17 @@ export class Parts {
 export class HttpRequest {
     public readonly head: Parts;
     public readonly body: Readable;
+    public readonly connectInfo: SocketAddress;
 
-    public constructor(head: Parts, body: Readable) {
+    public constructor(head: Parts, body: Readable, connectInfo?: SocketAddress) {
         this.head = head;
         this.body = body;
+        this.connectInfo =
+            connectInfo ??
+            new SocketAddress({
+                address: "0.0.0.0",
+                family: "ipv4",
+            });
     }
 
     public static builder(): HttpRequestBuilder {
@@ -81,7 +89,16 @@ export class HttpRequest {
     }
 
     public static fromIncomingMessage(message: IncomingMessage, trustProxy: boolean): HttpRequest {
-        return new HttpRequest(Parts.fromIncomingMessage(message, trustProxy), message);
+        return new HttpRequest(
+            Parts.fromIncomingMessage(message, trustProxy),
+            message,
+            new SocketAddress({
+                address:
+                    message.socket.remoteAddress === "" ? "0.0.0.0" : message.socket.remoteAddress,
+                family: message.socket.remoteFamily === "IPv6" ? "ipv6" : "ipv4",
+                port: message.socket.remotePort,
+            }),
+        );
     }
 
     public get method(): Method {
@@ -114,6 +131,7 @@ export class HttpRequestBuilder {
     private version_ = "1.1";
     private headers_ = new HeaderMap();
     private extensions_ = new Extensions();
+    private connectInfo_: SocketAddress | undefined;
 
     public method(method: Method | string): this {
         this.method_ = typeof method === "string" ? Method.fromString(method) : method;
@@ -155,10 +173,16 @@ export class HttpRequestBuilder {
         return this;
     }
 
+    public connectInfo(connectInfo: SocketAddress): this {
+        this.connectInfo_ = connectInfo;
+        return this;
+    }
+
     public body(body: BodyLike) {
         return new HttpRequest(
             new Parts(this.method_, this.uri_, this.version_, this.headers_, this.extensions_),
             Body.from(body).read(),
+            this.connectInfo_,
         );
     }
 }

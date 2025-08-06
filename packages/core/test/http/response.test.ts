@@ -220,38 +220,5 @@ describe("http:response", () => {
             assert(!isToHttpResponse({}));
             assert(!isToHttpResponse(null));
         });
-
-        /*
-        it("responseLikePartToResponse converts correctly", () => {
-            const resp = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
-            assert.equal(responseLikePartToResponse(resp), resp);
-
-            const toResp = {
-                toHttpResponse() {
-                    return resp;
-                },
-            };
-            assert.equal(responseLikePartToResponse(toResp), resp);
-
-            const body = "body string";
-            const converted = responseLikePartToResponse(body);
-            assert(converted instanceof HttpResponse);
-        });
-
-        it("isHttpResponseLikePart identifies correctly", () => {
-            const resp = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
-            const toResp = {
-                toHttpResponse() {
-                    return resp;
-                },
-            };
-            const body = "body";
-            assert(isHttpResponseLikePart(resp));
-            assert(isHttpResponseLikePart(toResp));
-            assert(isHttpResponseLikePart(body));
-            assert(!isHttpResponseLikePart(null));
-            assert(!isHttpResponseLikePart({}));
-        });
-        */
     });
 });
