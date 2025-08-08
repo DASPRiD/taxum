@@ -7,8 +7,8 @@ const router = new Router()
         "/",
         m.get(() => "Hello World"),
     )
-    .layer(requestId.setRequestIdLayer())
-    .layer(requestId.propagateRequestIdLayer());
+    .layer(requestId.SetRequestIdLayer.default())
+    .layer(requestId.PropagateRequestIdLayer.default());
 
 await serve(router, {
     catchCtrlC: true,

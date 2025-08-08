@@ -91,7 +91,7 @@ export const serve = async (router: Router, config?: ServeConfig): Promise<void>
     const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
         try {
             const httpRequests = HttpRequest.fromIncomingMessage(req, config?.trustProxy ?? false);
-            const response = await router.call(httpRequests);
+            const response = await router.invoke(httpRequests);
             await response.write(res);
         } catch (error) {
             if (isToHttpResponse(error)) {

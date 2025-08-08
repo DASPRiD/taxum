@@ -6,23 +6,23 @@ import {
     noContentResponse,
     StatusCode,
 } from "../../src/http/index.js";
-import type { Router, ServiceFn } from "../../src/routing/index.js";
+import type { Router, Service } from "../../src/routing/index.js";
 import { type ServeConfig, serve } from "../../src/server/index.js";
 
 class MockRouter {
-    private readonly handler: ServiceFn;
+    private readonly service: Service;
 
-    public constructor(handler: ServiceFn) {
-        this.handler = handler;
+    public constructor(service: Service) {
+        this.service = service;
     }
 
-    public async call(req: HttpRequest): Promise<HttpResponse> {
-        return this.handler(req);
+    public async invoke(req: HttpRequest): Promise<HttpResponse> {
+        return this.service.invoke(req);
     }
 }
 
-const makeMockRouter = (handler: ServiceFn): Router => {
-    return new MockRouter(handler) as unknown as Router;
+const makeMockRouter = (service: Service): Router => {
+    return new MockRouter(service) as unknown as Router;
 };
 
 describe("server:index", () => {
@@ -34,7 +34,7 @@ describe("server:index", () => {
         });
 
         it("responds with a successful response from router", async () => {
-            const router = makeMockRouter(() => HttpResponse.builder().body(null));
+            const router = makeMockRouter({ invoke: () => HttpResponse.builder().body(null) });
             const controller = new AbortController();
 
             const config: ServeConfig = {
@@ -50,8 +50,10 @@ describe("server:index", () => {
         });
 
         it("handles router error with toHttpResponse", async () => {
-            const router = makeMockRouter(() => {
-                throw StatusCode.IM_A_TEAPOT;
+            const router = makeMockRouter({
+                invoke: () => {
+                    throw StatusCode.IM_A_TEAPOT;
+                },
             });
             const controller = new AbortController();
 
@@ -72,8 +74,10 @@ describe("server:index", () => {
                 // Suppress actual console.error output.
             });
 
-            const router = makeMockRouter(() => {
-                throw new Error("boom");
+            const router = makeMockRouter({
+                invoke: () => {
+                    throw new Error("boom");
+                },
             });
             const controller = new AbortController();
 
@@ -92,7 +96,7 @@ describe("server:index", () => {
 
         it("calls onListen with address info", async () => {
             let listenCalled = false;
-            const router = makeMockRouter(() => noContentResponse.toHttpResponse());
+            const router = makeMockRouter({ invoke: () => noContentResponse.toHttpResponse() });
             const controller = new AbortController();
 
             const config: ServeConfig = {
@@ -109,7 +113,7 @@ describe("server:index", () => {
         });
 
         it("unrefs server when unrefOnStart is true", async () => {
-            const router = makeMockRouter(() => noContentResponse.toHttpResponse());
+            const router = makeMockRouter({ invoke: () => noContentResponse.toHttpResponse() });
             const controller = new AbortController();
 
             const config: ServeConfig = {
@@ -122,7 +126,7 @@ describe("server:index", () => {
         });
 
         it("shuts down via abortSignal", async () => {
-            const router = makeMockRouter(() => noContentResponse.toHttpResponse());
+            const router = makeMockRouter({ invoke: () => noContentResponse.toHttpResponse() });
             const controller = new AbortController();
 
             const config: ServeConfig = {
@@ -136,12 +140,12 @@ describe("server:index", () => {
         });
 
         it("shuts down after shutdownTimeout", async (t) => {
-            const router = makeMockRouter(
-                () =>
+            const router = makeMockRouter({
+                invoke: () =>
                     new Promise((resolve) =>
                         setTimeout(() => resolve(noContentResponse.toHttpResponse()), 2000),
                     ),
-            );
+            });
             const controller = new AbortController();
             t.mock.timers.enable({ apis: ["setTimeout"] });
 
@@ -158,7 +162,7 @@ describe("server:index", () => {
         });
 
         it("handles Ctrl+C signals if catchCtrlC is true", async () => {
-            const router = makeMockRouter(() => noContentResponse.toHttpResponse());
+            const router = makeMockRouter({ invoke: () => noContentResponse.toHttpResponse() });
             const controller = new AbortController();
 
             const config: ServeConfig = {
