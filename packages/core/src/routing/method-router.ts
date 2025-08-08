@@ -1,18 +1,21 @@
 import { match, P } from "ts-pattern";
-import { type HttpRequest, Method, type ReadonlyHttpResponse, StatusCode } from "../http/index.js";
+import { type HttpRequest, type HttpResponse, Method, StatusCode } from "../http/index.js";
 import { Fallback } from "./fallback.js";
-import type { HandlerFn } from "./handler.js";
+import { type Handler, HandlerService } from "./handler.js";
 import type { Layer } from "./layer.js";
 import { MethodFilter } from "./method-filter.js";
-import { type ServiceFn, serviceFromHandler } from "./service.js";
+import { Route } from "./route.js";
+import type { Service } from "./service.js";
 
-const defaultFallbackService = serviceFromHandler(() => StatusCode.METHOD_NOT_ALLOWED);
+const defaultFallbackRoute = new Route({
+    invoke: () => StatusCode.METHOD_NOT_ALLOWED,
+});
 
 /**
  * Registers a handler function to be executed when a specified method
  * matches the provided filter.
  */
-export const on = (filter: MethodFilter, handler: HandlerFn): MethodRouter => {
+export const on = (filter: MethodFilter, handler: Handler): MethodRouter => {
     return new MethodRouter().on(filter, handler);
 };
 
@@ -20,7 +23,7 @@ export const on = (filter: MethodFilter, handler: HandlerFn): MethodRouter => {
  * Creates a new MethodRouter instance configured with a fallback handler and
  * skips the 'Allow' header.
  */
-export const any = (handler: HandlerFn): MethodRouter => {
+export const any = (handler: Handler): MethodRouter => {
     return new MethodRouter().fallback(handler).skipAllowHeader();
 };
 
@@ -28,15 +31,15 @@ export const any = (handler: HandlerFn): MethodRouter => {
  * Shortcut methods for creating {@link MethodRouter}s for a given method.
  */
 export const m = {
-    connect: (handler: HandlerFn): MethodRouter => on(MethodFilter.CONNECT, handler),
-    delete: (handler: HandlerFn): MethodRouter => on(MethodFilter.DELETE, handler),
-    get: (handler: HandlerFn): MethodRouter => on(MethodFilter.GET, handler),
-    head: (handler: HandlerFn): MethodRouter => on(MethodFilter.HEAD, handler),
-    options: (handler: HandlerFn): MethodRouter => on(MethodFilter.OPTIONS, handler),
-    patch: (handler: HandlerFn): MethodRouter => on(MethodFilter.PATCH, handler),
-    post: (handler: HandlerFn): MethodRouter => on(MethodFilter.POST, handler),
-    put: (handler: HandlerFn): MethodRouter => on(MethodFilter.PUT, handler),
-    trace: (handler: HandlerFn): MethodRouter => on(MethodFilter.TRACE, handler),
+    connect: (handler: Handler): MethodRouter => on(MethodFilter.CONNECT, handler),
+    delete: (handler: Handler): MethodRouter => on(MethodFilter.DELETE, handler),
+    get: (handler: Handler): MethodRouter => on(MethodFilter.GET, handler),
+    head: (handler: Handler): MethodRouter => on(MethodFilter.HEAD, handler),
+    options: (handler: Handler): MethodRouter => on(MethodFilter.OPTIONS, handler),
+    patch: (handler: Handler): MethodRouter => on(MethodFilter.PATCH, handler),
+    post: (handler: Handler): MethodRouter => on(MethodFilter.POST, handler),
+    put: (handler: Handler): MethodRouter => on(MethodFilter.PUT, handler),
+    trace: (handler: Handler): MethodRouter => on(MethodFilter.TRACE, handler),
 };
 
 /**
@@ -48,17 +51,17 @@ export const m = {
  * supports a fallback mechanism and the ability to apply middleware layers to
  * all endpoints.
  */
-export class MethodRouter {
-    private getEndpoint: MethodEndpoint = new MethodEndpoint();
-    private headEndpoint: MethodEndpoint = new MethodEndpoint();
-    private deleteEndpoint: MethodEndpoint = new MethodEndpoint();
-    private optionsEndpoint: MethodEndpoint = new MethodEndpoint();
-    private patchEndpoint: MethodEndpoint = new MethodEndpoint();
-    private postEndpoint: MethodEndpoint = new MethodEndpoint();
-    private putEndpoint: MethodEndpoint = new MethodEndpoint();
-    private traceEndpoint: MethodEndpoint = new MethodEndpoint();
-    private connectEndpoint: MethodEndpoint = new MethodEndpoint();
-    private fallbackEndpoint: Fallback = new Fallback(defaultFallbackService);
+export class MethodRouter implements Service {
+    private getEndpoint = new MethodEndpoint();
+    private headEndpoint = new MethodEndpoint();
+    private deleteEndpoint = new MethodEndpoint();
+    private optionsEndpoint = new MethodEndpoint();
+    private patchEndpoint = new MethodEndpoint();
+    private postEndpoint = new MethodEndpoint();
+    private putEndpoint = new MethodEndpoint();
+    private traceEndpoint = new MethodEndpoint();
+    private connectEndpoint = new MethodEndpoint();
+    private fallbackEndpoint = Fallback.default(defaultFallbackRoute);
     private allowHeader: Set<string> | null = new Set();
 
     private readonly ENDPOINTS: [Method, MethodEndpoint][] = [
@@ -83,18 +86,24 @@ export class MethodRouter {
      * @param handler - the handler function to be executed for the specified
      *        methods and filter.
      */
-    public on(filter: MethodFilter, handler: HandlerFn): this {
-        const service = serviceFromHandler(handler);
+    public on(filter: MethodFilter, handler: Handler): this {
+        const route = new Route(new HandlerService(handler));
 
-        this.setEndpoint(service, filter, MethodFilter.GET, this.getEndpoint, ["GET", "HEAD"]);
-        this.setEndpoint(service, filter, MethodFilter.HEAD, this.headEndpoint, ["HEAD"]);
-        this.setEndpoint(service, filter, MethodFilter.TRACE, this.traceEndpoint, ["TRACE"]);
-        this.setEndpoint(service, filter, MethodFilter.PUT, this.putEndpoint, ["PUT"]);
-        this.setEndpoint(service, filter, MethodFilter.POST, this.postEndpoint, ["POST"]);
-        this.setEndpoint(service, filter, MethodFilter.PATCH, this.patchEndpoint, ["PATCH"]);
-        this.setEndpoint(service, filter, MethodFilter.OPTIONS, this.optionsEndpoint, ["OPTIONS"]);
-        this.setEndpoint(service, filter, MethodFilter.DELETE, this.deleteEndpoint, ["DELETE"]);
-        this.setEndpoint(service, filter, MethodFilter.CONNECT, this.connectEndpoint, ["CONNECT"]);
+        this.setEndpoint("GET", route, filter, MethodFilter.GET, this.getEndpoint, ["GET", "HEAD"]);
+        this.setEndpoint("HEAD", route, filter, MethodFilter.HEAD, this.headEndpoint, ["HEAD"]);
+        this.setEndpoint("TRACE", route, filter, MethodFilter.TRACE, this.traceEndpoint, ["TRACE"]);
+        this.setEndpoint("PUT", route, filter, MethodFilter.PUT, this.putEndpoint, ["PUT"]);
+        this.setEndpoint("POST", route, filter, MethodFilter.POST, this.postEndpoint, ["POST"]);
+        this.setEndpoint("PATCH", route, filter, MethodFilter.PATCH, this.patchEndpoint, ["PATCH"]);
+        this.setEndpoint("OPTIONS", route, filter, MethodFilter.OPTIONS, this.optionsEndpoint, [
+            "OPTIONS",
+        ]);
+        this.setEndpoint("DELETE", route, filter, MethodFilter.DELETE, this.deleteEndpoint, [
+            "DELETE",
+        ]);
+        this.setEndpoint("CONNECT", route, filter, MethodFilter.CONNECT, this.connectEndpoint, [
+            "CONNECT",
+        ]);
 
         return this;
     }
@@ -104,7 +113,7 @@ export class MethodRouter {
      *
      * @param handler - the handler function to be executed for this method.
      */
-    public connect(handler: HandlerFn): this {
+    public connect(handler: Handler): this {
         return this.on(MethodFilter.CONNECT, handler);
     }
 
@@ -113,7 +122,7 @@ export class MethodRouter {
      *
      * @param handler - the handler function to be executed for this method.
      */
-    public delete(handler: HandlerFn): this {
+    public delete(handler: Handler): this {
         return this.on(MethodFilter.DELETE, handler);
     }
 
@@ -122,7 +131,7 @@ export class MethodRouter {
      *
      * @param handler - the handler function to be executed for this method.
      */
-    public get(handler: HandlerFn): this {
+    public get(handler: Handler): this {
         return this.on(MethodFilter.GET, handler);
     }
 
@@ -131,7 +140,7 @@ export class MethodRouter {
      *
      * @param handler - the handler function to be executed for this method.
      */
-    public head(handler: HandlerFn): this {
+    public head(handler: Handler): this {
         return this.on(MethodFilter.HEAD, handler);
     }
 
@@ -140,7 +149,7 @@ export class MethodRouter {
      *
      * @param handler - the handler function to be executed for this method.
      */
-    public options(handler: HandlerFn): this {
+    public options(handler: Handler): this {
         return this.on(MethodFilter.OPTIONS, handler);
     }
 
@@ -149,7 +158,7 @@ export class MethodRouter {
      *
      * @param handler - the handler function to be executed for this method.
      */
-    public patch(handler: HandlerFn): this {
+    public patch(handler: Handler): this {
         return this.on(MethodFilter.PATCH, handler);
     }
 
@@ -158,7 +167,7 @@ export class MethodRouter {
      *
      * @param handler - the handler function to be executed for this method.
      */
-    public post(handler: HandlerFn): this {
+    public post(handler: Handler): this {
         return this.on(MethodFilter.POST, handler);
     }
 
@@ -167,7 +176,7 @@ export class MethodRouter {
      *
      * @param handler - the handler function to be executed for this method.
      */
-    public put(handler: HandlerFn): this {
+    public put(handler: Handler): this {
         return this.on(MethodFilter.PUT, handler);
     }
 
@@ -176,7 +185,7 @@ export class MethodRouter {
      *
      * @param handler - the handler function to be executed for this method.
      */
-    public trace(handler: HandlerFn): this {
+    public trace(handler: Handler): this {
         return this.on(MethodFilter.TRACE, handler);
     }
 
@@ -185,8 +194,8 @@ export class MethodRouter {
      *
      * @param handler - the handler function to be executed for this method.
      */
-    public fallback(handler: HandlerFn): this {
-        this.fallbackEndpoint.service = serviceFromHandler(handler);
+    public fallback(handler: Handler): this {
+        this.fallbackEndpoint = Fallback.service(new Route(new HandlerService(handler)));
         return this;
     }
 
@@ -196,16 +205,18 @@ export class MethodRouter {
      * @param layer - the layer to be applied to the endpoints.
      */
     public layer(layer: Layer): this {
-        this.getEndpoint.map(layer);
-        this.headEndpoint.map(layer);
-        this.deleteEndpoint.map(layer);
-        this.optionsEndpoint.map(layer);
-        this.patchEndpoint.map(layer);
-        this.postEndpoint.map(layer);
-        this.putEndpoint.map(layer);
-        this.traceEndpoint.map(layer);
-        this.connectEndpoint.map(layer);
-        this.fallbackEndpoint.map(layer);
+        const map = (route: Route) => route.layer(layer);
+
+        this.getEndpoint.map(map);
+        this.headEndpoint.map(map);
+        this.deleteEndpoint.map(map);
+        this.optionsEndpoint.map(map);
+        this.patchEndpoint.map(map);
+        this.postEndpoint.map(map);
+        this.putEndpoint.map(map);
+        this.traceEndpoint.map(map);
+        this.connectEndpoint.map(map);
+        this.fallbackEndpoint.map(map);
 
         return this;
     }
@@ -213,9 +224,9 @@ export class MethodRouter {
     /**
      * @internal
      */
-    public defaultFallback(handler: HandlerFn): void {
-        if (this.fallbackEndpoint.service === defaultFallbackService) {
-            this.fallbackEndpoint.service = serviceFromHandler(handler);
+    public defaultFallback(handler: Handler): void {
+        if (this.fallbackEndpoint.isDefault) {
+            this.fallbackEndpoint = Fallback.service(new Route(new HandlerService(handler)));
         }
     }
 
@@ -230,25 +241,22 @@ export class MethodRouter {
     /**
      * @internal
      */
-    public async call(req: HttpRequest): Promise<ReadonlyHttpResponse> {
+    public async invoke(req: HttpRequest): Promise<HttpResponse> {
         for (const [method, handler] of this.ENDPOINTS) {
-            const result = await this.callMethod(req, method, handler);
+            const res = await this.invokeMethod(req, method, handler);
 
-            if (result) {
-                return result;
+            if (res) {
+                return res;
             }
         }
 
-        const response = await this.fallbackEndpoint.service(req);
+        const res = await this.fallbackEndpoint.route.invoke(req);
 
-        if (this.allowHeader === null) {
-            return response;
+        if (this.allowHeader !== null) {
+            res.headers.insert("allow", this.allowHeader.values().toArray().join(","));
         }
 
-        const responseClone = response.toOwned();
-        responseClone.headers.insert("allow", this.allowHeader.values().toArray().join(","));
-
-        return responseClone;
+        return res;
     }
 
     /**
@@ -265,20 +273,11 @@ export class MethodRouter {
         MethodRouter.mergeInner(path, "TRACE", this.traceEndpoint, other.traceEndpoint);
         MethodRouter.mergeInner(path, "CONNECT", this.connectEndpoint, other.connectEndpoint);
 
-        this.fallbackEndpoint.service = match([
-            this.fallbackEndpoint.service,
-            other.fallbackEndpoint.service,
-        ])
-            .returnType<ServiceFn>()
-            .with([defaultFallbackService, defaultFallbackService], () => defaultFallbackService)
-            .with(
-                [P.not(defaultFallbackService), defaultFallbackService],
-                ([handler, _]) => handler,
-            )
-            .with(
-                [defaultFallbackService, P.not(defaultFallbackService)],
-                ([_, handler]) => handler,
-            )
+        this.fallbackEndpoint = match([this.fallbackEndpoint, other.fallbackEndpoint])
+            .returnType<Fallback>()
+            .with([{ isDefault: true }, { isDefault: true }], ([fallback, _]) => fallback)
+            .with([{ isDefault: false }, { isDefault: true }], ([fallback, _]) => fallback)
+            .with([{ isDefault: true }, { isDefault: false }], ([_, fallback]) => fallback)
             .otherwise(() => {
                 throw new Error("Cannot merge two `MethodRouter`s that both have a fallback");
             });
@@ -299,31 +298,32 @@ export class MethodRouter {
         own: MethodEndpoint,
         other: MethodEndpoint,
     ): void {
-        if (own.service !== null && other.service !== null) {
+        if (own.route !== null && other.route !== null) {
             throw new Error(
                 `Overlapping method route. Handler for \`${name} ${path}\` already exists`,
             );
         }
 
-        if (own.service === null) {
-            own.service = other.service;
+        if (own.route === null) {
+            own.route = other.route;
         }
     }
 
-    private async callMethod(
+    private async invokeMethod(
         req: HttpRequest,
         method: Method,
         endpoint: MethodEndpoint,
-    ): Promise<ReadonlyHttpResponse | null> {
-        if (!req.method.equals(method) || endpoint.service === null) {
+    ): Promise<HttpResponse | null> {
+        if (!req.method.equals(method) || endpoint.route === null) {
             return null;
         }
 
-        return endpoint.service(req);
+        return endpoint.route.invoke(req);
     }
 
     private setEndpoint(
-        service: ServiceFn,
+        methodName: string,
+        route: Route,
         endpointFilter: MethodFilter,
         filter: MethodFilter,
         out: MethodEndpoint,
@@ -333,7 +333,13 @@ export class MethodRouter {
             return;
         }
 
-        out.service = service;
+        if (out.route !== null) {
+            throw new Error(
+                `Overlapping method route. Cannot add two method routes that both handle ${methodName}`,
+            );
+        }
+
+        out.route = route;
 
         if (this.allowHeader === null) {
             return;
@@ -346,15 +352,15 @@ export class MethodRouter {
 }
 
 class MethodEndpoint {
-    public service: ServiceFn | null;
+    public route: Route | null;
 
-    public constructor(service: ServiceFn | null = null) {
-        this.service = service;
+    public constructor(route: Route | null = null) {
+        this.route = route;
     }
 
-    public map(layer: Layer): void {
-        if (this.service !== null) {
-            this.service = layer.layer(this.service);
+    public map(fn: (route: Route) => Route): void {
+        if (this.route !== null) {
+            this.route = fn(this.route);
         }
     }
 }

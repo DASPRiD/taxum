@@ -33,5 +33,7 @@ export * from "./layer.js";
 export * from "./method-filter.js";
 export * from "./method-router.js";
 export * from "./path-router.js";
+export * from "./route.js";
 export * from "./router.js";
 export * from "./service.js";
+export * from "./util.js";

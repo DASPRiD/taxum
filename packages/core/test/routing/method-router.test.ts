@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import consumers from "node:stream/consumers";
 import { describe, it, mock } from "node:test";
 import { HttpRequest, StatusCode } from "../../src/http/index.js";
-import { any, MethodFilter, MethodRouter, type ServiceFn } from "../../src/routing/index.js";
+import { any, MethodFilter, MethodRouter, type Service } from "../../src/routing/index.js";
 
 const METHODS = [
     ["GET", "get"],
@@ -25,7 +25,7 @@ describe("routing:method-router", () => {
                 const router = new MethodRouter();
                 router.on(MethodFilter[method], () => null);
 
-                const res = await router.call(makeRequest(method));
+                const res = await router.invoke(makeRequest(method));
                 assert(res.status.isSuccess());
             });
 
@@ -33,7 +33,7 @@ describe("routing:method-router", () => {
                 const router = new MethodRouter();
                 router[shortcutName](() => "");
 
-                const res = await router.call(makeRequest(method));
+                const res = await router.invoke(makeRequest(method));
                 assert(res.status.isSuccess());
             });
 
@@ -41,27 +41,36 @@ describe("routing:method-router", () => {
                 const router = new MethodRouter();
                 router.fallback(() => StatusCode.METHOD_NOT_ALLOWED);
 
-                const res = await router.call(makeRequest(method));
+                const res = await router.invoke(makeRequest(method));
                 assert.equal(res.status.code, 405);
             });
 
             it(`layer applies to ${method} handler`, async () => {
                 const spy = mock.fn(
-                    (inner: ServiceFn): ServiceFn =>
-                        (req) =>
-                            inner(req),
+                    (inner: Service): Service => ({
+                        invoke: (req) => inner.invoke(req),
+                    }),
                 );
 
                 const router = new MethodRouter();
                 router.on(MethodFilter[method], () => null);
                 router.layer({ layer: spy });
 
-                const res = await router.call(makeRequest(method));
+                const res = await router.invoke(makeRequest(method));
                 assert(res.status.isSuccess());
                 assert.equal(spy.mock.callCount(), 2);
             });
         });
     }
+
+    it("disallows settings the same method handler twice", () => {
+        const router = new MethodRouter();
+        router.on(MethodFilter.GET, () => null);
+
+        assert.throws(() => {
+            router.on(MethodFilter.GET, () => null);
+        }, /Overlapping method route/);
+    });
 
     describe("merging MethodRouters", () => {
         it("merges routers without conflicts", async () => {
@@ -73,11 +82,11 @@ describe("routing:method-router", () => {
 
             a.mergeForPath("/foo", b);
 
-            let res = await a.call(makeRequest("GET"));
+            let res = await a.invoke(makeRequest("GET"));
             assert(res);
             assert.equal(await consumers.text(res.body.read()), "GET from A");
 
-            res = await a.call(makeRequest("POST"));
+            res = await a.invoke(makeRequest("POST"));
             assert(res);
             assert.equal(await consumers.text(res.body.read()), "POST from B");
         });
@@ -108,7 +117,7 @@ describe("routing:method-router", () => {
             router.get(() => "hello");
             router.skipAllowHeader();
 
-            const res = await router.call(makeRequest("GET"));
+            const res = await router.invoke(makeRequest("GET"));
             assert(!res.headers.containsKey("allow"), "Allow header should be skipped");
         });
 
@@ -117,7 +126,7 @@ describe("routing:method-router", () => {
             router.get(() => "hello");
             router.post(() => "world");
 
-            const res = await router.call(makeRequest("OPTIONS"));
+            const res = await router.invoke(makeRequest("OPTIONS"));
             const allow = res.headers.get("allow");
 
             assert(allow?.includes("GET"));
@@ -129,7 +138,7 @@ describe("routing:method-router", () => {
             router.skipAllowHeader();
             router.get(() => "hello");
 
-            const res = await router.call(makeRequest("OPTIONS"));
+            const res = await router.invoke(makeRequest("OPTIONS"));
             assert(!res.headers.containsKey("allow"), "Allow header should be skipped");
         });
     });
@@ -138,7 +147,7 @@ describe("routing:method-router", () => {
         it("returns a MethodRouter with the fallback handler set", async () => {
             const router = any(() => StatusCode.ACCEPTED);
             const req = HttpRequest.builder().method("GET").path("/some-path").body(null);
-            const res = await router.call(req);
+            const res = await router.invoke(req);
 
             assert(res);
             assert.equal(res.status, StatusCode.ACCEPTED);
@@ -147,7 +156,7 @@ describe("routing:method-router", () => {
         it("skips the Allow header (allowHeader is null)", async () => {
             const router = any(() => StatusCode.OK);
             const req = HttpRequest.builder().method("GET").path("/some-path").body(null);
-            const res = await router.call(req);
+            const res = await router.invoke(req);
 
             assert(!res.headers.containsKey("allow"), "Allow header should not be present");
         });
@@ -163,7 +172,7 @@ describe("routing:method-router", () => {
             for (const [method] of METHODS) {
                 calledWithMethod = null;
                 const req = HttpRequest.builder().method(method).path("/").body(null);
-                const res = await router.call(req);
+                const res = await router.invoke(req);
 
                 assert.equal(res.status, StatusCode.ACCEPTED);
                 assert.equal(calledWithMethod, method);
@@ -176,12 +185,12 @@ describe("routing:method-router", () => {
             const router = new MethodRouter();
             const req = HttpRequest.builder().body(null);
 
-            const res1 = await router.call(req);
+            const res1 = await router.invoke(req);
             assert.equal(res1.status, StatusCode.METHOD_NOT_ALLOWED);
 
             router.defaultFallback(() => StatusCode.OK);
 
-            const res2 = await router.call(req);
+            const res2 = await router.invoke(req);
             assert.equal(res2.status, StatusCode.OK);
         });
 
@@ -191,7 +200,7 @@ describe("routing:method-router", () => {
             router.defaultFallback(() => StatusCode.IM_A_TEAPOT);
 
             const req = HttpRequest.builder().body(null);
-            const res = await router.call(req);
+            const res = await router.invoke(req);
             assert.equal(res.status, StatusCode.OK);
         });
     });

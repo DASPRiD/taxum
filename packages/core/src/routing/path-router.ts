@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import FindMyWay from "find-my-way";
-import { ExtensionKey, type HttpRequest, type ReadonlyHttpResponse } from "../http/index.js";
-import type { HandlerFn } from "./handler.js";
+import { ExtensionKey, type HttpRequest, type HttpResponse } from "../http/index.js";
+import type { Handler } from "./handler.js";
 import type { Layer } from "./layer.js";
 import type { MethodRouter } from "./method-router.js";
 
@@ -86,7 +86,7 @@ export class PathRouter {
     /**
      * @internal
      */
-    public methodNotAllowedFallback(handler: HandlerFn): void {
+    public methodNotAllowedFallback(handler: Handler): void {
         for (const route of this.routes.values()) {
             route.defaultFallback(handler);
         }
@@ -95,7 +95,7 @@ export class PathRouter {
     /**
      * @internal
      */
-    public async call(req: HttpRequest): Promise<ReadonlyHttpResponse | null> {
+    public async invoke(req: HttpRequest): Promise<HttpResponse | null> {
         const match = this.node.at(req.uri.pathname);
 
         if (!match) {
@@ -106,7 +106,7 @@ export class PathRouter {
         const endpoint = this.routes.get(match.routeId);
         assert(endpoint, "no route for id. This is a bug in taxum. Please file an issue");
 
-        return endpoint.call(req);
+        return endpoint.invoke(req);
     }
 
     private nextRouteId(): number {

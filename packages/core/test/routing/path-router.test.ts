@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import consumers from "node:stream/consumers";
 import { describe, it, mock } from "node:test";
 import { HttpRequest, jsonResponse, StatusCode } from "../../src/http/index.js";
-import { m, PATH_PARAMS, PathRouter, type ServiceFn } from "../../src/routing/index.js";
+import { m, PATH_PARAMS, PathRouter, type Service } from "../../src/routing/index.js";
 
 const makeRequest = (path: string) => HttpRequest.builder().path(path).body(null);
 
@@ -14,7 +14,7 @@ describe("routing:PathRouter", () => {
             m.get(() => "hello"),
         );
 
-        const res = await router.call(makeRequest("/foo"));
+        const res = await router.invoke(makeRequest("/foo"));
         assert.equal(res?.status.code, 200);
     });
 
@@ -25,7 +25,7 @@ describe("routing:PathRouter", () => {
             m.get(() => "hello"),
         );
 
-        const res = await router.call(makeRequest("/does-not-exist"));
+        const res = await router.invoke(makeRequest("/does-not-exist"));
         assert.equal(res, null);
     });
 
@@ -38,7 +38,7 @@ describe("routing:PathRouter", () => {
 
         router.route("/user/:id", methodRouter);
 
-        const res = await router.call(makeRequest("/user/123"));
+        const res = await router.invoke(makeRequest("/user/123"));
         assert(res);
         const json = await consumers.json(res.body.read());
 
@@ -47,9 +47,9 @@ describe("routing:PathRouter", () => {
 
     it("applies layer to all routes", async () => {
         const spy = mock.fn(
-            (inner: ServiceFn): ServiceFn =>
-                (req) =>
-                    inner(req),
+            (inner: Service): Service => ({
+                invoke: (req) => inner.invoke(req),
+            }),
         );
         const router = new PathRouter();
         router.route(
@@ -58,7 +58,7 @@ describe("routing:PathRouter", () => {
         );
         router.layer({ layer: spy });
 
-        const res = await router.call(makeRequest("/a"));
+        const res = await router.invoke(makeRequest("/a"));
         assert.equal(res?.status.code, 200);
         assert.equal(spy.mock.callCount(), 2);
     });
@@ -73,7 +73,7 @@ describe("routing:PathRouter", () => {
         const root = new PathRouter();
         root.nest("/api", child);
 
-        const res = await root.call(makeRequest("/api/sub"));
+        const res = await root.invoke(makeRequest("/api/sub"));
         assert(res);
         assert.equal(await consumers.text(res.body.read()), "nested");
     });
@@ -93,7 +93,7 @@ describe("routing:PathRouter", () => {
 
         a.merge(b);
 
-        const res = await a.call(makeRequest("/bar"));
+        const res = await a.invoke(makeRequest("/bar"));
         assert(res);
         assert.equal(await consumers.text(res.body.read()), "bar");
     });
@@ -108,7 +108,7 @@ describe("routing:PathRouter", () => {
         router.methodNotAllowedFallback(() => StatusCode.METHOD_NOT_ALLOWED);
 
         const req = HttpRequest.builder().method("POST").path("/abc").body(null);
-        const res = await router.call(req);
+        const res = await router.invoke(req);
 
         assert.equal(res?.status.code, 405);
     });
@@ -123,12 +123,12 @@ describe("routing:PathRouter", () => {
         router.route("/merge", second);
 
         const getReq = HttpRequest.builder().method("GET").path("/merge").body(null);
-        const getRes = await router.call(getReq);
+        const getRes = await router.invoke(getReq);
         assert(getRes);
         assert.equal(await consumers.text(getRes.body.read()), "GET OK");
 
         const postReq = HttpRequest.builder().method("POST").path("/merge").body(null);
-        const postRes = await router.call(postReq);
+        const postRes = await router.invoke(postReq);
         assert(postRes);
         assert.equal(await consumers.text(postRes.body.read()), "POST OK");
     });
@@ -162,7 +162,7 @@ describe("routing:PathRouter", () => {
         parent.nest("/foo/", nested);
 
         const req = HttpRequest.builder().path("/foo/bar").body(null);
-        const res = await parent.call(req);
+        const res = await parent.invoke(req);
 
         assert.strictEqual(res?.status, StatusCode.OK);
     });
@@ -178,7 +178,7 @@ describe("routing:PathRouter", () => {
         parent.nest("/foo", nested);
 
         const req = HttpRequest.builder().path("/foo").body(null);
-        const res = await parent.call(req);
+        const res = await parent.invoke(req);
 
         assert.strictEqual(res?.status, StatusCode.OK);
     });

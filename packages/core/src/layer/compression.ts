@@ -1,111 +1,233 @@
 import type { Readable } from "node:stream";
 import zlib, { type BrotliOptions, type ZlibOptions, type ZstdOptions } from "node:zlib";
 import { Body } from "../http/body.js";
-import { type HeaderMap, HttpResponse, type ReadonlyHttpResponse } from "../http/index.js";
-import type { Layer } from "../routing/index.js";
-
-export type CompressionLevel = "fastest" | "best" | "default" | number;
-export type Encoding = "identity" | "deflate" | "gzip" | "brotli" | "zstd";
-export type Predicate = (response: ReadonlyHttpResponse) => boolean;
-export type ResponseCompressionConfig = {
-    /**
-     * Encodings accepted by this layer.
-     *
-     * Defaults to accepting all encodings.
-     */
-    accept?: Set<Encoding>;
-
-    /**
-     * Level of compression data should be compressed with.
-     *
-     * Supports the following pre-defined values:
-     *
-     * - `"fastest"`: fastest quality of compression, usually produces bigger size.
-     * - `"best"`: best quality of compression, usually produces smallest size.
-     * - `"default"`: default quality of compression defined by the selected compression algorithm.
-     *
-     * You can also set this value to a `number` to define a precise quality based on the underlying compression
-     * algorithms' qualities.
-     *
-     * The interpretation of this depends on the algorithm chosen and the specific implementation backing it.
-     *
-     * Qualities are implicitly clamped to the algorithm's maximum.
-     */
-    compressionLevel?: CompressionLevel;
-
-    /**
-     * Predicate to decide whether the response should be compressed.
-     *
-     * If not specified, responses will be compressed unless:
-     *
-     * - They're gRPC, which has its own protocol specific compression scheme.
-     * - It's an image as determined by the `content-type` starting with `image/`.
-     * - They're Server-Sent Events (SSE) as determined by the `content-type` being `text/event-stream`.
-     * - The response is less than 32
-     */
-    predicate?: Predicate;
-};
+import { type HeaderMap, type HttpRequest, HttpResponse } from "../http/index.js";
+import type { Layer, Service } from "../routing/index.js";
 
 /**
- * Layer that adds compression to response bodies.
+ * Level of compression data should be compressed with.
+ *
+ * Supports the following pre-defined values:
+ *
+ * - `"fastest"`: fastest quality of compression, usually produces bigger size.
+ * - `"best"`: best quality of compression, usually produces the smallest size.
+ * - `"default"`: default quality of compression defined by the selected
+ *   compression algorithm.
+ *
+ * You can also set this value to a `number` to define a precise quality based
+ * on the underlying compression algorithms' qualities.
+ *
+ * The interpretation of this depends on the algorithm chosen and the specific
+ * implementation backing it.
+ *
+ * Qualities are implicitly clamped to the algorithm's maximum.
  */
-export const responseCompressionLayer = (config?: ResponseCompressionConfig): Layer => {
-    const accept: Set<Encoding> =
-        config?.accept ?? new Set(["identity", "deflate", "gzip", "brotli", "zstd"]);
+export type CompressionLevel = "fastest" | "best" | "default" | number;
+export type Encoding = "deflate" | "gzip" | "brotli" | "zstd";
+export type Predicate = (response: HttpResponse) => boolean;
 
-    const predicate =
-        config?.predicate ??
-        andPredicate([
-            sizeAbovePredicate(32),
-            notForContentTypePredicate("application/grpc"),
-            notForContentTypePredicate("image/", "image/svg+xml"),
-            notForContentTypePredicate("text/event-stream"),
-        ]);
+/**
+ * A layer that compresses response bodies.
+ *
+ * This uses the `Accept-Encoding` header to pick an appropriate encoding and
+ * adds the `Content-Encoding` header to responses.
+ *
+ * @example
+ * ```ts
+ * import { compression } from "@taxum/core/layer";
+ * import { m, Router } from "@taxum/core/routing";
+ *
+ * const router = new Router()
+ *     .route("/", m.get(() => "Hello World))
+ *     .layer(new compression.ResponseCompressionLayer());
+ * ```
+ */
+export class ResponseCompressionLayer implements Layer {
+    private readonly accept: Set<Encoding>;
+    private predicate: Predicate;
+    private compressionLevel: CompressionLevel;
 
-    const compressionLevel = config?.compressionLevel ?? "default";
+    /**
+     * Creates a new {@link ResponseCompressionLayer}.
+     *
+     * By default, all encodings are accepted and the
+     * {@link CompressionLevel | default compression level} is used.
+     *
+     * @see {@link DEFAULT_PREDICATE}
+     */
+    public constructor() {
+        this.accept = new Set(["deflate", "gzip", "brotli", "zstd"]);
+        this.predicate = DEFAULT_PREDICATE;
+        this.compressionLevel = "default";
+    }
 
-    const shouldCompress = (
-        encoding: Encoding,
-        response: ReadonlyHttpResponse,
-    ): encoding is Exclude<Encoding, "identity"> => {
+    /**
+     * Sets whether to support gzip encoding.
+     */
+    public gzip(enabled: boolean): this {
+        if (enabled) {
+            this.accept.add("gzip");
+        } else {
+            this.accept.delete("gzip");
+        }
+
+        return this;
+    }
+
+    /**
+     * Sets whether to support Deflate encoding.
+     */
+    public deflate(enabled: boolean): this {
+        if (enabled) {
+            this.accept.add("deflate");
+        } else {
+            this.accept.delete("deflate");
+        }
+
+        return this;
+    }
+
+    /**
+     * Sets whether to support Brotli encoding.
+     */
+    public brotli(enabled: boolean): this {
+        if (enabled) {
+            this.accept.add("brotli");
+        } else {
+            this.accept.delete("brotli");
+        }
+
+        return this;
+    }
+
+    /**
+     * Sets whether to support Zstd encoding.
+     */
+    public zstd(enabled: boolean): this {
+        if (enabled) {
+            this.accept.add("zstd");
+        } else {
+            this.accept.delete("zstd");
+        }
+
+        return this;
+    }
+
+    /**
+     * Sets the compression quality.
+     */
+    public quality(level: CompressionLevel): this {
+        this.compressionLevel = level;
+        return this;
+    }
+
+    /**
+     * Disabled support for gzip encoding.
+     */
+    public noGzip(): this {
+        return this.gzip(false);
+    }
+
+    /**
+     * Disables support for Deflate encoding.
+     */
+    public noDeflate(): this {
+        return this.deflate(false);
+    }
+
+    /**
+     * Disables support for Brotli encoding.
+     */
+    public noBrotli(): this {
+        return this.brotli(false);
+    }
+
+    /**
+     * Disables support for Zstd encoding.
+     */
+    public noZstd(): this {
+        return this.zstd(false);
+    }
+
+    /**
+     * Replace the current compression predicate.
+     *
+     * Predicates are used to determine whether a response should be compressed
+     * or not. The default predicate is {@link DEFAULT_PREDICATE}. See its
+     * documentation for more details on which responses it won't compress.
+     *
+     * Responses that are already compressed (i.e., have a `content-encoding`
+     * header) will _never_ be recompressed, regardless of what the predicate
+     * says.
+     */
+    public compressWhen(predicate: Predicate): this {
+        this.predicate = predicate;
+        return this;
+    }
+
+    public layer(inner: Service): Service {
+        return new ResponseCompression(inner, this.accept, this.predicate, this.compressionLevel);
+    }
+}
+
+class ResponseCompression implements Service {
+    private readonly inner: Service;
+    private readonly accept: Set<Encoding>;
+    private readonly predicate: Predicate;
+    private readonly compressionLevel: CompressionLevel;
+
+    public constructor(
+        inner: Service,
+        accept: Set<Encoding>,
+        predicate: Predicate,
+        compressionLevel: CompressionLevel,
+    ) {
+        this.inner = inner;
+        this.accept = accept;
+        this.predicate = predicate;
+        this.compressionLevel = compressionLevel;
+    }
+
+    public async invoke(req: HttpRequest): Promise<HttpResponse> {
+        const encoding = preferredEncoding(req.headers, this.accept);
+        const response = await this.inner.invoke(req);
+
+        if (!this.shouldCompress(encoding, response)) {
+            return response;
+        }
+
+        const headers = response.headers;
+
+        if (!headers.get("vary")?.toLowerCase().includes("accept-encoding")) {
+            headers.append("vary", "accept-encoding");
+        }
+
+        const compressor = compressors[encoding](this.compressionLevel);
+        const compressedStream = compressor(response.body.read());
+
+        return new HttpResponse(response.status, headers, new Body(compressedStream));
+    }
+
+    private shouldCompress(
+        encoding: Encoding | "identity",
+        res: HttpResponse,
+    ): encoding is Encoding {
         if (encoding === "identity") {
             // No compression supported.
             return false;
         }
 
         if (
-            response.headers.containsKey("content-encoding") ||
-            response.headers.containsKey("content-range")
+            res.headers.containsKey("content-encoding") ||
+            res.headers.containsKey("content-range")
         ) {
             // Do not compress already compressed responses or those that are ranges.
             return false;
         }
 
-        return predicate(response);
-    };
-
-    return {
-        layer: (inner) => async (req) => {
-            const encoding = preferredEncoding(req.headers, accept);
-            const response = await inner(req);
-
-            if (!shouldCompress(encoding, response)) {
-                return response;
-            }
-
-            const headers = response.headers.toOwned();
-
-            if (!headers.get("vary")?.toLowerCase().includes("accept-encoding")) {
-                headers.append("vary", "accept-encoding");
-            }
-
-            const compressor = compressors[encoding](compressionLevel);
-            const compressedStream = compressor(response.body.read());
-
-            return new HttpResponse(response.status, headers, new Body(compressedStream));
-        },
-    };
-};
+        return this.predicate(res);
+    }
+}
 
 type Compressor = (level: CompressionLevel) => (stream: Readable) => Readable;
 
@@ -270,7 +392,26 @@ export const notForContentTypePredicate =
         return !headerContentType.startsWith(contentType);
     };
 
-const preferredEncoding = (headers: HeaderMap, accept: Set<Encoding>): Encoding => {
+/**
+ * Default predicate for response compression.
+ *
+ * All responses will be compressed unless:
+ *
+ * - They're gRPC, which has its own protocol-specific compression scheme.
+ * - It's an image as determined by the `content-type` starting with
+ *   `image/`.
+ * - They're Server-Sent Events (SSE) as determined by the `content-type`
+ *   being `text/event-stream`.
+ * - The response is less than 32
+ */
+export const DEFAULT_PREDICATE = andPredicate([
+    sizeAbovePredicate(32),
+    notForContentTypePredicate("application/grpc"),
+    notForContentTypePredicate("image/", "image/svg+xml"),
+    notForContentTypePredicate("text/event-stream"),
+]);
+
+const preferredEncoding = (headers: HeaderMap, accept: Set<Encoding>): Encoding | "identity" => {
     const encodings = headers
         .getAll("accept-encoding")
         .flatMap((value) => value.split(","))

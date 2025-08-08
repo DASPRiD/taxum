@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import { Readable, Transform } from "node:stream";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import { z } from "zod";
@@ -23,6 +24,24 @@ describe("extract:json", () => {
         const result = await extract(req);
 
         assert.deepEqual(result, { foo: "bar" });
+    });
+
+    it("rethrows stream read errors", async () => {
+        const failedTransform = new Transform({
+            transform(_chunk, _encoding, callback) {
+                callback(new Error("Failed to transform"));
+            },
+        });
+        const body = Readable.from([""]);
+        body.pipe(failedTransform);
+
+        const req = HttpRequest.builder()
+            .method("POST")
+            .header("Content-Type", "application/json")
+            .body(failedTransform);
+
+        const extract = json(schema);
+        await assert.rejects(async () => extract(req), new Error("Failed to transform"));
     });
 
     it("throws MissingJsonContentTypeError if content-type is not JSON", async () => {

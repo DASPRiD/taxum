@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { Readable } from "node:stream";
+import consumers from "node:stream/consumers";
 import { before, describe, it, mock } from "node:test";
 import {
     Body,
@@ -10,7 +11,6 @@ import {
     Parts,
     StatusCode,
 } from "@taxum/core/http";
-import type { JwtConfig } from "../src/index.js";
 
 const createRequest = (authorization?: string): HttpRequest => {
     const headers = new HeaderMap();
@@ -23,11 +23,11 @@ const createRequest = (authorization?: string): HttpRequest => {
     return new HttpRequest(parts, Readable.from([]));
 };
 
-describe("jwtLayer", () => {
+describe("JwtLayer", () => {
     const jwtVerifyMock =
         mock.fn<(token: unknown, key: unknown, options: unknown) => Promise<unknown>>();
     let JWT: typeof import("../src/index.js")["JWT"];
-    let jwtLayer: typeof import("../src/index.js")["jwtLayer"];
+    let JwtLayer: typeof import("../src/index.js")["JwtLayer"];
 
     before(async () => {
         mock.module("jose", {
@@ -36,79 +36,79 @@ describe("jwtLayer", () => {
             },
         });
 
-        ({ JWT, jwtLayer } = await import("../src/index.js"));
+        ({ JWT, JwtLayer } = await import("../src/index.js"));
     });
 
     it("rejects missing authorization header", async () => {
-        const config: JwtConfig = { key: new Uint8Array() };
-        const layer = jwtLayer(config);
+        const layer = new JwtLayer(new Uint8Array());
         const req = createRequest();
 
-        const handler = layer.layer(() => {
-            throw new Error("should not be called");
+        const service = layer.layer({
+            invoke: () => {
+                throw new Error("should not be called");
+            },
         });
 
-        const res = await handler(req);
+        const res = await service.invoke(req);
         assert(res instanceof HttpResponse);
         assert.equal(res.status.code, StatusCode.UNAUTHORIZED.code);
-        assert.equal(res.body, null);
+        assert.equal(await consumers.text(res.body.read()), "");
     });
 
     it("rejects malformed authorization header", async () => {
-        const config: JwtConfig = { key: new Uint8Array() };
-        const layer = jwtLayer(config);
+        const layer = new JwtLayer(new Uint8Array());
         const req = createRequest("Token abc123");
 
-        const handler = layer.layer(() => {
-            throw new Error("should not be called");
+        const service = layer.layer({
+            invoke: () => {
+                throw new Error("should not be called");
+            },
         });
 
-        const res = await handler(req);
+        const res = await service.invoke(req);
         assert.equal(res.status.code, StatusCode.UNAUTHORIZED.code);
     });
 
     it("returns error message when debug is enabled", async () => {
-        const config: JwtConfig = { key: new Uint8Array(), debug: true };
-        const layer = jwtLayer(config);
+        const layer = new JwtLayer(new Uint8Array()).debug(true);
         const req = createRequest("Bearer invalid.jwt.token");
 
         jwtVerifyMock.mock.mockImplementationOnce(() => {
             throw new Error("bad signature");
         });
 
-        const handler = layer.layer(() => {
-            throw new Error("should not be called");
+        const service = layer.layer({
+            invoke: () => {
+                throw new Error("should not be called");
+            },
         });
 
-        const res = await handler(req);
+        const res = await service.invoke(req);
         assert.equal(res.status.code, StatusCode.UNAUTHORIZED.code);
-        assert.equal(res.body, "bad signature");
+        assert.equal(await consumers.text(res.body.read()), "bad signature");
     });
 
     it("returns 401 on invalid JWT and debug is disabled", async () => {
-        const config: JwtConfig = { key: new Uint8Array(), debug: false };
-        const layer = jwtLayer(config);
+        const layer = new JwtLayer(new Uint8Array());
         const req = createRequest("Bearer whatever");
 
         jwtVerifyMock.mock.mockImplementationOnce(() => {
             throw new Error("invalid");
         });
 
-        const handler = layer.layer(() => {
-            throw new Error("should not be called");
+        const service = layer.layer({
+            invoke: () => {
+                throw new Error("should not be called");
+            },
         });
 
-        const res = await handler(req);
+        const res = await service.invoke(req);
         assert.equal(res.status.code, StatusCode.UNAUTHORIZED.code);
-        assert.equal(res.body, null);
+        assert.equal(await consumers.text(res.body.read()), "");
     });
 
     it("allows request through if allowUnauthorized is true", async () => {
-        const config: JwtConfig = {
-            key: new Uint8Array(),
-            allowUnauthorized: true,
-        };
-        const layer = jwtLayer(config);
+        const layer = new JwtLayer(new Uint8Array()).allowUnauthorized(true);
         const req = createRequest("Bearer bad");
 
         jwtVerifyMock.mock.mockImplementationOnce(() => {
@@ -117,44 +117,39 @@ describe("jwtLayer", () => {
 
         let innerCalled = false;
 
-        const handler = layer.layer(() => {
-            innerCalled = true;
-            return Promise.resolve(
-                new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("ok")),
-            );
+        const service = layer.layer({
+            invoke: () => {
+                innerCalled = true;
+                return new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("ok"));
+            },
         });
 
-        const res = await handler(req);
+        const res = await service.invoke(req);
         assert(innerCalled);
         assert.equal(res.status.code, StatusCode.OK.code);
     });
 
     it("injects JWT verification result into request.extensions", async () => {
         const payload = { sub: "123", aud: "abc" };
-        const config: JwtConfig = { key: new Uint8Array() };
-        const layer = jwtLayer(config);
+        const layer = new JwtLayer(new Uint8Array());
         const req = createRequest("Bearer valid.token");
 
         jwtVerifyMock.mock.mockImplementationOnce(() => Promise.resolve(payload));
 
-        const handler = layer.layer((request) => {
-            const ext = request.extensions.get(JWT);
-            assert.deepEqual(ext, payload);
-            return Promise.resolve(
-                new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("yes")),
-            );
+        const service = layer.layer({
+            invoke: (req) => {
+                const ext = req.extensions.get(JWT);
+                assert.deepEqual(ext, payload);
+
+                return new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("yes"));
+            },
         });
 
-        const res = await handler(req);
+        const res = await service.invoke(req);
         assert.equal(res.status.code, StatusCode.OK.code);
     });
 
     it("supports verifyOptions as static object", async () => {
-        const config: JwtConfig = {
-            key: new Uint8Array(),
-            verifyOptions: { audience: "abc" },
-        };
-
         const req = createRequest("Bearer my.jwt.token");
 
         jwtVerifyMock.mock.mockImplementationOnce((_token, _key, options) => {
@@ -162,21 +157,16 @@ describe("jwtLayer", () => {
             return Promise.resolve({ aud: "abc" });
         });
 
-        const layer = jwtLayer(config);
-        const handler = layer.layer(() =>
-            Promise.resolve(new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("done"))),
-        );
+        const layer = new JwtLayer(new Uint8Array()).verifyOptions({ audience: "abc" });
+        const service = layer.layer({
+            invoke: () => new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("done")),
+        });
 
-        const res = await handler(req);
+        const res = await service.invoke(req);
         assert.equal(res.status.code, StatusCode.OK.code);
     });
 
     it("supports verifyOptions as function", async () => {
-        const config: JwtConfig = {
-            key: new Uint8Array(),
-            verifyOptions: () => ({ audience: "dynamic" }),
-        };
-
         const req = createRequest("Bearer my.jwt.token");
 
         jwtVerifyMock.mock.mockImplementationOnce((_token, _key, options) => {
@@ -184,12 +174,12 @@ describe("jwtLayer", () => {
             return Promise.resolve({ aud: "dynamic" });
         });
 
-        const layer = jwtLayer(config);
-        const handler = layer.layer(() =>
-            Promise.resolve(new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("done"))),
-        );
+        const layer = new JwtLayer(new Uint8Array()).verifyOptions(() => ({ audience: "dynamic" }));
+        const service = layer.layer({
+            invoke: () => new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("done")),
+        });
 
-        const res = await handler(req);
+        const res = await service.invoke(req);
         assert.equal(res.status.code, StatusCode.OK.code);
     });
 });

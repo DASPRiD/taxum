@@ -4,7 +4,6 @@ import {
     type HttpRequest,
     HttpResponse,
     noContentResponse,
-    type ReadonlyHttpResponse,
     StatusCode,
 } from "../../src/http/index.js";
 import type { Router, ServiceFn } from "../../src/routing/index.js";
@@ -17,7 +16,7 @@ class MockRouter {
         this.handler = handler;
     }
 
-    public async call(req: HttpRequest): Promise<ReadonlyHttpResponse> {
+    public async call(req: HttpRequest): Promise<HttpResponse> {
         return this.handler(req);
     }
 }

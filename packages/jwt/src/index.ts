@@ -4,7 +4,7 @@
  * This package supplies a JWT layer which can be used to verify incoming
  * HTTP requests to contain a valid JWT `Authorization` header.
  *
- * @see {@link jwtLayer}
+ * @see {@link JwtLayer}
  * @packageDocumentation
  */
 
@@ -15,7 +15,7 @@ import {
     StatusCode,
     type ToHttpResponse,
 } from "@taxum/core/http";
-import type { Layer } from "@taxum/core/routing";
+import type { Layer, Service } from "@taxum/core/routing";
 import {
     type CryptoKey,
     type JWK,
@@ -31,96 +31,113 @@ import {
 export const JWT = new ExtensionKey<JWTVerifyResult>("JWT");
 
 /**
- * Configuration options for handling JSON Web Tokens (JWTs).
- */
-export type JwtConfig = {
-    /**
-     * Key used for verifying incoming JWTs.
-     */
-    key: CryptoKey | KeyObject | JWK | Uint8Array;
-
-    /**
-     * Options used to verify JWTs.
-     */
-    verifyOptions?: JWTVerifyOptions | (() => JWTVerifyOptions);
-
-    /**
-     * Whether to allow unauthorized users to pass through.
-     */
-    allowUnauthorized?: boolean;
-
-    /**
-     * When enabled, the HTTP response will contain concrete error information.
-     *
-     * You should **not** enable this in production!
-     */
-    debug?: boolean;
-};
-
-/**
- * Layer to validate incoming JWTs.
+ * A layer to validate incoming JWTs.
  *
- * If verification succeeds, the decoded JWT is stored in the request's extensions
- * under the {@link JWT} key.
- *
- * See {@link JwtConfig} for configuration.
+ * If verification succeeds, the decoded JWT is stored in the request's
+ * extensions under the {@link JWT} key.
  *
  * @example
  * ```ts
- * import {jwtLayer} from "@taxum/jwt";
+ * import {JwtLayer} from "@taxum/jwt";
  * import {m, Router} from "@taxum/core/routing";
  *
  * const router = new Router()
  *     .route("/" m.get(() => "I'm protected!"))
- *     .layer(jwtLayer({
- *         key: new Uint8Array(),
- *     ));
- *
+ *     .layer(new JwtLayer(new Uint8Array());
  * ```
  */
-export const jwtLayer = (config: JwtConfig): Layer => {
-    const resolveJwt = async (req: HttpRequest): Promise<JWTVerifyResult | UnauthorizedError> => {
+export class JwtLayer implements Layer {
+    private readonly key: CryptoKey | KeyObject | JWK | Uint8Array;
+    private verifyOptions_: JWTVerifyOptions | (() => JWTVerifyOptions) | undefined;
+    private allowUnauthorized_: boolean;
+    private debug_: boolean;
+
+    public constructor(key: CryptoKey | KeyObject | JWK | Uint8Array) {
+        this.key = key;
+        this.verifyOptions_ = undefined;
+        this.allowUnauthorized_ = false;
+        this.debug_ = false;
+    }
+
+    public verifyOptions(verifyOptions: JWTVerifyOptions | (() => JWTVerifyOptions)): this {
+        this.verifyOptions_ = verifyOptions;
+        return this;
+    }
+
+    public allowUnauthorized(allow: boolean): this {
+        this.allowUnauthorized_ = allow;
+        return this;
+    }
+
+    public debug(enabled: boolean): this {
+        this.debug_ = enabled;
+        return this;
+    }
+
+    public layer(inner: Service): Service {
+        return new Jwt(inner, this.key, this.verifyOptions_, this.allowUnauthorized_, this.debug_);
+    }
+}
+
+class Jwt implements Service {
+    private readonly inner: Service;
+    private readonly key: CryptoKey | KeyObject | JWK | Uint8Array;
+    private readonly verifyOptions: JWTVerifyOptions | (() => JWTVerifyOptions) | undefined;
+    private readonly allowUnauthorized: boolean;
+    private readonly debug: boolean;
+
+    public constructor(
+        inner: Service,
+        key: CryptoKey | KeyObject | JWK | Uint8Array,
+        verifyOptions: JWTVerifyOptions | (() => JWTVerifyOptions) | undefined,
+        allowUnauthorized: boolean,
+        debug: boolean,
+    ) {
+        this.inner = inner;
+        this.key = key;
+        this.verifyOptions = verifyOptions;
+        this.allowUnauthorized = allowUnauthorized;
+        this.debug = debug;
+    }
+
+    public async invoke(req: HttpRequest): Promise<HttpResponse> {
+        const jwtOrError = await this.resolveJwt(req);
+
+        if (jwtOrError instanceof UnauthorizedError) {
+            return this.allowUnauthorized ? this.inner.invoke(req) : jwtOrError.toHttpResponse();
+        }
+
+        req.extensions.insert(JWT, jwtOrError);
+        return this.inner.invoke(req);
+    }
+
+    private async resolveJwt(req: HttpRequest): Promise<JWTVerifyResult | UnauthorizedError> {
         const authorization = req.headers.get("authorization");
 
         if (!authorization) {
-            return new UnauthorizedError("Missing authorization header", config?.debug ?? false);
+            return new UnauthorizedError("Missing authorization header", this.debug);
         }
 
         const parts = authorization.split(" ");
 
         if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") {
-            return new UnauthorizedError("Malformed authorization header", config?.debug ?? false);
+            return new UnauthorizedError("Malformed authorization header", this.debug);
         }
 
         const verifyOptions =
-            typeof config.verifyOptions === "function"
-                ? config.verifyOptions()
-                : config.verifyOptions;
+            typeof this.verifyOptions === "function" ? this.verifyOptions() : this.verifyOptions;
 
         try {
-            return jwtVerify(parts[1], config.key, verifyOptions);
+            return jwtVerify(parts[1], this.key, verifyOptions);
         } catch (error) {
             return new UnauthorizedError(
                 /* node:coverage ignore next */
                 error instanceof Error ? error.message : "Invalid JWT",
-                config?.debug ?? false,
+                this.debug,
             );
         }
-    };
-
-    return {
-        layer: (inner) => async (req) => {
-            const jwtOrError = await resolveJwt(req);
-
-            if (jwtOrError instanceof UnauthorizedError) {
-                return config?.allowUnauthorized ? inner(req) : jwtOrError.toHttpResponse();
-            }
-
-            req.extensions.insert(JWT, jwtOrError);
-            return inner(req);
-        },
-    };
-};
+    }
+}
 
 export class UnauthorizedError implements ToHttpResponse {
     public readonly reason: string;

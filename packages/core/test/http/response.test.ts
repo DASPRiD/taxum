@@ -134,16 +134,6 @@ describe("http:response", () => {
             });
         });
 
-        describe("toOwned()", () => {
-            it("creates a new instance with same values", () => {
-                const resp = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("x"));
-                const owned = resp.toOwned();
-                assert(owned !== resp);
-                assert.equal(owned.status, resp.status);
-                assert.equal(owned.body, resp.body);
-            });
-        });
-
         describe("write()", () => {
             it("writes status, headers and pipes body to ServerResponse", async () => {
                 const status = StatusCode.OK;

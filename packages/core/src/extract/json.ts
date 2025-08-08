@@ -91,10 +91,11 @@ export const json =
         try {
             json = await consumers.json(req.body);
         } catch (error) {
-            throw new MalformedJsonError(
-                /* node:coverage ignore next */
-                error instanceof Error ? error.message : "Malformed JSON body",
-            );
+            if (error instanceof SyntaxError) {
+                throw new MalformedJsonError(error.message);
+            }
+
+            throw error;
         }
 
         const parseResult = await schema["~standard"].validate(json);

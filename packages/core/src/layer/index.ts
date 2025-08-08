@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import * as clientIp from "./client-ipr.js";
+import * as clientIp from "./client-ip.js";
 import * as compression from "./compression.js";
 import * as cors from "./cors/index.js";
 import * as decompression from "./decompression.js";

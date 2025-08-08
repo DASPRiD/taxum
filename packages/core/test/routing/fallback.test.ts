@@ -1,36 +1,39 @@
 import assert from "node:assert/strict";
-import consumers from "node:stream/consumers";
 import { describe, it, mock } from "node:test";
-import { HttpRequest, HttpResponse, noContentResponse } from "../../src/http/index.js";
-import type { ServiceFn } from "../../src/routing/index.js";
 import { Fallback } from "../../src/routing/index.js";
+import { Route } from "../../src/routing/route.js";
 
-describe("routing:fallback", () => {
-    it("stores the initial service function", () => {
-        const service: ServiceFn = () => noContentResponse.toHttpResponse();
-        const fallback = new Fallback(service);
+describe("routing:Fallback", () => {
+    it("default() stores the route and marks as default", () => {
+        const route = new Route({ invoke: () => null });
+        const fallback = Fallback.default(route);
 
-        assert.strictEqual(fallback.service, service);
+        assert.strictEqual(fallback.route, route);
+        assert.strictEqual(fallback.isDefault, true);
     });
 
-    it("applies a layer using map", async () => {
-        const originalService = mock.fn<ServiceFn>(() => HttpResponse.builder().body("original"));
-        const wrappedService = mock.fn<ServiceFn>(() => HttpResponse.builder().body("wrapped"));
+    it("service() stores the route and marks as non-default", () => {
+        const route = new Route({ invoke: () => null });
+        const fallback = Fallback.service(route);
 
-        const layer = {
-            layer: mock.fn((_inner: ServiceFn) => wrappedService),
-        };
+        assert.strictEqual(fallback.route, route);
+        assert.strictEqual(fallback.isDefault, false);
+    });
 
-        const fallback = new Fallback(originalService);
-        fallback.map(layer);
+    it("map() applies a transformation to the route", () => {
+        const originalRoute = new Route({ invoke: () => null });
+        const transformedRoute = new Route({ invoke: () => null });
 
-        const req = HttpRequest.builder().body(null);
-        const result = await fallback.service(req);
+        const mapFn = mock.fn((_r: Route) => transformedRoute);
 
-        assert.strictEqual(await consumers.text(result.body.read()), "wrapped");
-        assert.strictEqual(layer.layer.mock.calls.length, 1);
-        assert.strictEqual(layer.layer.mock.calls[0].arguments[0], originalService);
-        assert.strictEqual(wrappedService.mock.calls.length, 1);
-        assert.strictEqual(wrappedService.mock.calls[0].arguments[0], req);
+        const fallback = Fallback.default(originalRoute);
+        const mappedFallback = fallback.map(mapFn);
+
+        assert.strictEqual(mappedFallback.route, transformedRoute);
+
+        assert.strictEqual(mapFn.mock.calls.length, 1);
+        assert.strictEqual(mapFn.mock.calls[0].arguments[0], originalRoute);
+
+        assert.strictEqual(mappedFallback.isDefault, fallback.isDefault);
     });
 });

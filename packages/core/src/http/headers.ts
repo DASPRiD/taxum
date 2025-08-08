@@ -1,21 +1,19 @@
 import type { IncomingMessage } from "node:http";
 
 /**
- * Represents a read-only map of HTTP headers, where header keys are
- * case-insensitive.
- *
- * Provides methods to query and iterate through the headers.
+ * Represents a case-insensitive map for HTTP headers, allowing insertion,
+ * appending, removal, clearing, and extending of key-value pairs.
  */
-export class ReadonlyHeaderMap {
+export class HeaderMap {
     protected readonly map: Map<string, string[]>;
 
-    public constructor(map?: Map<string, string[]> | ReadonlyHeaderMap) {
+    public constructor(map?: Map<string, string[]> | HeaderMap) {
         if (!map) {
             this.map = new Map();
             return;
         }
 
-        if (map instanceof ReadonlyHeaderMap) {
+        if (map instanceof HeaderMap) {
             this.map = new Map(map.map.entries());
             return;
         }
@@ -55,10 +53,6 @@ export class ReadonlyHeaderMap {
         return this.map.get(key.toLowerCase()) ?? [];
     }
 
-    public toOwned(): HeaderMap {
-        return new HeaderMap(this);
-    }
-
     public keys(): IterableIterator<string> {
         return this.map.keys();
     }
@@ -82,15 +76,7 @@ export class ReadonlyHeaderMap {
     public [Symbol.iterator]() {
         return this.entries();
     }
-}
 
-/**
- * Represents a case-insensitive map for HTTP headers, allowing insertion,
- * appending, removal, clearing, and extending of key-value pairs.
- *
- * It extends {@link ReadonlyHeaderMap} and adds mutable operations.
- */
-export class HeaderMap extends ReadonlyHeaderMap {
     public insert(key: string, value: string): void {
         this.map.set(key.toLowerCase(), [value]);
     }

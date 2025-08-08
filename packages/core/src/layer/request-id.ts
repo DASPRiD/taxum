@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { ExtensionKey, type HttpRequest } from "../http/index.js";
-import type { Layer } from "../routing/index.js";
+import { ExtensionKey, type HttpRequest, type HttpResponse } from "../http/index.js";
+import type { Layer, Service } from "../routing/index.js";
 
 export const REQUEST_ID = new ExtensionKey<string>("Request ID");
 const DEFAULT_HEADER_NAME = "x-request-id";
@@ -8,83 +8,147 @@ const DEFAULT_HEADER_NAME = "x-request-id";
 export type MakeRequestId = (req: HttpRequest) => string | null;
 
 /**
- * Configuration object for working with request IDs.
- */
-export type RequestIdConfig = {
-    /**
-     * Callback function to generate a unique request ID.
-     *
-     * Defaults to UUID.
-     */
-    makeRequestId?: MakeRequestId;
-
-    /**
-     * Header name to retrieve a request ID from.
-     *
-     * Defaults to `X-Request-ID`.
-     */
-    headerName?: string;
-};
-
-/**
  * A layer that manages request IDs for incoming requests.
  *
- * This function ensures that each request is associated with a unique identifier,
- * which can be either provided in the request headers or dynamically generated.
+ * This function ensures that each request is associated with a unique
+ * identifier, which can be either provided in the request headers or
+ * dynamically generated.
+ *
+ * @example
+ * ```ts
+ * import { requestId } from "@taxum/core/layer";
+ * import { m, Router } from "@taxum/core/routing";
+ *
+ * const router = new Router()
+ *     .route("/", m.get(() => "Hello World))
+ *     .layer(requestId.SetRequestIdLayer.default());
+ * ```
  */
-export const setRequestIdLayer = (config?: RequestIdConfig): Layer => {
-    const headerName = config?.headerName ?? DEFAULT_HEADER_NAME;
-    const makeRequestId = config?.makeRequestId ?? (() => randomUUID());
+export class SetRequestIdLayer implements Layer {
+    private readonly headerName: string;
+    private readonly makeRequestId: MakeRequestId;
 
-    return {
-        layer: (inner) => (req) => {
-            const requestId = req.headers.get(headerName);
+    /**
+     * Creates a new {@link SetRequestIdLayer}.
+     *
+     * @param headerName - The name of the header to be used.
+     * @param makeRequestId - A function to generate a request ID.
+     */
+    public constructor(headerName: string, makeRequestId: MakeRequestId) {
+        this.headerName = headerName;
+        this.makeRequestId = makeRequestId;
+    }
 
-            if (requestId) {
-                req.extensions.insert(REQUEST_ID, requestId);
-                return inner(req);
-            }
+    /**
+     * Creates a new layer with the header name defaulting to `X-Request-Id`
+     * with UUID request IDs.
+     */
+    public static default(): SetRequestIdLayer {
+        return new SetRequestIdLayer(DEFAULT_HEADER_NAME, () => randomUUID());
+    }
 
-            const newRequestId = makeRequestId(req);
+    public layer(inner: Service): Service {
+        return new SetRequestId(inner, this.headerName, this.makeRequestId);
+    }
+}
 
-            if (newRequestId !== null) {
-                req.headers.insert(headerName, newRequestId);
-                return inner(req);
-            }
+class SetRequestId implements Service {
+    private readonly inner: Service;
+    private readonly headerName: string;
+    private readonly makeRequestId: MakeRequestId;
 
-            return inner(req);
-        },
-    };
-};
+    public constructor(inner: Service, headerName: string, makeRequestId: MakeRequestId) {
+        this.inner = inner;
+        this.headerName = headerName;
+        this.makeRequestId = makeRequestId;
+    }
+
+    public async invoke(req: HttpRequest): Promise<HttpResponse> {
+        const requestId = req.headers.get(this.headerName);
+
+        if (requestId) {
+            req.extensions.insert(REQUEST_ID, requestId);
+            return this.inner.invoke(req);
+        }
+
+        const newRequestId = this.makeRequestId(req);
+
+        if (newRequestId !== null) {
+            req.headers.insert(this.headerName, newRequestId);
+            return this.inner.invoke(req);
+        }
+
+        return this.inner.invoke(req);
+    }
+}
 
 /**
- * A layer that propagates a request ID header from the incoming request to the outgoing response.
+ * A layer that propagates a request ID header from the incoming request to the
+ * outgoing response.
  *
- * The purpose of this layer is to ensure consistency of the request ID header across the request-response cycle.
- * If the response does not already include the request ID header, it will include the one from the incoming request.
- * Additionally, the request ID is stored in the response extensions for further processing.
+ * The purpose of this layer is to ensure consistency of the request ID header
+ * across the request-response cycle. If the response does not already include
+ * the request ID header, it will include the one from the incoming request.
+ * Additionally, the request ID is stored in the response extensions for further
+ * processing.
  *
- * If not set, the header name defaults to `X-Request-ID`.
+ * @example
+ * ```ts
+ * import { requestId } from "@taxum/core/layer";
+ * import { m, Router } from "@taxum/core/routing";
+ *
+ * const router = new Router()
+ *     .route("/", m.get(() => "Hello World))
+ *     .layer(requestId.PropagateRequestIdLayer.default());
+ * ```
  */
-export const propagateRequestIdLayer = (headerNameOpt?: string): Layer => {
-    const headerName = headerNameOpt ?? DEFAULT_HEADER_NAME;
+export class PropagateRequestIdLayer implements Layer {
+    private readonly headerName: string;
 
-    return {
-        layer: (inner) => async (req) => {
-            const response = (await inner(req)).toOwned();
-            const requestRequestId = req.headers.get(headerName);
-            const responseRequestId = response.headers.get(headerName);
+    /**
+     * Creates a new {@link PropagateRequestIdLayer}.
+     *
+     * @param headerName - The name of the header to be used.
+     */
+    public constructor(headerName: string) {
+        this.headerName = headerName;
+    }
 
-            if (responseRequestId) {
-                if (!response.extensions.has(REQUEST_ID)) {
-                    response.extensions.insert(REQUEST_ID, responseRequestId);
-                }
-            } else if (requestRequestId) {
-                response.headers.insert(headerName, requestRequestId);
-                response.extensions.insert(REQUEST_ID, requestRequestId);
+    /**
+     * Creates a new layer with the header name defaulting to `X-Request-Id`.
+     */
+    public static default(): PropagateRequestIdLayer {
+        return new PropagateRequestIdLayer(DEFAULT_HEADER_NAME);
+    }
+
+    public layer(inner: Service): Service {
+        return new PropagateRequestId(inner, this.headerName);
+    }
+}
+
+class PropagateRequestId implements Service {
+    private readonly inner: Service;
+    private readonly headerName: string;
+
+    public constructor(inner: Service, headerName: string) {
+        this.inner = inner;
+        this.headerName = headerName;
+    }
+
+    public async invoke(req: HttpRequest): Promise<HttpResponse> {
+        const response = await this.inner.invoke(req);
+        const requestRequestId = req.headers.get(this.headerName);
+        const responseRequestId = response.headers.get(this.headerName);
+
+        if (responseRequestId) {
+            if (!response.extensions.has(REQUEST_ID)) {
+                response.extensions.insert(REQUEST_ID, responseRequestId);
             }
+        } else if (requestRequestId) {
+            response.headers.insert(this.headerName, requestRequestId);
+            response.extensions.insert(REQUEST_ID, requestRequestId);
+        }
 
-            return response;
-        },
-    };
-};
+        return response;
+    }
+}

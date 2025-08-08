@@ -3,7 +3,7 @@ import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import type { Extractor } from "../../src/extract/index.js";
 import { HttpRequest, HttpResponse } from "../../src/http/index.js";
-import { handler } from "../../src/routing/index.js";
+import { HandlerService, handler } from "../../src/routing/index.js";
 
 const makeExtractor =
     <T>(value: T): Extractor<T> =>
@@ -90,6 +90,18 @@ describe("routing:handler", () => {
             await assert.rejects(async () => h(req), {
                 message: "Handler failed",
             });
+        });
+    });
+
+    describe("HandlerService", () => {
+        it("invokes the underlying handler and returns its response", async () => {
+            const handler = async () => HttpResponse.builder().body("hello");
+            const service = new HandlerService(handler);
+
+            const req = HttpRequest.builder().body(null);
+            const res = await service.invoke(req);
+
+            assert.equal(await consumers.text(res.body.read()), "hello");
         });
     });
 });

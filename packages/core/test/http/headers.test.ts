@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { HeaderMap, ReadonlyHeaderMap } from "../../src/http/index.js";
+import { HeaderMap } from "../../src/http/index.js";
 
 describe("http:headers", () => {
-    describe("ReadonlyHeaderMap", () => {
+    describe("HeaderMap", () => {
         it("constructs empty map if no argument", () => {
-            const map = new ReadonlyHeaderMap();
+            const map = new HeaderMap();
             assert.equal(map.isEmpty(), true);
             assert.equal(map.len(), 0);
         });
@@ -15,37 +15,37 @@ describe("http:headers", () => {
                 ["Content-Type", ["text/html"]],
                 ["X-Custom", ["value"]],
             ]);
-            const map = new ReadonlyHeaderMap(original);
+            const map = new HeaderMap(original);
             assert.equal(map.containsKey("content-type"), true);
             assert.equal(map.containsKey("Content-Type"), true);
             assert.equal(map.get("CONTENT-TYPE"), "text/html");
             assert.deepEqual(map.getAll("x-custom"), ["value"]);
         });
 
-        it("constructs from another ReadonlyHeaderMap", () => {
-            const base = new ReadonlyHeaderMap(new Map([["foo", ["bar"]]]));
-            const copy = new ReadonlyHeaderMap(base);
+        it("constructs from another HeaderMap", () => {
+            const base = new HeaderMap(new Map([["foo", ["bar"]]]));
+            const copy = new HeaderMap(base);
             assert.equal(copy.containsKey("foo"), true);
             assert.equal(copy.get("foo"), "bar");
         });
 
         it("get returns null for missing key", () => {
-            const map = new ReadonlyHeaderMap();
+            const map = new HeaderMap();
             assert.equal(map.get("missing"), null);
         });
 
         it("get returns null for missing empty values", () => {
-            const map = new ReadonlyHeaderMap(new Map([["missing", []]]));
+            const map = new HeaderMap(new Map([["missing", []]]));
             assert.equal(map.get("missing"), null);
         });
 
         it("getAll returns empty array for missing key", () => {
-            const map = new ReadonlyHeaderMap();
+            const map = new HeaderMap();
             assert.deepEqual(map.getAll("missing"), []);
         });
 
         it("keys returns all keys", () => {
-            const map = new ReadonlyHeaderMap(
+            const map = new HeaderMap(
                 new Map([
                     ["a", ["1"]],
                     ["b", ["2"]],
@@ -56,7 +56,7 @@ describe("http:headers", () => {
         });
 
         it("values yields all values", () => {
-            const map = new ReadonlyHeaderMap(
+            const map = new HeaderMap(
                 new Map([
                     ["a", ["1", "2"]],
                     ["b", ["3"]],
@@ -67,7 +67,7 @@ describe("http:headers", () => {
         });
 
         it("entries yields all key-value pairs", () => {
-            const map = new ReadonlyHeaderMap(
+            const map = new HeaderMap(
                 new Map([
                     ["a", ["1", "2"]],
                     ["b", ["3"]],
@@ -82,21 +82,12 @@ describe("http:headers", () => {
         });
 
         it("iterable yields same as entries", () => {
-            const map = new ReadonlyHeaderMap(new Map([["a", ["1"]]]));
+            const map = new HeaderMap(new Map([["a", ["1"]]]));
             const iterated = Array.from(map);
             const entries = Array.from(map.entries());
             assert.deepEqual(iterated, entries);
         });
 
-        it("toOwned returns a new HeaderMap", () => {
-            const readonly = new ReadonlyHeaderMap(new Map([["x", ["y"]]]));
-            const owned = readonly.toOwned();
-            assert.notEqual(readonly, owned);
-            assert.equal(owned.get("x"), "y");
-        });
-    });
-
-    describe("HeaderMap", () => {
         it("insert replaces existing values", () => {
             const map = new HeaderMap();
             map.insert("foo", "bar");

@@ -1,5 +1,4 @@
-import type { Layer } from "./layer.js";
-import type { ServiceFn } from "./service.js";
+import type { Route } from "./route.js";
 
 /**
  * Represents a Fallback that wraps a service function and applies layers to it.
@@ -7,13 +6,23 @@ import type { ServiceFn } from "./service.js";
  * @internal
  */
 export class Fallback {
-    public service: ServiceFn;
+    public readonly route: Route;
+    public readonly isDefault;
 
-    public constructor(service: ServiceFn) {
-        this.service = service;
+    private constructor(route: Route, isDefault: boolean) {
+        this.route = route;
+        this.isDefault = isDefault;
     }
 
-    public map(layer: Layer) {
-        this.service = layer.layer(this.service);
+    public static default(route: Route): Fallback {
+        return new Fallback(route, true);
+    }
+
+    public static service(route: Route): Fallback {
+        return new Fallback(route, false);
+    }
+
+    public map(fn: (route: Route) => Route): Fallback {
+        return new Fallback(fn(this.route), this.isDefault);
     }
 }

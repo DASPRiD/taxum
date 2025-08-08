@@ -1,6 +1,6 @@
 import assert from "node:assert";
-import { HeaderMap, HttpResponse, Method } from "../../http/index.js";
-import type { Layer, ServiceFn } from "../../routing/index.js";
+import { HeaderMap, type HttpRequest, HttpResponse, Method } from "../../http/index.js";
+import type { Layer, Service } from "../../routing/index.js";
 import { AllowCredentials } from "./allow-credentials.js";
 import { AllowHeaders } from "./allow-headers.js";
 import { AllowMethods } from "./allow-methods.js";
@@ -19,6 +19,19 @@ export * from "./expose-headers.js";
 export * from "./max-age.js";
 export * from "./vary.js";
 
+/**
+ * A layer that sets CORS headers on the response.
+ *
+ * @example
+ * ```ts
+ * import { cors } from "@taxum/core/layer";
+ * import { m, Router } from "@taxum/core/routing";
+ *
+ * const router = new Router()
+ *     .route("/", m.get(() => "Hello World))
+ *     .layer(cors.CorsLayer.permissive());
+ * ```
+ */
 export class CorsLayer implements Layer {
     private allowCredentials_ = AllowCredentials.default();
     private allowHeaders_ = AllowHeaders.default();
@@ -85,43 +98,20 @@ export class CorsLayer implements Layer {
         return this;
     }
 
-    public layer(inner: ServiceFn): ServiceFn {
+    public layer(inner: Service): Service {
         this.ensureUsableCorsRules();
 
-        return async (req) => {
-            const origin = req.head.headers.get("origin");
-
-            const headers = new HeaderMap();
-            headers.extend(maybeHeader(this.allowCredentials_.toHeader(origin, req.head)));
-            headers.extend(maybeHeader(this.allowPrivateNetwork_.toHeader(origin, req.head)));
-            headers.extend(maybeHeader(this.vary_.toHeader()));
-
-            const allowOriginPromise = this.allowOrigin_.toHeader(origin, req.head);
-
-            if (req.method.equals(Method.OPTIONS)) {
-                headers.extend(maybeHeader(this.allowMethods_.toHeader(req.head)));
-                headers.extend(maybeHeader(this.allowHeaders_.toHeader(req.head)));
-                headers.extend(maybeHeader(this.maxAge_.toHeader(origin, req.head)));
-                headers.extend(maybeHeader(await allowOriginPromise));
-
-                return HttpResponse.builder().headers(headers).body(null);
-            }
-
-            headers.extend(maybeHeader(this.exposeHeaders_.toHeader()));
-
-            const [response, allowOrigin] = await Promise.all([inner(req), allowOriginPromise]);
-            headers.extend(maybeHeader(allowOrigin));
-            const responseHeaders = response.headers.toOwned();
-
-            const vary = headers.remove("vary");
-
-            if (vary) {
-                responseHeaders.append("vary", vary);
-            }
-
-            responseHeaders.extend(headers);
-            return new HttpResponse(response.status, responseHeaders, response.body);
-        };
+        return new Cors(
+            inner,
+            this.allowCredentials_,
+            this.allowHeaders_,
+            this.allowMethods_,
+            this.allowOrigin_,
+            this.allowPrivateNetwork_,
+            this.exposeHeaders_,
+            this.maxAge_,
+            this.vary_,
+        );
     }
 
     private ensureUsableCorsRules(): void {
@@ -148,6 +138,78 @@ export class CorsLayer implements Layer {
             !this.exposeHeaders_.isWildcard(),
             "Invalid CORS configuration: Cannot combine `access-control-allow-credentials: true` with `access-control-expose-headers: *`",
         );
+    }
+}
+
+export class Cors implements Service {
+    private readonly inner: Service;
+    private readonly allowCredentials: AllowCredentials;
+    private readonly allowHeaders: AllowHeaders;
+    private readonly allowMethods: AllowMethods;
+    private readonly allowOrigin: AllowOrigin;
+    private readonly allowPrivateNetwork: AllowPrivateNetwork;
+    private readonly exposeHeaders: ExposeHeaders;
+    private readonly maxAge: MaxAge;
+    private readonly vary: Vary;
+
+    public constructor(
+        inner: Service,
+        allowCredentials: AllowCredentials,
+        allowHeaders: AllowHeaders,
+        allowMethods: AllowMethods,
+        allowOrigin: AllowOrigin,
+        allowPrivateNetwork: AllowPrivateNetwork,
+        exposeHeaders: ExposeHeaders,
+        maxAge: MaxAge,
+        vary: Vary,
+    ) {
+        this.inner = inner;
+        this.allowCredentials = allowCredentials;
+        this.allowHeaders = allowHeaders;
+        this.allowMethods = allowMethods;
+        this.allowOrigin = allowOrigin;
+        this.allowPrivateNetwork = allowPrivateNetwork;
+        this.exposeHeaders = exposeHeaders;
+        this.maxAge = maxAge;
+        this.vary = vary;
+    }
+
+    public async invoke(req: HttpRequest): Promise<HttpResponse> {
+        const origin = req.head.headers.get("origin");
+
+        const headers = new HeaderMap();
+        headers.extend(maybeHeader(this.allowCredentials.toHeader(origin, req.head)));
+        headers.extend(maybeHeader(this.allowPrivateNetwork.toHeader(origin, req.head)));
+        headers.extend(maybeHeader(this.vary.toHeader()));
+
+        const allowOriginPromise = this.allowOrigin.toHeader(origin, req.head);
+
+        if (req.method.equals(Method.OPTIONS)) {
+            headers.extend(maybeHeader(this.allowMethods.toHeader(req.head)));
+            headers.extend(maybeHeader(this.allowHeaders.toHeader(req.head)));
+            headers.extend(maybeHeader(this.maxAge.toHeader(origin, req.head)));
+            headers.extend(maybeHeader(await allowOriginPromise));
+
+            return HttpResponse.builder().headers(headers).body(null);
+        }
+
+        headers.extend(maybeHeader(this.exposeHeaders.toHeader()));
+
+        const [response, allowOrigin] = await Promise.all([
+            this.inner.invoke(req),
+            allowOriginPromise,
+        ]);
+        headers.extend(maybeHeader(allowOrigin));
+        const responseHeaders = response.headers;
+
+        const vary = headers.remove("vary");
+
+        if (vary) {
+            responseHeaders.append("vary", vary);
+        }
+
+        responseHeaders.extend(headers);
+        return new HttpResponse(response.status, responseHeaders, response.body);
     }
 }
 

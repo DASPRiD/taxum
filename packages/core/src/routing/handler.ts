@@ -1,5 +1,6 @@
 import type { AnyExtractor, Extractor } from "../extract/index.js";
-import type { HttpRequest, HttpResponseLike } from "../http/index.js";
+import { type HttpRequest, HttpResponse, type HttpResponseLike } from "../http/index.js";
+import type { Service } from "./service.js";
 
 /**
  * Represents a function that handles an HTTP request and returns an HTTP
@@ -8,7 +9,7 @@ import type { HttpRequest, HttpResponseLike } from "../http/index.js";
  * The response can either be a promise that resolves to an HTTP-like response
  * object or a direct HTTP-like response object.
  */
-export type HandlerFn = (req: HttpRequest) => Promise<HttpResponseLike> | HttpResponseLike;
+export type Handler = (req: HttpRequest) => Promise<HttpResponseLike> | HttpResponseLike;
 
 /**
  * Creates a handler function that processes an HTTP request using the provided
@@ -31,7 +32,7 @@ export const handler = <
 >(
     extractors: Extractors,
     fn: (...args: Args) => Promise<HttpResponseLike> | HttpResponseLike,
-): HandlerFn => {
+): Handler => {
     return async (req: HttpRequest) => {
         const values = (await Promise.all(extractors.map((e) => e(req)))) as unknown as Args;
         return fn(...values);
@@ -62,3 +63,18 @@ export type ExtractorResult<E> = E extends Extractor<infer T> ? T : never;
 export type ExtractorResults<T extends readonly AnyExtractor[]> = {
     [K in keyof T]: ExtractorResult<T[K]>;
 };
+
+/**
+ * A service that wraps a handler function.
+ */
+export class HandlerService implements Service {
+    private readonly handler: Handler;
+
+    public constructor(handler: Handler) {
+        this.handler = handler;
+    }
+
+    public async invoke(req: HttpRequest): Promise<HttpResponse> {
+        return HttpResponse.from(await this.handler(req));
+    }
+}

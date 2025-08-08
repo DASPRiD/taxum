@@ -1,12 +1,14 @@
-import { type HttpRequest, type ReadonlyHttpResponse, StatusCode } from "../http/index.js";
+import { type HttpRequest, type HttpResponse, StatusCode } from "../http/index.js";
 import { Fallback } from "./fallback.js";
-import type { HandlerFn } from "./handler.js";
+import { type Handler, HandlerService } from "./handler.js";
 import type { Layer } from "./layer.js";
 import type { MethodRouter } from "./method-router.js";
 import { PathRouter } from "./path-router.js";
-import { serviceFromHandler } from "./service.js";
+import { Route } from "./route.js";
 
-const defaultFallbackService = serviceFromHandler(() => StatusCode.NOT_FOUND);
+const defaultFallbackRoute = new Route({
+    invoke: () => StatusCode.NOT_FOUND,
+});
 
 /**
  * The Router class is responsible for handling and routing HTTP requests based
@@ -17,7 +19,7 @@ const defaultFallbackService = serviceFromHandler(() => StatusCode.NOT_FOUND);
  */
 export class Router {
     private pathRouter = new PathRouter();
-    private catchAllFallback: Fallback = new Fallback(defaultFallbackService);
+    private catchAllFallback = Fallback.default(defaultFallbackRoute);
 
     /**
      * Defines a route for a specified path and associates it with a method
@@ -52,8 +54,8 @@ export class Router {
      *
      * @param handler - the function to be used as a fallback handler.
      */
-    public fallback(handler: HandlerFn): this {
-        this.catchAllFallback.service = serviceFromHandler(handler);
+    public fallback(handler: Handler): this {
+        this.catchAllFallback = Fallback.service(new Route(new HandlerService(handler)));
         return this;
     }
 
@@ -61,7 +63,7 @@ export class Router {
      * Resets the fallback handler to the default.
      */
     public resetFallback(): this {
-        this.catchAllFallback.service = defaultFallbackService;
+        this.catchAllFallback = Fallback.default(defaultFallbackRoute);
         return this;
     }
 
@@ -85,7 +87,7 @@ export class Router {
      * issuing a `POST` triggers `handle405`. Calling an entirely different
      * route, like `/hello` causes `handle404` to run.
      */
-    public methodNotAllowedFallback(handler: HandlerFn): this {
+    public methodNotAllowedFallback(handler: Handler): this {
         this.pathRouter.methodNotAllowedFallback(handler);
         return this;
     }
@@ -97,7 +99,7 @@ export class Router {
      */
     public layer(layer: Layer): this {
         this.pathRouter.layer(layer);
-        this.catchAllFallback.map(layer);
+        this.catchAllFallback = this.catchAllFallback.map((route) => route.layer(layer));
         return this;
     }
 
@@ -114,13 +116,13 @@ export class Router {
      * @param req - the HTTP request object containing all necessary details for
      *        the call.
      */
-    public async call(req: HttpRequest): Promise<ReadonlyHttpResponse> {
-        let response = await this.pathRouter.call(req);
+    public async invoke(req: HttpRequest): Promise<HttpResponse> {
+        let res = await this.pathRouter.invoke(req);
 
-        if (!response) {
-            response = await this.catchAllFallback.service(req);
+        if (!res) {
+            res = await this.catchAllFallback.route.invoke(req);
         }
 
-        return response;
+        return res;
     }
 }

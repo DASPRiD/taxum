@@ -1,22 +1,13 @@
 import type { ServerResponse } from "node:http";
 import { Body, type BodyLike, isBodyLike } from "./body.js";
 import { Extensions } from "./extensions.js";
-import { HeaderMap, type ReadonlyHeaderMap } from "./headers.js";
+import { HeaderMap } from "./headers.js";
 import { StatusCode } from "./status.js";
 
 /**
- * Represents an immutable HTTP response object.
- *
- * This is a read-only view of an {@link HttpResponse} to guarantee no side
- * effect changes happen to upstream producers which might hold long-term
- * references to responses or response parts.
- */
-export type ReadonlyHttpResponse = Readonly<Omit<HttpResponse, "headers">> & {
-    readonly headers: ReadonlyHeaderMap;
-};
-
-/**
  * Represents an HTTP response.
+ *
+ * See {@link http | Ownership and Reuse Contract} in the module documentation.
  */
 export class HttpResponse {
     public status: StatusCode;
@@ -40,7 +31,7 @@ export class HttpResponse {
      * Creates a new immutable `HttpResponse` instance from the given
      * {@link HttpResponseLike} object.
      */
-    public static from(response: HttpResponseLike): ReadonlyHttpResponse {
+    public static from(response: HttpResponseLike): HttpResponse {
         if (isHttpResponseLikePart(response)) {
             return responseLikePartToResponse(response);
         }
@@ -51,12 +42,12 @@ export class HttpResponse {
 
         if (response.length === 3) {
             result = responseLikePartToResponse(response[2]);
-            headers = result.headers.toOwned();
+            headers = result.headers;
             headers.extend(response[1]);
             extensions = result.extensions;
         } else {
             result = responseLikePartToResponse(response[1]);
-            headers = result.headers.toOwned();
+            headers = result.headers;
             extensions = result.extensions;
         }
 
@@ -83,19 +74,6 @@ export class HttpResponse {
      */
     public static builder(): HttpResponseBuilder {
         return new HttpResponseBuilder();
-    }
-
-    /**
-     * Creates and returns a new instance of the HttpResponse object.
-     *
-     * The new instance contains the same status, headers, body, and extensions
-     * as the original.
-     *
-     * This is mainly useful if you have a {@link ReadonlyHttpResponse} and need
-     * to make modifications to it.
-     */
-    public toOwned(): HttpResponse {
-        return new HttpResponse(this.status, this.headers.toOwned(), this.body, this.extensions);
     }
 
     /**
