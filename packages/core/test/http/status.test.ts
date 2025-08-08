@@ -17,8 +17,8 @@ describe("http:status", () => {
         });
 
         it("fromCode returns correct instance", () => {
-            assert.strictEqual(StatusCode.fromCode(200), StatusCode.OK);
-            assert.strictEqual(StatusCode.fromCode(404), StatusCode.NOT_FOUND);
+            assert.equal(StatusCode.fromCode(200), StatusCode.OK);
+            assert.equal(StatusCode.fromCode(404), StatusCode.NOT_FOUND);
         });
 
         it("fromCode throws for unknown codes", () => {

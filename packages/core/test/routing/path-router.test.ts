@@ -164,7 +164,7 @@ describe("routing:PathRouter", () => {
         const req = HttpRequest.builder().path("/foo/bar").body(null);
         const res = await parent.invoke(req);
 
-        assert.strictEqual(res?.status, StatusCode.OK);
+        assert.equal(res?.status, StatusCode.OK);
     });
 
     it("correctly joins paths when nested path is '/'", async () => {
@@ -180,6 +180,6 @@ describe("routing:PathRouter", () => {
         const req = HttpRequest.builder().path("/foo").body(null);
         const res = await parent.invoke(req);
 
-        assert.strictEqual(res?.status, StatusCode.OK);
+        assert.equal(res?.status, StatusCode.OK);
     });
 });

@@ -21,7 +21,7 @@ describe("http:body", () => {
             it("returns the same Body if already a Body", () => {
                 const orig = Body.from("hello");
                 const result = Body.from(orig);
-                assert.strictEqual(result, orig);
+                assert.equal(result, orig);
             });
 
             it("wraps a Readable stream", () => {

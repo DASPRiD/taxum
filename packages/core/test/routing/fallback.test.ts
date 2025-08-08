@@ -8,32 +8,32 @@ describe("routing:Fallback", () => {
         const route = new Route({ invoke: () => null });
         const fallback = Fallback.default(route);
 
-        assert.strictEqual(fallback.route, route);
-        assert.strictEqual(fallback.isDefault, true);
+        assert.equal(fallback.route, route);
+        assert.equal(fallback.isDefault, true);
     });
 
     it("service() stores the route and marks as non-default", () => {
         const route = new Route({ invoke: () => null });
         const fallback = Fallback.service(route);
 
-        assert.strictEqual(fallback.route, route);
-        assert.strictEqual(fallback.isDefault, false);
+        assert.equal(fallback.route, route);
+        assert.equal(fallback.isDefault, false);
     });
 
     it("map() applies a transformation to the route", () => {
         const originalRoute = new Route({ invoke: () => null });
         const transformedRoute = new Route({ invoke: () => null });
 
-        const mapFn = mock.fn((_r: Route) => transformedRoute);
+        const map = mock.fn((_inner) => transformedRoute);
 
         const fallback = Fallback.default(originalRoute);
-        const mappedFallback = fallback.map(mapFn);
+        const mappedFallback = fallback.map(map);
 
-        assert.strictEqual(mappedFallback.route, transformedRoute);
+        assert.equal(mappedFallback.route, transformedRoute);
 
-        assert.strictEqual(mapFn.mock.calls.length, 1);
-        assert.strictEqual(mapFn.mock.calls[0].arguments[0], originalRoute);
+        assert.equal(map.mock.calls.length, 1);
+        assert.equal(map.mock.calls[0].arguments[0], originalRoute);
 
-        assert.strictEqual(mappedFallback.isDefault, fallback.isDefault);
+        assert.equal(mappedFallback.isDefault, fallback.isDefault);
     });
 });

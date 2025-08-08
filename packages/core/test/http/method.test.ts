@@ -30,8 +30,8 @@ describe("http:method", () => {
         });
 
         it("fromString returns known static instance for standard methods", () => {
-            assert.strictEqual(Method.fromString("GET"), Method.GET);
-            assert.strictEqual(Method.fromString("POST"), Method.POST);
+            assert.equal(Method.fromString("GET"), Method.GET);
+            assert.equal(Method.fromString("POST"), Method.POST);
         });
 
         it("fromString creates new Method instance for unknown methods", () => {

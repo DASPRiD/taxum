@@ -95,6 +95,6 @@ describe("http:extension", () => {
         const a = new Extensions();
         const b = new Extensions();
         const result = a.extend(b);
-        assert.strictEqual(result, a);
+        assert.equal(result, a);
     });
 });
