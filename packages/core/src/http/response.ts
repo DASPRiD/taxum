@@ -1,6 +1,6 @@
 import type { ServerResponse } from "node:http";
 import { Body, type BodyLike, isBodyLike } from "./body.js";
-import { Extensions } from "./extensions.js";
+import { type ExtensionKey, Extensions } from "./extensions.js";
 import { HeaderMap } from "./headers.js";
 import { StatusCode } from "./status.js";
 
@@ -105,6 +105,7 @@ export class HttpResponse {
 export class HttpResponseBuilder {
     private status_ = StatusCode.OK;
     private headers_ = new HeaderMap();
+    private extensions_ = new Extensions();
 
     public status(status: StatusCode | number): this {
         if (status instanceof StatusCode) {
@@ -126,8 +127,18 @@ export class HttpResponseBuilder {
         return this;
     }
 
+    public extensions(extensions: Extensions): this {
+        this.extensions_ = extensions;
+        return this;
+    }
+
+    public extension<T>(key: ExtensionKey<T>, value: T): this {
+        this.extensions_.insert(key, value);
+        return this;
+    }
+
     public body(body: BodyLike): HttpResponse {
-        return new HttpResponse(this.status_, this.headers_, Body.from(body));
+        return new HttpResponse(this.status_, this.headers_, Body.from(body), this.extensions_);
     }
 }
 

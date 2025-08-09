@@ -4,11 +4,11 @@ import { parseSearchParams } from "nested-search-params";
 import {
     type HttpRequest,
     HttpResponse,
-    jsonResponse,
     Method,
     StatusCode,
     type ToHttpResponse,
 } from "../http/index.js";
+import { ValidationError } from "./error.js";
 import type { Extractor } from "./index.js";
 
 export class MissingFormDataContentTypeError implements ToHttpResponse {
@@ -19,17 +19,15 @@ export class MissingFormDataContentTypeError implements ToHttpResponse {
     }
 }
 
-export class InvalidFormDataError implements ToHttpResponse {
-    public readonly issues: readonly StandardSchemaV1.Issue[];
-
+export class InvalidFormDataError extends ValidationError implements ToHttpResponse {
     public constructor(issues: readonly StandardSchemaV1.Issue[]) {
-        this.issues = issues;
+        super(issues, "body");
     }
 
     public toHttpResponse(): HttpResponse {
-        const response = jsonResponse(this.issues).toHttpResponse();
-        response.status = StatusCode.UNPROCESSABLE_CONTENT;
-        return response;
+        return HttpResponse.builder()
+            .status(StatusCode.UNPROCESSABLE_CONTENT)
+            .body("Invalid form data");
     }
 }
 

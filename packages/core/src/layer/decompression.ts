@@ -1,27 +1,25 @@
 import type { Transform } from "node:stream";
 import zlib from "node:zlib";
-import { match } from "ts-pattern";
 import { HttpResponse, StatusCode } from "../http/index.js";
 import { HttpRequest } from "../http/request.js";
 import type { Layer, Service } from "../routing/index.js";
-
-export type Encoding = "deflate" | "gzip" | "brotli" | "zstd";
+import { AcceptEncoding } from "./compression-utils.js";
 
 /**
  * A layer that decompresses request bodies.
  *
  * @example
  * ```ts
- * import { decompression } from "@taxum/core/layer";
+ * import { RequestDecompressionLayer } from "@taxum/core/layer/decompression";
  * import { m, Router } from "@taxum/core/routing";
  *
  * const router = new Router()
  *     .route("/", m.get(() => "Hello World))
- *     .layer(new decompression.RequestDecompressionLayer());
+ *     .layer(new RequestDecompressionLayer());
  * ```
  */
 export class RequestDecompressionLayer implements Layer {
-    private readonly accept: Set<Encoding>;
+    private readonly accept: AcceptEncoding;
     private passThroughUnaccepted_ = false;
 
     /**
@@ -31,59 +29,39 @@ export class RequestDecompressionLayer implements Layer {
      * **not** passed through.
      */
     public constructor() {
-        this.accept = new Set(["deflate", "gzip", "brotli", "zstd"]);
+        this.accept = new AcceptEncoding();
         this.passThroughUnaccepted_ = false;
     }
 
     /**
      * Sets whether to support gzip encoding.
      */
-    public gzip(enabled: boolean): this {
-        if (enabled) {
-            this.accept.add("gzip");
-        } else {
-            this.accept.delete("gzip");
-        }
-
+    public gzip(enable: boolean): this {
+        this.accept.setGzip(enable);
         return this;
     }
 
     /**
      * Sets whether to support Deflate encoding.
      */
-    public deflate(enabled: boolean): this {
-        if (enabled) {
-            this.accept.add("deflate");
-        } else {
-            this.accept.delete("deflate");
-        }
-
+    public deflate(enable: boolean): this {
+        this.accept.setDeflate(enable);
         return this;
     }
 
     /**
      * Sets whether to support Brotli encoding.
      */
-    public brotli(enabled: boolean): this {
-        if (enabled) {
-            this.accept.add("brotli");
-        } else {
-            this.accept.delete("brotli");
-        }
-
+    public br(enable: boolean): this {
+        this.accept.setBr(enable);
         return this;
     }
 
     /**
      * Sets whether to support Zstd encoding.
      */
-    public zstd(enabled: boolean): this {
-        if (enabled) {
-            this.accept.add("zstd");
-        } else {
-            this.accept.delete("zstd");
-        }
-
+    public zstd(enable: boolean): this {
+        this.accept.setZstd(enable);
         return this;
     }
 
@@ -104,8 +82,8 @@ export class RequestDecompressionLayer implements Layer {
     /**
      * Disables support for Brotli encoding.
      */
-    public noBrotli(): this {
-        return this.brotli(false);
+    public noBr(): this {
+        return this.br(false);
     }
 
     /**
@@ -131,10 +109,10 @@ export class RequestDecompressionLayer implements Layer {
 
 class RequestDecompression implements Service {
     private readonly inner: Service;
-    private readonly accept: Set<Encoding>;
+    private readonly accept: AcceptEncoding;
     private readonly passThroughUnaccepted: boolean;
 
-    public constructor(inner: Service, accept: Set<Encoding>, passThroughUnaccepted: boolean) {
+    public constructor(inner: Service, accept: AcceptEncoding, passThroughUnaccepted: boolean) {
         this.inner = inner;
         this.accept = accept;
         this.passThroughUnaccepted = passThroughUnaccepted;
@@ -147,46 +125,30 @@ class RequestDecompression implements Service {
             return this.inner.invoke(req);
         }
 
-        return match(contentEncoding)
-            .when(
-                (value) => value === "deflate" && this.accept.has("deflate"),
-                () => {
-                    return invokeWithTransform(this.inner, req, zlib.createInflate());
-                },
-            )
-            .when(
-                (value) => value === "gzip" && this.accept.has("gzip"),
-                () => {
-                    return invokeWithTransform(this.inner, req, zlib.createGunzip());
-                },
-            )
-            .when(
-                (value) => value === "br" && this.accept.has("brotli"),
-                () => {
-                    return invokeWithTransform(this.inner, req, zlib.createBrotliDecompress());
-                },
-            )
-            .when(
-                (value) => value === "zstd" && this.accept.has("zstd"),
-                () => {
-                    return invokeWithTransform(this.inner, req, zlib.createZstdDecompress());
-                },
-            )
-            .with("identity", () => {
-                return this.inner.invoke(req);
-            })
-            .when(
-                () => this.passThroughUnaccepted,
-                () => {
-                    return this.inner.invoke(req);
-                },
-            )
-            .otherwise(() => {
-                return HttpResponse.builder()
-                    .status(StatusCode.UNSUPPORTED_MEDIA_TYPE)
-                    .header("accept-encoding", toAcceptEncodingHeader(this.accept))
-                    .body(null);
-            });
+        if (contentEncoding === "deflate" && this.accept.deflate()) {
+            return invokeWithTransform(this.inner, req, zlib.createInflate());
+        }
+
+        if (contentEncoding === "gzip" && this.accept.gzip()) {
+            return invokeWithTransform(this.inner, req, zlib.createGunzip());
+        }
+
+        if (contentEncoding === "br" && this.accept.br()) {
+            return invokeWithTransform(this.inner, req, zlib.createBrotliDecompress());
+        }
+
+        if (contentEncoding === "zstd" && this.accept.zstd()) {
+            return invokeWithTransform(this.inner, req, zlib.createZstdDecompress());
+        }
+
+        if (contentEncoding === "identity" || this.passThroughUnaccepted) {
+            return this.inner.invoke(req);
+        }
+
+        return HttpResponse.builder()
+            .status(StatusCode.UNSUPPORTED_MEDIA_TYPE)
+            .header("accept-encoding", this.accept.toHeaderValue() ?? "identity")
+            .body(null);
     }
 }
 
@@ -200,30 +162,4 @@ const invokeWithTransform = async (
     req.body.pipe(transform);
 
     return inner.invoke(new HttpRequest(req.head, transform));
-};
-
-const toAcceptEncodingHeader = (encodings: Set<Encoding>): string => {
-    if (encodings.size === 0) {
-        return "identity";
-    }
-
-    const values = [];
-
-    if (encodings.has("deflate")) {
-        values.push("deflate");
-    }
-
-    if (encodings.has("gzip")) {
-        values.push("gzip");
-    }
-
-    if (encodings.has("brotli")) {
-        values.push("br");
-    }
-
-    if (encodings.has("zstd")) {
-        values.push("zstd");
-    }
-
-    return values.join(",");
 };

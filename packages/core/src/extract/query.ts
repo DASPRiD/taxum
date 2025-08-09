@@ -1,25 +1,16 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { parseSearchParams } from "nested-search-params";
-import {
-    type HttpRequest,
-    type HttpResponse,
-    jsonResponse,
-    StatusCode,
-    type ToHttpResponse,
-} from "../http/index.js";
+import { type HttpRequest, HttpResponse, StatusCode, type ToHttpResponse } from "../http/index.js";
+import { ValidationError } from "./error.js";
 import type { Extractor } from "./index.js";
 
-export class InvalidQueryDataError implements ToHttpResponse {
-    public readonly issues: readonly StandardSchemaV1.Issue[];
-
+export class InvalidQueryDataError extends ValidationError implements ToHttpResponse {
     public constructor(issues: readonly StandardSchemaV1.Issue[]) {
-        this.issues = issues;
+        super(issues, "search_params");
     }
 
     public toHttpResponse(): HttpResponse {
-        const response = jsonResponse(this.issues).toHttpResponse();
-        response.status = StatusCode.BAD_REQUEST;
-        return response;
+        return HttpResponse.builder().status(StatusCode.BAD_REQUEST).body("Invalid query params");
     }
 }
 

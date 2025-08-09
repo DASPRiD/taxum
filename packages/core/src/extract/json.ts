@@ -5,10 +5,10 @@ import {
     type HeaderMap,
     type HttpRequest,
     HttpResponse,
-    jsonResponse,
     StatusCode,
     type ToHttpResponse,
 } from "../http/index.js";
+import { ValidationError } from "./error.js";
 import type { Extractor } from "./index.js";
 
 export class MissingJsonContentTypeError implements ToHttpResponse {
@@ -31,17 +31,13 @@ export class MalformedJsonError implements ToHttpResponse {
     }
 }
 
-export class InvalidJsonError implements ToHttpResponse {
-    public readonly issues: readonly StandardSchemaV1.Issue[];
-
+export class InvalidJsonError extends ValidationError implements ToHttpResponse {
     public constructor(issues: readonly StandardSchemaV1.Issue[]) {
-        this.issues = issues;
+        super(issues, "body");
     }
 
     public toHttpResponse(): HttpResponse {
-        const response = jsonResponse(this.issues).toHttpResponse();
-        response.status = StatusCode.UNPROCESSABLE_CONTENT;
-        return response;
+        return HttpResponse.builder().status(StatusCode.UNPROCESSABLE_CONTENT).body("Invalid JSON");
     }
 }
 

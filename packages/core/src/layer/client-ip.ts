@@ -17,12 +17,12 @@ export const CLIENT_IP = new ExtensionKey<string>("Client IP");
  *
  * @example
  * ```ts
- * import { clientIp } from "@taxum/core/layer";
+ * import { SetClientIpLayer } from "@taxum/core/layer/client-ip";
  * import { m, Router } from "@taxum/core/routing";
  *
  * const router = new Router()
  *     .route("/", m.get(() => "Hello World))
- *     .layer(new clientIp.SetClientIpLayer());
+ *     .layer(new SetClientIpLayer());
  * ```
  */
 export class SetClientIpLayer implements Layer {
@@ -31,7 +31,7 @@ export class SetClientIpLayer implements Layer {
     /**
      * Creates a new {@link SetClientIpLayer}.
      *
-     * @param trustProxy - Whether to trust proxy headers.
+     * @param trustProxy - whether to trust proxy headers.
      */
     public constructor(trustProxy = false) {
         this.trustProxy = trustProxy;

@@ -2,7 +2,14 @@ import assert from "node:assert/strict";
 import consumers from "node:stream/consumers";
 import { describe, it, mock } from "node:test";
 import { HttpRequest, HttpResponse, StatusCode } from "../../src/http/index.js";
-import { type Handler, type Layer, MethodRouter, m, Router } from "../../src/routing/index.js";
+import {
+    type ErrorHandler,
+    type Handler,
+    type Layer,
+    MethodRouter,
+    m,
+    Router,
+} from "../../src/routing/index.js";
 
 describe("routing:Router", () => {
     it("routes a request to a matching method handler", async () => {
@@ -124,5 +131,22 @@ describe("routing:Router", () => {
         );
         assert.equal(res3.status, StatusCode.NOT_FOUND);
         assert.equal(handle404.mock.callCount(), 1);
+    });
+
+    it("allow overriding the error handler", async () => {
+        const errorHandler: ErrorHandler = () =>
+            HttpResponse.builder().status(StatusCode.NOT_FOUND).body("not found");
+
+        const router = new Router()
+            .route(
+                "/test",
+                m.get(() => {
+                    throw StatusCode.UNPROCESSABLE_CONTENT;
+                }),
+            )
+            .errorHandler(errorHandler);
+
+        const res = await router.invoke(HttpRequest.builder().path("/test").body(null));
+        assert.equal(res.status, StatusCode.NOT_FOUND);
     });
 });

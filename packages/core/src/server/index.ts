@@ -8,7 +8,8 @@
 import assert from "node:assert";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
-import { HttpRequest, isToHttpResponse } from "../http/index.js";
+import { HttpRequest } from "../http/index.js";
+import { getGlobalLogger } from "../logger/index.js";
 import type { Router } from "../routing/index.js";
 
 /**
@@ -94,12 +95,7 @@ export const serve = async (router: Router, config?: ServeConfig): Promise<void>
             const response = await router.invoke(httpRequests);
             await response.write(res);
         } catch (error) {
-            if (isToHttpResponse(error)) {
-                await error.toHttpResponse().write(res);
-                return;
-            }
-
-            console.error("Uncaught error in request handler", error);
+            getGlobalLogger().error("Uncaught error in router", error);
 
             try {
                 res.statusCode = 500;

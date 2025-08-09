@@ -60,6 +60,6 @@ describe("extract:query", () => {
         const res = err.toHttpResponse();
 
         assert.equal(res.status, StatusCode.BAD_REQUEST);
-        assert.deepEqual(await consumers.json(res.body.read()), issues);
+        assert.deepEqual(await consumers.text(res.body.read()), "Invalid query params");
     });
 });

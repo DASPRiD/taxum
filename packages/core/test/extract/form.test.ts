@@ -74,6 +74,6 @@ describe("extract:form", () => {
         const res = err.toHttpResponse();
 
         assert.equal(res.status, StatusCode.UNPROCESSABLE_CONTENT);
-        assert.deepEqual(await consumers.json(res.body.read()), issues);
+        assert.deepEqual(await consumers.text(res.body.read()), "Invalid form data");
     });
 });

@@ -37,13 +37,77 @@
       "taxum": "./src/http/index.ts",
       "default": "./dist/http/index.js"
     },
-    "./layer": {
+    "./logger": {
       "types": [
-        "./dist/layer/index.d.ts",
-        "./src/layer/index.ts"
+        "./dist/logger/index.d.ts",
+        "./src/logger/index.ts"
       ],
-      "taxum": "./src/layer/index.ts",
-      "default": "./dist/layer/index.js"
+      "taxum": "./src/logger/index.ts",
+      "default": "./dist/logger/index.js"
+    },
+    "./layer/cors": {
+      "types": [
+        "./dist/layer/cors/index.d.ts",
+        "./src/layer/cors/index.ts"
+      ],
+      "taxum": "./src/layer/cors/index.ts",
+      "default": "./dist/layer/cors/index.js"
+    },
+    "./layer/client-ip": {
+      "types": [
+        "./dist/layer/client-ip.d.ts",
+        "./src/layer/client-ip.ts"
+      ],
+      "taxum": "./src/layer/client-ip.ts",
+      "default": "./dist/layer/client-ip.js"
+    },
+    "./layer/compression": {
+      "types": [
+        "./dist/layer/compression.d.ts",
+        "./src/layer/compression.ts"
+      ],
+      "taxum": "./src/layer/compression.ts",
+      "default": "./dist/layer/compression.js"
+    },
+    "./layer/decompression": {
+      "types": [
+        "./dist/layer/decompression.d.ts",
+        "./src/layer/decompression.ts"
+      ],
+      "taxum": "./src/layer/decompression.ts",
+      "default": "./dist/layer/decompression.js"
+    },
+    "./layer/from-fn": {
+      "types": [
+        "./dist/layer/from-fn.d.ts",
+        "./src/layer/from-fn.ts"
+      ],
+      "taxum": "./src/layer/from-fn.ts",
+      "default": "./dist/layer/from-fn.js"
+    },
+    "./layer/limit": {
+      "types": [
+        "./dist/layer/limit.d.ts",
+        "./src/layer/limit.ts"
+      ],
+      "taxum": "./src/layer/limit.ts",
+      "default": "./dist/layer/limit.js"
+    },
+    "./layer/request-id": {
+      "types": [
+        "./dist/layer/request-id.d.ts",
+        "./src/layer/request-id.ts"
+      ],
+      "taxum": "./src/layer/request-id.ts",
+      "default": "./dist/layer/request-id.js"
+    },
+    "./layer/set-status": {
+      "types": [
+        "./dist/layer/set-status.d.ts",
+        "./src/layer/set-status.ts"
+      ],
+      "taxum": "./src/layer/set-status.ts",
+      "default": "./dist/layer/set-status.js"
     },
     "./routing": {
       "types": [

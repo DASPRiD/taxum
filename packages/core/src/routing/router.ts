@@ -1,4 +1,5 @@
 import { type HttpRequest, type HttpResponse, StatusCode } from "../http/index.js";
+import { type ErrorHandler, runWithErrorHandler } from "./eror-handler.js";
 import { Fallback } from "./fallback.js";
 import { type Handler, HandlerService } from "./handler.js";
 import type { Layer } from "./layer.js";
@@ -20,6 +21,7 @@ const defaultFallbackRoute = new Route({
 export class Router {
     private pathRouter = new PathRouter();
     private catchAllFallback = Fallback.default(defaultFallbackRoute);
+    private errorHandler_: ErrorHandler | null = null;
 
     /**
      * Defines a route for a specified path and associates it with a method
@@ -93,6 +95,16 @@ export class Router {
     }
 
     /**
+     * Sets the error handler to convert errors into responses.
+     *
+     * @see {@link ErrorHandler}
+     */
+    public errorHandler(errorHandler: ErrorHandler): this {
+        this.errorHandler_ = errorHandler;
+        return this;
+    }
+
+    /**
      * Applies the specified layer to all previously registered routes.
      *
      * @param layer - the layer to be applied to the endpoints.
@@ -117,12 +129,14 @@ export class Router {
      *        the call.
      */
     public async invoke(req: HttpRequest): Promise<HttpResponse> {
-        let res = await this.pathRouter.invoke(req);
+        return runWithErrorHandler(this.errorHandler_, async () => {
+            let res = await this.pathRouter.invoke(req);
 
-        if (!res) {
-            res = await this.catchAllFallback.route.invoke(req);
-        }
+            if (!res) {
+                res = await this.catchAllFallback.route.invoke(req);
+            }
 
-        return res;
+            return res;
+        });
     }
 }

@@ -1,11 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import {
-    type HttpRequest,
-    HttpResponse,
-    noContentResponse,
-    StatusCode,
-} from "../../src/http/index.js";
+import { type HttpRequest, HttpResponse, noContentResponse } from "../../src/http/index.js";
 import type { Router, Service } from "../../src/routing/index.js";
 import { type ServeConfig, serve } from "../../src/server/index.js";
 
@@ -49,26 +44,6 @@ describe("server:index", () => {
             await serve(router, config);
         });
 
-        it("handles router error with toHttpResponse", async () => {
-            const router = makeMockRouter({
-                invoke: () => {
-                    throw StatusCode.IM_A_TEAPOT;
-                },
-            });
-            const controller = new AbortController();
-
-            const config: ServeConfig = {
-                onListen: async ({ port }) => {
-                    const response = await fetch(`http://localhost:${port}`);
-                    assert(response.status === 418);
-                    controller.abort();
-                },
-                abortSignal: controller.signal,
-            };
-
-            await serve(router, config);
-        });
-
         it("handles uncaught errors with 500", async (t) => {
             const spy = t.mock.method(console, "error", () => {
                 // Suppress actual console.error output.
@@ -91,7 +66,7 @@ describe("server:index", () => {
             };
 
             await serve(router, config);
-            assert.match(spy.mock.calls[0].arguments[0], /Uncaught error in request handler/i);
+            assert.match(spy.mock.calls[0].arguments[0], /Uncaught error in router/i);
         });
 
         it("calls onListen with address info", async () => {

@@ -2,17 +2,16 @@ import assert from "node:assert";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { type HttpRequest, HttpResponse, StatusCode, type ToHttpResponse } from "../http/index.js";
 import { PATH_PARAMS } from "../routing/index.js";
+import { ValidationError } from "./error.js";
 import type { Extractor } from "./index.js";
 
-export class InvalidPathParamsError implements ToHttpResponse {
-    public readonly issues: readonly StandardSchemaV1.Issue[];
-
+export class InvalidPathParamsError extends ValidationError implements ToHttpResponse {
     public constructor(issues: readonly StandardSchemaV1.Issue[]) {
-        this.issues = issues;
+        super(issues, "path_param");
     }
 
     public toHttpResponse(): HttpResponse {
-        return HttpResponse.builder().status(StatusCode.BAD_REQUEST).body(null);
+        return HttpResponse.builder().status(StatusCode.BAD_REQUEST).body("Invalid path params");
     }
 }
 

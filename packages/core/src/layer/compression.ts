@@ -1,8 +1,9 @@
 import type { Readable } from "node:stream";
 import zlib, { type BrotliOptions, type ZlibOptions, type ZstdOptions } from "node:zlib";
 import { Body } from "../http/body.js";
-import { type HeaderMap, type HttpRequest, HttpResponse } from "../http/index.js";
+import { Encoding, type HttpRequest, HttpResponse } from "../http/index.js";
 import type { Layer, Service } from "../routing/index.js";
+import { AcceptEncoding } from "./compression-utils.js";
 
 /**
  * Level of compression data should be compressed with.
@@ -23,7 +24,6 @@ import type { Layer, Service } from "../routing/index.js";
  * Qualities are implicitly clamped to the algorithm's maximum.
  */
 export type CompressionLevel = "fastest" | "best" | "default" | number;
-export type Encoding = "deflate" | "gzip" | "brotli" | "zstd";
 export type Predicate = (response: HttpResponse) => boolean;
 
 /**
@@ -34,16 +34,16 @@ export type Predicate = (response: HttpResponse) => boolean;
  *
  * @example
  * ```ts
- * import { compression } from "@taxum/core/layer";
+ * import { ResponseCompressionLayer } from "@taxum/core/layer/compression";
  * import { m, Router } from "@taxum/core/routing";
  *
  * const router = new Router()
  *     .route("/", m.get(() => "Hello World))
- *     .layer(new compression.ResponseCompressionLayer());
+ *     .layer(new ResponseCompressionLayer());
  * ```
  */
 export class ResponseCompressionLayer implements Layer {
-    private readonly accept: Set<Encoding>;
+    private readonly accept: AcceptEncoding;
     private predicate: Predicate;
     private compressionLevel: CompressionLevel;
 
@@ -56,7 +56,7 @@ export class ResponseCompressionLayer implements Layer {
      * @see {@link DEFAULT_PREDICATE}
      */
     public constructor() {
-        this.accept = new Set(["deflate", "gzip", "brotli", "zstd"]);
+        this.accept = new AcceptEncoding();
         this.predicate = DEFAULT_PREDICATE;
         this.compressionLevel = "default";
     }
@@ -64,52 +64,32 @@ export class ResponseCompressionLayer implements Layer {
     /**
      * Sets whether to support gzip encoding.
      */
-    public gzip(enabled: boolean): this {
-        if (enabled) {
-            this.accept.add("gzip");
-        } else {
-            this.accept.delete("gzip");
-        }
-
+    public gzip(enable: boolean): this {
+        this.accept.setGzip(enable);
         return this;
     }
 
     /**
      * Sets whether to support Deflate encoding.
      */
-    public deflate(enabled: boolean): this {
-        if (enabled) {
-            this.accept.add("deflate");
-        } else {
-            this.accept.delete("deflate");
-        }
-
+    public deflate(enable: boolean): this {
+        this.accept.setDeflate(enable);
         return this;
     }
 
     /**
      * Sets whether to support Brotli encoding.
      */
-    public brotli(enabled: boolean): this {
-        if (enabled) {
-            this.accept.add("brotli");
-        } else {
-            this.accept.delete("brotli");
-        }
-
+    public br(enable: boolean): this {
+        this.accept.setBr(enable);
         return this;
     }
 
     /**
      * Sets whether to support Zstd encoding.
      */
-    public zstd(enabled: boolean): this {
-        if (enabled) {
-            this.accept.add("zstd");
-        } else {
-            this.accept.delete("zstd");
-        }
-
+    public zstd(enable: boolean): this {
+        this.accept.setZstd(enable);
         return this;
     }
 
@@ -138,8 +118,8 @@ export class ResponseCompressionLayer implements Layer {
     /**
      * Disables support for Brotli encoding.
      */
-    public noBrotli(): this {
-        return this.brotli(false);
+    public noBr(): this {
+        return this.br(false);
     }
 
     /**
@@ -172,13 +152,13 @@ export class ResponseCompressionLayer implements Layer {
 
 class ResponseCompression implements Service {
     private readonly inner: Service;
-    private readonly accept: Set<Encoding>;
+    private readonly accept: AcceptEncoding;
     private readonly predicate: Predicate;
     private readonly compressionLevel: CompressionLevel;
 
     public constructor(
         inner: Service,
-        accept: Set<Encoding>,
+        accept: AcceptEncoding,
         predicate: Predicate,
         compressionLevel: CompressionLevel,
     ) {
@@ -189,10 +169,18 @@ class ResponseCompression implements Service {
     }
 
     public async invoke(req: HttpRequest): Promise<HttpResponse> {
-        const encoding = preferredEncoding(req.headers, this.accept);
+        const encoding = Encoding.fromHeaders(req.headers, this.accept);
         const response = await this.inner.invoke(req);
 
         if (!this.shouldCompress(encoding, response)) {
+            return response;
+        }
+
+        const compressorBuilder = compressors.get(encoding);
+
+        /* node:coverage ignore next 4 */
+        if (!compressorBuilder) {
+            // Should normally never happen, but just in case.
             return response;
         }
 
@@ -202,17 +190,18 @@ class ResponseCompression implements Service {
             headers.append("vary", "accept-encoding");
         }
 
-        const compressor = compressors[encoding](this.compressionLevel);
+        headers.remove("accept-ranges");
+        headers.remove("content-length");
+        headers.insert("content-encoding", encoding.value);
+
+        const compressor = compressorBuilder(this.compressionLevel);
         const compressedStream = compressor(response.body.read());
 
         return new HttpResponse(response.status, headers, new Body(compressedStream));
     }
 
-    private shouldCompress(
-        encoding: Encoding | "identity",
-        res: HttpResponse,
-    ): encoding is Encoding {
-        if (encoding === "identity") {
+    private shouldCompress(encoding: Encoding, res: HttpResponse): boolean {
+        if (encoding === Encoding.IDENTITY) {
             // No compression supported.
             return false;
         }
@@ -231,52 +220,64 @@ class ResponseCompression implements Service {
 
 type Compressor = (level: CompressionLevel) => (stream: Readable) => Readable;
 
-const compressors: Record<Exclude<Encoding, "identity">, Compressor> = {
-    deflate: (level) => {
-        const options: ZlibOptions = { level: zlibQuality(level) };
+const compressors = new Map<Encoding, Compressor>([
+    [
+        Encoding.DEFLATE,
+        (level) => {
+            const options: ZlibOptions = { level: zlibQuality(level) };
 
-        return (value: Readable) => {
-            const stream = zlib.createDeflate(options);
-            value.pipe(stream);
-            return stream;
-        };
-    },
-    gzip: (level) => {
-        const options: ZlibOptions = { level: zlibQuality(level) };
+            return (value: Readable) => {
+                const stream = zlib.createDeflate(options);
+                value.pipe(stream);
+                return stream;
+            };
+        },
+    ],
+    [
+        Encoding.GZIP,
+        (level) => {
+            const options: ZlibOptions = { level: zlibQuality(level) };
 
-        return (value: Readable) => {
-            const stream = zlib.createGzip(options);
-            value.pipe(stream);
-            return stream;
-        };
-    },
-    brotli: (level) => {
-        const options: BrotliOptions = {
-            params: {
-                [zlib.constants.BROTLI_PARAM_QUALITY]: brotliQuality(level),
-            },
-        };
+            return (value: Readable) => {
+                const stream = zlib.createGzip(options);
+                value.pipe(stream);
+                return stream;
+            };
+        },
+    ],
+    [
+        Encoding.BROTLI,
+        (level) => {
+            const options: BrotliOptions = {
+                params: {
+                    [zlib.constants.BROTLI_PARAM_QUALITY]: brotliQuality(level),
+                },
+            };
 
-        return (value: Readable) => {
-            const stream = zlib.createBrotliCompress(options);
-            value.pipe(stream);
-            return stream;
-        };
-    },
-    zstd: (level) => {
-        const options: ZstdOptions = {
-            params: {
-                [zlib.constants.ZSTD_c_compressionLevel]: zstdQuality(level),
-            },
-        };
+            return (value: Readable) => {
+                const stream = zlib.createBrotliCompress(options);
+                value.pipe(stream);
+                return stream;
+            };
+        },
+    ],
+    [
+        Encoding.ZSTD,
+        (level) => {
+            const options: ZstdOptions = {
+                params: {
+                    [zlib.constants.ZSTD_c_compressionLevel]: zstdQuality(level),
+                },
+            };
 
-        return (value: Readable) => {
-            const stream = zlib.createZstdCompress(options);
-            value.pipe(stream);
-            return stream;
-        };
-    },
-};
+            return (value: Readable) => {
+                const stream = zlib.createZstdCompress(options);
+                value.pipe(stream);
+                return stream;
+            };
+        },
+    ],
+]);
 
 const zlibQuality = (level: CompressionLevel): number => {
     if (typeof level === "number") {
@@ -410,72 +411,3 @@ export const DEFAULT_PREDICATE = andPredicate([
     notForContentTypePredicate("image/", "image/svg+xml"),
     notForContentTypePredicate("text/event-stream"),
 ]);
-
-const preferredEncoding = (headers: HeaderMap, accept: Set<Encoding>): Encoding | "identity" => {
-    const encodings = headers
-        .getAll("accept-encoding")
-        .flatMap((value) => value.split(","))
-        .reduce<[Encoding, number][]>((results, value) => {
-            const values = value.split(";", 2);
-            const encoding = parseEncoding(values[0], accept);
-
-            if (!encoding) {
-                return results;
-            }
-
-            const qValue = parseQValue(values[1]);
-
-            if (qValue === null) {
-                return results;
-            }
-
-            results.push([encoding, qValue]);
-            return results;
-        }, [])
-        .filter(([_, qValue]) => qValue > 0);
-
-    if (encodings.length === 0) {
-        return "identity";
-    }
-
-    return encodings.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
-};
-
-const parseEncoding = (value: string, accept: Set<Encoding>): Encoding | null => {
-    const normalized = value.toLowerCase();
-
-    if (normalized === "gzip" || (normalized === "x-gzip" && accept.has("gzip"))) {
-        return "gzip";
-    }
-
-    if (normalized === "deflate" && accept.has("deflate")) {
-        return "deflate";
-    }
-
-    if (normalized === "br" && accept.has("brotli")) {
-        return "brotli";
-    }
-
-    if (normalized === "zstd" && accept.has("zstd")) {
-        return "zstd";
-    }
-
-    return null;
-};
-
-const qValueRegex = /^[01](?:.\d{0,3})?$/;
-
-const parseQValue = (value: string): number | null => {
-    const normalized = value.toLowerCase().split("=", 2);
-
-    if (normalized[0] !== "q") {
-        return null;
-    }
-
-    if (!qValueRegex.test(normalized[1])) {
-        return null;
-    }
-
-    const qValue = Math.floor(Number.parseFloat(normalized[1]) * 1000);
-    return qValue <= 1000 ? qValue : null;
-};

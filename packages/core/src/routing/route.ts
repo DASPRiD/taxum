@@ -7,6 +7,8 @@ import {
     Method,
     type SizeHint,
 } from "../http/index.js";
+import { getGlobalLogger } from "../logger/index.js";
+import { MapErrorToResponse } from "./eror-handler.js";
 import type { Layer, Service } from "./index.js";
 import { MapToHttpResponse } from "./util.js";
 
@@ -14,7 +16,7 @@ export class Route implements Service {
     private readonly inner: Service;
 
     public constructor(inner: Service<HttpResponseLike>) {
-        this.inner = new MapToHttpResponse(inner);
+        this.inner = new MapErrorToResponse(new MapToHttpResponse(inner));
     }
 
     public layer(layer: Layer): Route {
@@ -35,7 +37,7 @@ export class Route implements Service {
                 res.headers.containsKey("transfer-encoding") ||
                 res.body.sizeHint.lower !== 0
             ) {
-                console.warn("response to CONNECT with nonempty body");
+                getGlobalLogger().warn("response to CONNECT with nonempty body");
                 res.body = Body.from(null);
             }
         } else {

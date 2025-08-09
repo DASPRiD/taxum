@@ -47,7 +47,7 @@ export class AllowOrigin {
      * @internal
      */
     public async toHeader(origin: string | null, parts: Parts): Promise<[string, string] | null> {
-        const name = "access-control-allow-methods";
+        const name = "access-control-allow-origin";
 
         if (typeof this.inner === "string") {
             return [name, this.inner];

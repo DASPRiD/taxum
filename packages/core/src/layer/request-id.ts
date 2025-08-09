@@ -16,12 +16,12 @@ export type MakeRequestId = (req: HttpRequest) => string | null;
  *
  * @example
  * ```ts
- * import { requestId } from "@taxum/core/layer";
+ * import { SetRequestIdLayer } from "@taxum/core/layer/request-id";
  * import { m, Router } from "@taxum/core/routing";
  *
  * const router = new Router()
  *     .route("/", m.get(() => "Hello World))
- *     .layer(requestId.SetRequestIdLayer.default());
+ *     .layer(SetRequestIdLayer.default());
  * ```
  */
 export class SetRequestIdLayer implements Layer {
@@ -31,8 +31,8 @@ export class SetRequestIdLayer implements Layer {
     /**
      * Creates a new {@link SetRequestIdLayer}.
      *
-     * @param headerName - The name of the header to be used.
-     * @param makeRequestId - A function to generate a request ID.
+     * @param headerName - the name of the header to be used.
+     * @param makeRequestId - a function to generate a request ID.
      */
     public constructor(headerName: string, makeRequestId: MakeRequestId) {
         this.headerName = headerName;
@@ -75,6 +75,7 @@ class SetRequestId implements Service {
 
         if (newRequestId !== null) {
             req.headers.insert(this.headerName, newRequestId);
+            req.extensions.insert(REQUEST_ID, newRequestId);
             return this.inner.invoke(req);
         }
 
@@ -94,12 +95,12 @@ class SetRequestId implements Service {
  *
  * @example
  * ```ts
- * import { requestId } from "@taxum/core/layer";
+ * import { PropagateRequestId } from "@taxum/core/layer/request-id";
  * import { m, Router } from "@taxum/core/routing";
  *
  * const router = new Router()
  *     .route("/", m.get(() => "Hello World))
- *     .layer(requestId.PropagateRequestIdLayer.default());
+ *     .layer(PropagateRequestIdLayer.default());
  * ```
  */
 export class PropagateRequestIdLayer implements Layer {
@@ -108,7 +109,7 @@ export class PropagateRequestIdLayer implements Layer {
     /**
      * Creates a new {@link PropagateRequestIdLayer}.
      *
-     * @param headerName - The name of the header to be used.
+     * @param headerName - the name of the header to be used.
      */
     public constructor(headerName: string) {
         this.headerName = headerName;

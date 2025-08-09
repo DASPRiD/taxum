@@ -4,7 +4,7 @@
  *
  * Key components:
  *
- * - {@link HandlerFn} - core request handler functions
+ * - {@link Handler} - core request handler functions
  * - {@link Layer} - middleware layers for request/response processing
  * - {@link MethodFilter} - HTTP method filtering capabilities
  * - Method and path-based routing functionality
@@ -24,6 +24,7 @@
  * ```
  */
 
+export * from "./eror-handler.js";
 /**
  * @internal
  */

@@ -192,6 +192,25 @@ describe("http:response", () => {
             assert.deepEqual(vals, ["y", "z"]);
         });
 
+        it("extensions() sets extensions", () => {
+            const key = new ExtensionKey("foo");
+            const ext = new Extensions();
+            ext.insert(key, 123);
+
+            const builder = new HttpResponseBuilder();
+            builder.extensions(ext);
+            const res = builder.body(null);
+            assert.equal(res.extensions, ext);
+        });
+
+        it("extension() inserts a single extension key-value", () => {
+            const builder = new HttpResponseBuilder();
+            const key = new ExtensionKey("foo");
+            builder.extension(key, "value");
+            const res = builder.body(null);
+            assert.equal(res.extensions.get(key), "value");
+        });
+
         it("body() creates HttpResponse with given body", () => {
             const builder = new HttpResponseBuilder();
             const resp = builder.body("hello");

@@ -139,6 +139,20 @@ describe("http:request", () => {
             assert.equal(req.headers, parts.headers);
             assert.equal(req.extensions, parts.extensions);
         });
+
+        it("creates a through request through withBody()", () => {
+            const parts = new Parts(Method.GET, new URL("http://a"), "1.1", new HeaderMap());
+            const body = Readable.from(["test"]);
+            const req = new HttpRequest(parts, body);
+
+            const newBody = Readable.from(["new test"]);
+            const newReq = req.withBody(newBody);
+
+            assert.equal(newReq.head, parts);
+            assert.equal(newReq.body, newBody);
+            assert.equal(newReq.connectInfo.address, "0.0.0.0");
+            assert.equal(newReq.connectInfo.port, 0);
+        });
     });
 
     describe("HttpRequestBuilder", () => {

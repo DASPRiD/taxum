@@ -3,7 +3,7 @@ import { describe, it, mock } from "node:test";
 import { Fallback } from "../../src/routing/index.js";
 import { Route } from "../../src/routing/route.js";
 
-describe("routing:Fallback", () => {
+describe("routing:fallback", () => {
     it("default() stores the route and marks as default", () => {
         const route = new Route({ invoke: () => null });
         const fallback = Fallback.default(route);

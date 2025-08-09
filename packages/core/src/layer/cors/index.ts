@@ -24,12 +24,12 @@ export * from "./vary.js";
  *
  * @example
  * ```ts
- * import { cors } from "@taxum/core/layer";
+ * import { CorsLayer } from "@taxum/core/layer/cors";
  * import { m, Router } from "@taxum/core/routing";
  *
  * const router = new Router()
  *     .route("/", m.get(() => "Hello World))
- *     .layer(cors.CorsLayer.permissive());
+ *     .layer(CorsLayer.permissive());
  * ```
  */
 export class CorsLayer implements Layer {
@@ -141,7 +141,7 @@ export class CorsLayer implements Layer {
     }
 }
 
-export class Cors implements Service {
+class Cors implements Service {
     private readonly inner: Service;
     private readonly allowCredentials: AllowCredentials;
     private readonly allowHeaders: AllowHeaders;
@@ -195,21 +195,18 @@ export class Cors implements Service {
 
         headers.extend(maybeHeader(this.exposeHeaders.toHeader()));
 
-        const [response, allowOrigin] = await Promise.all([
-            this.inner.invoke(req),
-            allowOriginPromise,
-        ]);
+        const [res, allowOrigin] = await Promise.all([this.inner.invoke(req), allowOriginPromise]);
         headers.extend(maybeHeader(allowOrigin));
-        const responseHeaders = response.headers;
+        const innerHeaders = res.headers;
 
         const vary = headers.remove("vary");
 
         if (vary) {
-            responseHeaders.append("vary", vary);
+            innerHeaders.append("vary", vary);
         }
 
-        responseHeaders.extend(headers);
-        return new HttpResponse(response.status, responseHeaders, response.body);
+        innerHeaders.extend(headers);
+        return new HttpResponse(res.status, innerHeaders, res.body);
     }
 }
 

@@ -7,12 +7,12 @@ import type { Layer, Service } from "../routing/index.js";
  * @example
  * ```ts
  * import { StatusCode } from "@taxum/core/http";
- * import { setStatus } from "@taxum/core/layer";
+ * import { SetStatusLayer } from "@taxum/core/layer/set-status";
  * import { m, Router } from "@taxum/core/routing";
  *
  * const router = new Router()
  *     .route("/", m.get(() => "Hello World))
- *     .layer(new setStatus.SetStatusLayer(StatusCode.ACCEPTED));
+ *     .layer(new SetStatusLayer(StatusCode.ACCEPTED));
  * ```
  */
 export class SetStatusLayer implements Layer {
@@ -21,7 +21,7 @@ export class SetStatusLayer implements Layer {
     /**
      * Creates a new {@link SetStatusLayer}.
      *
-     * @param status - The status to set responses to.
+     * @param status - the status to set responses to.
      */
     public constructor(status: StatusCode) {
         this.status = status;

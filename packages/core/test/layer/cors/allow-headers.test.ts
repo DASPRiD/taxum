@@ -1,0 +1,69 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import { HeaderMap, Method, Parts } from "../../../src/http/index.js";
+import { AllowHeaders } from "../../../src/layer/cors/index.js";
+
+describe("layer:cors:allow-headers", () => {
+    const partsWithRequestHeaders = new Parts(
+        Method.GET,
+        new URL("http://localhost"),
+        "1.1",
+        new HeaderMap(
+            new Map([["access-control-request-headers", ["X-Custom-Header, X-Another-Header"]]]),
+        ),
+    );
+
+    const partsWithoutRequestHeaders = new Parts(
+        Method.GET,
+        new URL("http://localhost"),
+        "1.1",
+        new HeaderMap(),
+    );
+
+    it("default returns none", () => {
+        const ah = AllowHeaders.default();
+        assert.equal(ah.toHeader(partsWithRequestHeaders), null);
+    });
+
+    it("none returns null header", () => {
+        const ah = AllowHeaders.none();
+        assert.equal(ah.toHeader(partsWithRequestHeaders), null);
+    });
+
+    it("any returns wildcard *", () => {
+        const ah = AllowHeaders.any();
+        assert(ah.isWildcard());
+        assert.deepEqual(ah.toHeader(partsWithRequestHeaders), [
+            "access-control-allow-headers",
+            "*",
+        ]);
+    });
+
+    it("list returns joined headers string", () => {
+        const ah = AllowHeaders.list(["X-Foo", "X-Bar"]);
+        assert(!ah.isWildcard());
+        assert.deepEqual(ah.toHeader(partsWithRequestHeaders), [
+            "access-control-allow-headers",
+            "X-Foo,X-Bar",
+        ]);
+    });
+
+    it("mirrorRequest mirrors access-control-request-headers when present", () => {
+        const ah = AllowHeaders.mirrorRequest();
+        assert.deepEqual(ah.toHeader(partsWithRequestHeaders), [
+            "access-control-allow-headers",
+            "X-Custom-Header, X-Another-Header",
+        ]);
+    });
+
+    it("mirrorRequest returns null if access-control-request-headers not present", () => {
+        const ah = AllowHeaders.mirrorRequest();
+        assert.equal(ah.toHeader(partsWithoutRequestHeaders), null);
+    });
+
+    it("isWildcard returns true only for *", () => {
+        assert(AllowHeaders.any().isWildcard());
+        assert(!AllowHeaders.none().isWildcard());
+        assert(!AllowHeaders.list(["X"]).isWildcard());
+    });
+});

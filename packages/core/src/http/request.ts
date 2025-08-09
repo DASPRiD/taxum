@@ -101,6 +101,10 @@ export class HttpRequest {
         );
     }
 
+    public withBody(body: Readable): HttpRequest {
+        return new HttpRequest(this.head, body, this.connectInfo);
+    }
+
     public get method(): Method {
         return this.head.method;
     }
