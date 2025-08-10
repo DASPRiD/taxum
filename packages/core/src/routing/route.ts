@@ -12,6 +12,9 @@ import { MapErrorToResponse } from "./eror-handler.js";
 import type { Layer, Service } from "./index.js";
 import { MapToHttpResponse } from "./util.js";
 
+/**
+ * @internal
+ */
 export class Route implements Service {
     private readonly inner: Service;
 
@@ -19,11 +22,19 @@ export class Route implements Service {
         this.inner = new MapErrorToResponse(new MapToHttpResponse(inner));
     }
 
-    public layer(layer: Layer): Route {
-        return new Route(layer.layer(this.inner));
+    public layer(layer: Layer<HttpResponse, HttpResponseLike>): Route {
+        return new Route(layer.layer(this));
+    }
+
+    public async invokeInner(req: HttpRequest): Promise<HttpResponse> {
+        return this.innerInvoke(req, true);
     }
 
     public async invoke(req: HttpRequest): Promise<HttpResponse> {
+        return this.innerInvoke(req, false);
+    }
+
+    private async innerInvoke(req: HttpRequest, topLevel: boolean): Promise<HttpResponse> {
         const res = await this.inner.invoke(req);
 
         if (req.method.equals(Method.CONNECT) && res.status.isSuccess()) {
@@ -37,10 +48,10 @@ export class Route implements Service {
                 res.headers.containsKey("transfer-encoding") ||
                 res.body.sizeHint.lower !== 0
             ) {
-                getGlobalLogger().warn("response to CONNECT with nonempty body");
+                getGlobalLogger().error("response to CONNECT with nonempty body");
                 res.body = Body.from(null);
             }
-        } else {
+        } else if (topLevel) {
             setContentLength(res.headers, res.body.sizeHint);
 
             if (req.method.equals(Method.HEAD)) {

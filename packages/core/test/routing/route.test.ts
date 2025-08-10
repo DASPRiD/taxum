@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import { HttpRequest, HttpResponse, StatusCode } from "../../src/http/index.js";
-import { type Handler, Route } from "../../src/routing/index.js";
+import type { Handler } from "../../src/routing/index.js";
+import { Route } from "../../src/routing/route.js";
 
 describe("routing:route", () => {
     const routeFrom = (handler: Handler): Route => {
@@ -25,7 +26,7 @@ describe("routing:route", () => {
         const route = routeFrom(() => "abc");
 
         const req = HttpRequest.builder().body(null);
-        const res = await route.invoke(req);
+        const res = await route.invokeInner(req);
 
         assert.equal(res.headers.get("content-length"), "3");
     });
@@ -36,7 +37,7 @@ describe("routing:route", () => {
         });
 
         const req = HttpRequest.builder().body(null);
-        const res = await route.invoke(req);
+        const res = await route.invokeInner(req);
 
         assert.equal(res.headers.get("content-length"), "999");
     });
@@ -45,15 +46,15 @@ describe("routing:route", () => {
         const route = routeFrom(() => "abc");
 
         const req = HttpRequest.builder().method("HEAD").body(null);
-        const res = await route.invoke(req);
+        const res = await route.invokeInner(req);
 
         assert.equal(await consumers.text(res.body.read()), "");
     });
 
     it("clears body for successful CONNECT with non-empty body", async (t) => {
         const route = routeFrom(() => "foo");
-        const spy = t.mock.method(console, "warn", () => {
-            // Suppress console.warn
+        const spy = t.mock.method(console, "error", () => {
+            // Suppress console.error
         });
 
         const req = HttpRequest.builder().method("CONNECT").body(null);

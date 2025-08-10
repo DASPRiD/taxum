@@ -1,5 +1,11 @@
 import { match, P } from "ts-pattern";
-import { type HttpRequest, type HttpResponse, Method, StatusCode } from "../http/index.js";
+import {
+    type HttpRequest,
+    type HttpResponse,
+    type HttpResponseLike,
+    Method,
+    StatusCode,
+} from "../http/index.js";
 import { Fallback } from "./fallback.js";
 import { type Handler, HandlerService } from "./handler.js";
 import type { Layer } from "./layer.js";
@@ -16,7 +22,7 @@ const defaultFallbackRoute = new Route({
  * matches the provided filter.
  */
 export const on = (filter: MethodFilter, handler: Handler): MethodRouter => {
-    return new MethodRouter().on(filter, handler);
+    return MethodRouter.default().on(filter, handler);
 };
 
 /**
@@ -24,7 +30,7 @@ export const on = (filter: MethodFilter, handler: Handler): MethodRouter => {
  * skips the 'Allow' header.
  */
 export const any = (handler: Handler): MethodRouter => {
-    return new MethodRouter().fallback(handler).skipAllowHeader();
+    return MethodRouter.default().fallback(handler).skipAllowHeader();
 };
 
 /**
@@ -52,30 +58,59 @@ export const m = {
  * all endpoints.
  */
 export class MethodRouter implements Service {
-    private getEndpoint = new MethodEndpoint();
-    private headEndpoint = new MethodEndpoint();
-    private deleteEndpoint = new MethodEndpoint();
-    private optionsEndpoint = new MethodEndpoint();
-    private patchEndpoint = new MethodEndpoint();
-    private postEndpoint = new MethodEndpoint();
-    private putEndpoint = new MethodEndpoint();
-    private traceEndpoint = new MethodEndpoint();
-    private connectEndpoint = new MethodEndpoint();
-    private fallbackEndpoint = Fallback.default(defaultFallbackRoute);
-    private allowHeader: Set<string> | null = new Set();
+    private getEndpoint: MethodEndpoint;
+    private headEndpoint: MethodEndpoint;
+    private deleteEndpoint: MethodEndpoint;
+    private optionsEndpoint: MethodEndpoint;
+    private patchEndpoint: MethodEndpoint;
+    private postEndpoint: MethodEndpoint;
+    private putEndpoint: MethodEndpoint;
+    private traceEndpoint: MethodEndpoint;
+    private connectEndpoint: MethodEndpoint;
+    private fallbackEndpoint: Fallback;
+    private allowHeader: Set<string> | null;
 
-    private readonly ENDPOINTS: [Method, MethodEndpoint][] = [
-        [Method.HEAD, this.headEndpoint],
-        [Method.HEAD, this.getEndpoint],
-        [Method.GET, this.getEndpoint],
-        [Method.POST, this.postEndpoint],
-        [Method.OPTIONS, this.optionsEndpoint],
-        [Method.PATCH, this.patchEndpoint],
-        [Method.PUT, this.putEndpoint],
-        [Method.DELETE, this.deleteEndpoint],
-        [Method.TRACE, this.traceEndpoint],
-        [Method.CONNECT, this.connectEndpoint],
-    ];
+    private constructor(
+        getEndpoint: MethodEndpoint,
+        headEndpoint: MethodEndpoint,
+        deleteEndpoint: MethodEndpoint,
+        optionsEndpoint: MethodEndpoint,
+        patchEndpoint: MethodEndpoint,
+        postEndpoint: MethodEndpoint,
+        putEndpoint: MethodEndpoint,
+        traceEndpoint: MethodEndpoint,
+        connectEndpoint: MethodEndpoint,
+        fallbackEndpoint: Fallback,
+        allowHeader: Set<string> | null,
+    ) {
+        this.getEndpoint = getEndpoint;
+        this.headEndpoint = headEndpoint;
+        this.deleteEndpoint = deleteEndpoint;
+        this.optionsEndpoint = optionsEndpoint;
+        this.patchEndpoint = patchEndpoint;
+        this.postEndpoint = postEndpoint;
+        this.putEndpoint = putEndpoint;
+        this.traceEndpoint = traceEndpoint;
+        this.connectEndpoint = connectEndpoint;
+        this.fallbackEndpoint = fallbackEndpoint;
+        this.allowHeader = allowHeader;
+    }
+
+    public static default(): MethodRouter {
+        return new MethodRouter(
+            MethodEndpoint.NONE,
+            MethodEndpoint.NONE,
+            MethodEndpoint.NONE,
+            MethodEndpoint.NONE,
+            MethodEndpoint.NONE,
+            MethodEndpoint.NONE,
+            MethodEndpoint.NONE,
+            MethodEndpoint.NONE,
+            MethodEndpoint.NONE,
+            Fallback.default(defaultFallbackRoute),
+            new Set(),
+        );
+    }
 
     /**
      * Registers a handler function for specific HTTP methods based on the
@@ -89,21 +124,78 @@ export class MethodRouter implements Service {
     public on(filter: MethodFilter, handler: Handler): this {
         const route = new Route(new HandlerService(handler));
 
-        this.setEndpoint("GET", route, filter, MethodFilter.GET, this.getEndpoint, ["GET", "HEAD"]);
-        this.setEndpoint("HEAD", route, filter, MethodFilter.HEAD, this.headEndpoint, ["HEAD"]);
-        this.setEndpoint("TRACE", route, filter, MethodFilter.TRACE, this.traceEndpoint, ["TRACE"]);
-        this.setEndpoint("PUT", route, filter, MethodFilter.PUT, this.putEndpoint, ["PUT"]);
-        this.setEndpoint("POST", route, filter, MethodFilter.POST, this.postEndpoint, ["POST"]);
-        this.setEndpoint("PATCH", route, filter, MethodFilter.PATCH, this.patchEndpoint, ["PATCH"]);
-        this.setEndpoint("OPTIONS", route, filter, MethodFilter.OPTIONS, this.optionsEndpoint, [
+        this.getEndpoint = this.setEndpoint(
+            "GET",
+            route,
+            filter,
+            MethodFilter.GET,
+            this.getEndpoint,
+            ["GET", "HEAD"],
+        );
+        this.headEndpoint = this.setEndpoint(
+            "HEAD",
+            route,
+            filter,
+            MethodFilter.HEAD,
+            this.headEndpoint,
+            ["HEAD"],
+        );
+        this.traceEndpoint = this.setEndpoint(
+            "TRACE",
+            route,
+            filter,
+            MethodFilter.TRACE,
+            this.traceEndpoint,
+            ["TRACE"],
+        );
+        this.putEndpoint = this.setEndpoint(
+            "PUT",
+            route,
+            filter,
+            MethodFilter.PUT,
+            this.putEndpoint,
+            ["PUT"],
+        );
+        this.postEndpoint = this.setEndpoint(
+            "POST",
+            route,
+            filter,
+            MethodFilter.POST,
+            this.postEndpoint,
+            ["POST"],
+        );
+        this.patchEndpoint = this.setEndpoint(
+            "PATCH",
+            route,
+            filter,
+            MethodFilter.PATCH,
+            this.patchEndpoint,
+            ["PATCH"],
+        );
+        this.optionsEndpoint = this.setEndpoint(
             "OPTIONS",
-        ]);
-        this.setEndpoint("DELETE", route, filter, MethodFilter.DELETE, this.deleteEndpoint, [
+            route,
+            filter,
+            MethodFilter.OPTIONS,
+            this.optionsEndpoint,
+            ["OPTIONS"],
+        );
+        this.deleteEndpoint = this.setEndpoint(
             "DELETE",
-        ]);
-        this.setEndpoint("CONNECT", route, filter, MethodFilter.CONNECT, this.connectEndpoint, [
+            route,
+            filter,
+            MethodFilter.DELETE,
+            this.deleteEndpoint,
+            ["DELETE"],
+        );
+        this.connectEndpoint = this.setEndpoint(
             "CONNECT",
-        ]);
+            route,
+            filter,
+            MethodFilter.CONNECT,
+            this.connectEndpoint,
+            ["CONNECT"],
+        );
 
         return this;
     }
@@ -204,21 +296,22 @@ export class MethodRouter implements Service {
      *
      * @param layer - the layer to be applied to the endpoints.
      */
-    public layer(layer: Layer): this {
+    public layer(layer: Layer<HttpResponse, HttpResponseLike>): MethodRouter {
         const map = (route: Route) => route.layer(layer);
 
-        this.getEndpoint.map(map);
-        this.headEndpoint.map(map);
-        this.deleteEndpoint.map(map);
-        this.optionsEndpoint.map(map);
-        this.patchEndpoint.map(map);
-        this.postEndpoint.map(map);
-        this.putEndpoint.map(map);
-        this.traceEndpoint.map(map);
-        this.connectEndpoint.map(map);
-        this.fallbackEndpoint.map(map);
-
-        return this;
+        return new MethodRouter(
+            this.getEndpoint.map(map),
+            this.headEndpoint.map(map),
+            this.deleteEndpoint.map(map),
+            this.optionsEndpoint.map(map),
+            this.patchEndpoint.map(map),
+            this.postEndpoint.map(map),
+            this.putEndpoint.map(map),
+            this.traceEndpoint.map(map),
+            this.connectEndpoint.map(map),
+            this.fallbackEndpoint.map(map),
+            this.allowHeader,
+        );
     }
 
     /**
@@ -242,7 +335,20 @@ export class MethodRouter implements Service {
      * @internal
      */
     public async invoke(req: HttpRequest): Promise<HttpResponse> {
-        for (const [method, handler] of this.ENDPOINTS) {
+        const endpoints: [Method, MethodEndpoint][] = [
+            [Method.HEAD, this.headEndpoint],
+            [Method.HEAD, this.getEndpoint],
+            [Method.GET, this.getEndpoint],
+            [Method.POST, this.postEndpoint],
+            [Method.OPTIONS, this.optionsEndpoint],
+            [Method.PATCH, this.patchEndpoint],
+            [Method.PUT, this.putEndpoint],
+            [Method.DELETE, this.deleteEndpoint],
+            [Method.TRACE, this.traceEndpoint],
+            [Method.CONNECT, this.connectEndpoint],
+        ];
+
+        for (const [method, handler] of endpoints) {
             const res = await this.invokeMethod(req, method, handler);
 
             if (res) {
@@ -263,15 +369,60 @@ export class MethodRouter implements Service {
      * @internal
      */
     public mergeForPath(path: string, other: MethodRouter): this {
-        MethodRouter.mergeInner(path, "GET", this.getEndpoint, other.getEndpoint);
-        MethodRouter.mergeInner(path, "HEAD", this.headEndpoint, other.headEndpoint);
-        MethodRouter.mergeInner(path, "DELETE", this.deleteEndpoint, other.deleteEndpoint);
-        MethodRouter.mergeInner(path, "OPTIONS", this.optionsEndpoint, other.optionsEndpoint);
-        MethodRouter.mergeInner(path, "PATCH", this.patchEndpoint, other.patchEndpoint);
-        MethodRouter.mergeInner(path, "POST", this.postEndpoint, other.postEndpoint);
-        MethodRouter.mergeInner(path, "PUT", this.putEndpoint, other.putEndpoint);
-        MethodRouter.mergeInner(path, "TRACE", this.traceEndpoint, other.traceEndpoint);
-        MethodRouter.mergeInner(path, "CONNECT", this.connectEndpoint, other.connectEndpoint);
+        this.getEndpoint = MethodRouter.mergeInner(
+            path,
+            "GET",
+            this.getEndpoint,
+            other.getEndpoint,
+        );
+        this.headEndpoint = MethodRouter.mergeInner(
+            path,
+            "HEAD",
+            this.headEndpoint,
+            other.headEndpoint,
+        );
+        this.deleteEndpoint = MethodRouter.mergeInner(
+            path,
+            "DELETE",
+            this.deleteEndpoint,
+            other.deleteEndpoint,
+        );
+        this.optionsEndpoint = MethodRouter.mergeInner(
+            path,
+            "OPTIONS",
+            this.optionsEndpoint,
+            other.optionsEndpoint,
+        );
+        this.patchEndpoint = MethodRouter.mergeInner(
+            path,
+            "PATCH",
+            this.patchEndpoint,
+            other.patchEndpoint,
+        );
+        this.postEndpoint = MethodRouter.mergeInner(
+            path,
+            "POST",
+            this.postEndpoint,
+            other.postEndpoint,
+        );
+        this.putEndpoint = MethodRouter.mergeInner(
+            path,
+            "PUT",
+            this.putEndpoint,
+            other.putEndpoint,
+        );
+        this.traceEndpoint = MethodRouter.mergeInner(
+            path,
+            "TRACE",
+            this.traceEndpoint,
+            other.traceEndpoint,
+        );
+        this.connectEndpoint = MethodRouter.mergeInner(
+            path,
+            "CONNECT",
+            this.connectEndpoint,
+            other.connectEndpoint,
+        );
 
         this.fallbackEndpoint = match([this.fallbackEndpoint, other.fallbackEndpoint])
             .returnType<Fallback>()
@@ -297,16 +448,14 @@ export class MethodRouter implements Service {
         name: string,
         own: MethodEndpoint,
         other: MethodEndpoint,
-    ): void {
+    ): MethodEndpoint {
         if (own.route !== null && other.route !== null) {
             throw new Error(
                 `Overlapping method route. Handler for \`${name} ${path}\` already exists`,
             );
         }
 
-        if (own.route === null) {
-            own.route = other.route;
-        }
+        return own.route === null ? other : own;
     }
 
     private async invokeMethod(
@@ -318,7 +467,7 @@ export class MethodRouter implements Service {
             return null;
         }
 
-        return endpoint.route.invoke(req);
+        return endpoint.route.invokeInner(req);
     }
 
     private setEndpoint(
@@ -326,41 +475,47 @@ export class MethodRouter implements Service {
         route: Route,
         endpointFilter: MethodFilter,
         filter: MethodFilter,
-        out: MethodEndpoint,
+        current: MethodEndpoint,
         methods: string[],
-    ): void {
+    ): MethodEndpoint {
         if (!endpointFilter.contains(filter)) {
-            return;
+            return current;
         }
 
-        if (out.route !== null) {
+        if (current.route !== null) {
             throw new Error(
                 `Overlapping method route. Cannot add two method routes that both handle ${methodName}`,
             );
         }
 
-        out.route = route;
-
-        if (this.allowHeader === null) {
-            return;
+        if (this.allowHeader !== null) {
+            for (const method of methods) {
+                this.allowHeader.add(method);
+            }
         }
 
-        for (const method of methods) {
-            this.allowHeader.add(method);
-        }
+        return MethodEndpoint.create(route);
     }
 }
 
 class MethodEndpoint {
-    public route: Route | null;
+    public static NONE = new MethodEndpoint(null);
 
-    public constructor(route: Route | null = null) {
+    public readonly route: Route | null;
+
+    private constructor(route: Route | null = null) {
         this.route = route;
     }
 
-    public map(fn: (route: Route) => Route): void {
-        if (this.route !== null) {
-            this.route = fn(this.route);
+    public static create(route: Route): MethodEndpoint {
+        return new MethodEndpoint(route);
+    }
+
+    public map(fn: (route: Route) => Route): MethodEndpoint {
+        if (this.route === null) {
+            return this;
         }
+
+        return MethodEndpoint.create(fn(this.route));
     }
 }

@@ -1,4 +1,4 @@
-import { requestId } from "@taxum/core/layer";
+import { PropagateRequestIdLayer, SetRequestIdLayer } from "@taxum/core/layer/request-id";
 import { m, Router } from "@taxum/core/routing";
 import { serve } from "@taxum/core/server";
 
@@ -7,8 +7,8 @@ const router = new Router()
         "/",
         m.get(() => "Hello World"),
     )
-    .layer(requestId.SetRequestIdLayer.default())
-    .layer(requestId.PropagateRequestIdLayer.default());
+    .layer(SetRequestIdLayer.default())
+    .layer(PropagateRequestIdLayer.default());
 
 await serve(router, {
     catchCtrlC: true,

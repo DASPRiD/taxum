@@ -22,7 +22,7 @@ describe("routing:method-router", () => {
     for (const [method, shortcutName] of METHODS) {
         describe(`method: ${method}`, () => {
             it(`handles ${method} with .on()`, async () => {
-                const router = new MethodRouter();
+                const router = MethodRouter.default();
                 router.on(MethodFilter[method], () => null);
 
                 const res = await router.invoke(makeRequest(method));
@@ -30,7 +30,7 @@ describe("routing:method-router", () => {
             });
 
             it(`handles ${method} with shortcut method`, async () => {
-                const router = new MethodRouter();
+                const router = MethodRouter.default();
                 router[shortcutName](() => "");
 
                 const res = await router.invoke(makeRequest(method));
@@ -38,7 +38,7 @@ describe("routing:method-router", () => {
             });
 
             it(`calls fallback when ${method} handler missing`, async () => {
-                const router = new MethodRouter();
+                const router = MethodRouter.default();
                 router.fallback(() => StatusCode.METHOD_NOT_ALLOWED);
 
                 const res = await router.invoke(makeRequest(method));
@@ -52,7 +52,7 @@ describe("routing:method-router", () => {
                     }),
                 );
 
-                const router = new MethodRouter();
+                const router = MethodRouter.default();
                 router.on(MethodFilter[method], () => null);
                 router.layer({ layer: spy });
 
@@ -64,7 +64,7 @@ describe("routing:method-router", () => {
     }
 
     it("disallows settings the same method handler twice", () => {
-        const router = new MethodRouter();
+        const router = MethodRouter.default();
         router.on(MethodFilter.GET, () => null);
 
         assert.throws(() => {
@@ -74,10 +74,10 @@ describe("routing:method-router", () => {
 
     describe("merging MethodRouters", () => {
         it("merges routers without conflicts", async () => {
-            const a = new MethodRouter();
+            const a = MethodRouter.default();
             a.get(() => "GET from A");
 
-            const b = new MethodRouter();
+            const b = MethodRouter.default();
             b.post(() => "POST from B");
 
             a.mergeForPath("/foo", b);
@@ -92,18 +92,18 @@ describe("routing:method-router", () => {
         });
 
         it("throws when merging routers with conflicting handlers", () => {
-            const a = new MethodRouter();
+            const a = MethodRouter.default();
             a.put(() => "PUT A");
 
-            const b = new MethodRouter();
+            const b = MethodRouter.default();
             b.put(() => "PUT B");
 
             assert.throws(() => a.mergeForPath("/conflict", b), /Overlapping method route/);
         });
 
         it("throws if both routers have a fallback", () => {
-            const r1 = new MethodRouter().fallback(() => StatusCode.OK);
-            const r2 = new MethodRouter().fallback(() => StatusCode.CREATED);
+            const r1 = MethodRouter.default().fallback(() => StatusCode.OK);
+            const r2 = MethodRouter.default().fallback(() => StatusCode.CREATED);
 
             assert.throws(() => {
                 r1.mergeForPath("/foo", r2);
@@ -113,7 +113,7 @@ describe("routing:method-router", () => {
 
     describe("skipAllowHeader behavior", () => {
         it("does not add Allow header when skipAllowHeader() called", async () => {
-            const router = new MethodRouter();
+            const router = MethodRouter.default();
             router.get(() => "hello");
             router.skipAllowHeader();
 
@@ -122,7 +122,7 @@ describe("routing:method-router", () => {
         });
 
         it("adds Allow header listing allowed methods", async () => {
-            const router = new MethodRouter();
+            const router = MethodRouter.default();
             router.get(() => "hello");
             router.post(() => "world");
 
@@ -134,7 +134,7 @@ describe("routing:method-router", () => {
         });
 
         it("adds no Allow header when adding more methods after skip", async () => {
-            const router = new MethodRouter();
+            const router = MethodRouter.default();
             router.skipAllowHeader();
             router.get(() => "hello");
 
@@ -182,7 +182,7 @@ describe("routing:method-router", () => {
 
     describe("defaultFallback", () => {
         it("sets fallback handler only if fallback is default", async () => {
-            const router = new MethodRouter();
+            const router = MethodRouter.default();
             const req = HttpRequest.builder().body(null);
 
             const res1 = await router.invoke(req);
@@ -195,7 +195,7 @@ describe("routing:method-router", () => {
         });
 
         it("does not overwrite fallback handler if it's already set", async () => {
-            const router = new MethodRouter();
+            const router = MethodRouter.default();
             router.fallback(() => StatusCode.OK);
             router.defaultFallback(() => StatusCode.IM_A_TEAPOT);
 

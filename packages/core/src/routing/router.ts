@@ -1,4 +1,10 @@
-import { type HttpRequest, type HttpResponse, StatusCode } from "../http/index.js";
+import {
+    ExtensionKey,
+    type HttpRequest,
+    type HttpResponse,
+    type HttpResponseLike,
+    StatusCode,
+} from "../http/index.js";
 import { type ErrorHandler, runWithErrorHandler } from "./eror-handler.js";
 import { Fallback } from "./fallback.js";
 import { type Handler, HandlerService } from "./handler.js";
@@ -6,10 +12,19 @@ import type { Layer } from "./layer.js";
 import type { MethodRouter } from "./method-router.js";
 import { PathRouter } from "./path-router.js";
 import { Route } from "./route.js";
+import type { Service } from "./service.js";
 
 const defaultFallbackRoute = new Route({
     invoke: () => StatusCode.NOT_FOUND,
 });
+
+/**
+ * Extension key which holds the original URI.
+ *
+ * This is required as the URI within a `HttpRequest` can be mutated during
+ * the request lifecycle.
+ */
+export const ORIGINAL_URI = new ExtensionKey("OriginalUri");
 
 /**
  * The Router class is responsible for handling and routing HTTP requests based
@@ -19,7 +34,7 @@ const defaultFallbackRoute = new Route({
  * and processing requests.
  */
 export class Router {
-    private pathRouter = new PathRouter();
+    private pathRouter = PathRouter.default();
     private catchAllFallback = Fallback.default(defaultFallbackRoute);
     private errorHandler_: ErrorHandler | null = null;
 
@@ -45,6 +60,11 @@ export class Router {
      */
     public nest(path: string, router: Router): this {
         this.pathRouter.nest(path, router.pathRouter);
+        return this;
+    }
+
+    public nestService(path: string, service: Service<HttpResponseLike>): this {
+        this.pathRouter.nestService(path, service);
         return this;
     }
 
@@ -109,9 +129,17 @@ export class Router {
      *
      * @param layer - the layer to be applied to the endpoints.
      */
-    public layer(layer: Layer): this {
-        this.pathRouter.layer(layer);
+    public layer(layer: Layer<HttpResponse, HttpResponseLike>): this {
+        this.pathRouter = this.pathRouter.layer(layer);
         this.catchAllFallback = this.catchAllFallback.map((route) => route.layer(layer));
+        return this;
+    }
+
+    /**
+     * Applies the specified layer to all previously registered routes.
+     */
+    public routeLayer(layer: Layer<HttpResponse, HttpResponseLike>): this {
+        this.pathRouter = this.pathRouter.routeLayer(layer);
         return this;
     }
 
@@ -129,6 +157,8 @@ export class Router {
      *        the call.
      */
     public async invoke(req: HttpRequest): Promise<HttpResponse> {
+        req.extensions.insert(ORIGINAL_URI, new URL(req.uri));
+
         return runWithErrorHandler(this.errorHandler_, async () => {
             let res = await this.pathRouter.invoke(req);
 

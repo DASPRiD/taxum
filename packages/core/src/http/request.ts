@@ -31,6 +31,10 @@ export class Parts {
         this.extensions = extensions ?? new Extensions();
     }
 
+    public withUri(uri: URL): Parts {
+        return new Parts(this.method, uri, this.version, this.headers, this.extensions);
+    }
+
     public static fromIncomingMessage(message: IncomingMessage, trustProxy: boolean): Parts {
         const headers = HeaderMap.fromIncomingMessage(message);
         const localProtocol =
@@ -103,6 +107,10 @@ export class HttpRequest {
 
     public withBody(body: Readable): HttpRequest {
         return new HttpRequest(this.head, body, this.connectInfo);
+    }
+
+    public withUri(uri: URL): HttpRequest {
+        return new HttpRequest(this.head.withUri(uri), this.body, this.connectInfo);
     }
 
     public get method(): Method {

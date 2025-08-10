@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it, mock } from "node:test";
-import { Fallback } from "../../src/routing/index.js";
+import { Fallback } from "../../src/routing/fallback.js";
 import { Route } from "../../src/routing/route.js";
 
 describe("routing:fallback", () => {

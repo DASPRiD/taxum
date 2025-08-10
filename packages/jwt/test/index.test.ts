@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { Readable } from "node:stream";
 import consumers from "node:stream/consumers";
-import { before, describe, it, mock } from "node:test";
+import { before, beforeEach, describe, it, mock } from "node:test";
 import {
     Body,
     HeaderMap,
@@ -26,8 +26,8 @@ const createRequest = (authorization?: string): HttpRequest => {
 describe("JwtLayer", () => {
     const jwtVerifyMock =
         mock.fn<(token: unknown, key: unknown, options: unknown) => Promise<unknown>>();
-    let JWT: typeof import("../src/index.js")["JWT"];
-    let JwtLayer: typeof import("../src/index.js")["JwtLayer"];
+    let JWT: typeof import("../src/index.js").JWT;
+    let JwtLayer: typeof import("../src/index.js").JwtLayer;
 
     before(async () => {
         mock.module("jose", {
@@ -37,6 +37,10 @@ describe("JwtLayer", () => {
         });
 
         ({ JWT, JwtLayer } = await import("../src/index.js"));
+    });
+
+    beforeEach(() => {
+        jwtVerifyMock.mock.resetCalls();
     });
 
     it("rejects missing authorization header", async () => {

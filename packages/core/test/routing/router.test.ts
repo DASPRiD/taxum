@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import consumers from "node:stream/consumers";
 import { describe, it, mock } from "node:test";
-import { HttpRequest, HttpResponse, StatusCode } from "../../src/http/index.js";
+import {
+    HttpRequest,
+    HttpResponse,
+    type HttpResponseLike,
+    StatusCode,
+} from "../../src/http/index.js";
 import {
     type ErrorHandler,
     type Handler,
@@ -9,12 +14,13 @@ import {
     MethodRouter,
     m,
     Router,
+    type Service,
 } from "../../src/routing/index.js";
 
 describe("routing:Router", () => {
     it("routes a request to a matching method handler", async () => {
         const router = new Router();
-        const methodRouter = new MethodRouter().get(() => "hello");
+        const methodRouter = MethodRouter.default().get(() => "hello");
 
         router.route("/greet", methodRouter);
 
@@ -71,7 +77,7 @@ describe("routing:Router", () => {
         const router = new Router();
         router.route(
             "/test",
-            new MethodRouter().get(() => "works"),
+            MethodRouter.default().get(() => "works"),
         );
         router.fallback(() => "fallback");
         router.layer(loggingLayer);
@@ -88,11 +94,43 @@ describe("routing:Router", () => {
         assert.deepEqual(logs, ["/test", "/not-found"]);
     });
 
+    it("applies a layer to all routes", async () => {
+        const logs: string[] = [];
+
+        const loggingLayer: Layer = {
+            layer: (inner) => ({
+                invoke: (req) => {
+                    logs.push(req.uri.pathname);
+                    return inner.invoke(req);
+                },
+            }),
+        };
+
+        const router = new Router();
+        router.route(
+            "/test",
+            MethodRouter.default().get(() => "works"),
+        );
+        router.fallback(() => "fallback");
+        router.routeLayer(loggingLayer);
+
+        const res1 = await router.invoke(
+            HttpRequest.builder().method("GET").path("/test").body(null),
+        );
+        const res2 = await router.invoke(
+            HttpRequest.builder().method("GET").path("/not-found").body(null),
+        );
+
+        assert.equal(await consumers.text(res1.body.read()), "works");
+        assert.equal(await consumers.text(res2.body.read()), "fallback");
+        assert.deepEqual(logs, ["/test"]);
+    });
+
     it("can nest sub-routers", async () => {
         const sub = new Router();
         sub.route(
             "/inner",
-            new MethodRouter().get(() => "inside"),
+            MethodRouter.default().get(() => "inside"),
         );
 
         const main = new Router();
@@ -102,6 +140,21 @@ describe("routing:Router", () => {
         const res = await main.invoke(req);
 
         assert.equal(await consumers.text(res.body.read()), "inside");
+    });
+
+    it("can nest services", async () => {
+        const nestedService: Service<HttpResponseLike> = {
+            invoke: async () => "nested response",
+        };
+
+        const router = new Router();
+        router.nestService("/nested", nestedService);
+
+        const req = HttpRequest.builder().method("GET").path("/nested").body(null);
+        const res = await router.invoke(req);
+
+        assert.equal(res.status.code, 200);
+        assert.equal(await consumers.text(res.body.read()), "nested response");
     });
 
     it("calls methodNotAllowedFallback when method is unsupported but path exists", async () => {

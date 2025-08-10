@@ -106,7 +106,7 @@ describe("layer:cors:index", () => {
             return HttpRequest.builder().method(method).headers(headerMap).body(null);
         };
 
-        it.only("adds correct CORS headers on OPTIONS request", async () => {
+        it("adds correct CORS headers on OPTIONS request", async () => {
             const cors = new CorsLayer()
                 .allowMethods(AllowMethods.any())
                 .allowHeaders(AllowHeaders.any())
@@ -133,7 +133,7 @@ describe("layer:cors:index", () => {
             );
         });
 
-        it.only("adds CORS headers on non-OPTIONS request and merges vary header", async () => {
+        it("adds CORS headers on non-OPTIONS request and merges vary header", async () => {
             const innerService = {
                 invoke: async () => {
                     return HttpResponse.builder().header("vary", "Origin").body("body");

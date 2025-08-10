@@ -19,10 +19,19 @@ export const noContentResponse: ToHttpResponse = {
     },
 };
 
+export type JsonSerializable =
+    | string
+    | number
+    | boolean
+    | null
+    | JsonSerializable[]
+    | { [key: string]: JsonSerializable | undefined }
+    | { toJSON: () => JsonSerializable };
+
 /**
  * A JSON response with the content-type header set to application/json.
  */
-export const jsonResponse = (value: unknown): ToHttpResponse => ({
+export const jsonResponse = (value: JsonSerializable): ToHttpResponse => ({
     toHttpResponse: (): HttpResponse => {
         return HttpResponse.builder()
             .header("content-type", "application/json")
