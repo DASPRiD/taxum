@@ -7,5 +7,6 @@
     },
     "release-type": "node",
     "initial-version": "1.0.0",
-    "plugins": ["node-workspace"]
+    "plugins": ["node-workspace"],
+    "prerelease": true
 }
