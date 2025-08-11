@@ -31,10 +31,6 @@ You can find several examples in the [examples](https://github.com/DASPRiD/taxum
 
 To check out docs, visit [dasprid.github.io/taxum](https://dasprid.github.io/taxum/).
 
-## Changelog
-
-Detailed changes for each release are documented in the [CHANGELOG](https://github.com/dasprid/taxum/blob/main/packages/fs/CHANGELOG.md)
-
 ## License
 
 [BSD-3-Clause](https://github.com/dasprid/taxum/blob/main/LICENSE)
