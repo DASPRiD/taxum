@@ -11,7 +11,10 @@ import type { Service } from "./service.js";
  */
 export type ErrorHandler = (error: unknown) => HttpResponse;
 
-const defaultErrorHandler = (error: unknown) => {
+/**
+ * The default error handler which converts any error into a response.
+ */
+export const defaultErrorHandler = (error: unknown) => {
     if (isToHttpResponse(error)) {
         const res = error.toHttpResponse();
 
