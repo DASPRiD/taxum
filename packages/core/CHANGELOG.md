@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/DASPRiD/taxum/compare/core-v0.1.0...core-v0.1.1) (2025-08-11)
+
+
+### Bug Fixes
+
+* **core:** apply defaults to FnLayer templates ([843ca70](https://github.com/DASPRiD/taxum/commit/843ca7017541843cbaae216b365ccdb485696395))
+
 ## [0.1.0](https://github.com/DASPRiD/taxum/compare/core-v0.0.1...core-v0.1.0) (2025-08-11)
 
 

@@ -1,5 +1,5 @@
 {
-    "packages/core": "0.1.0",
-    "packages/fs": "0.1.0",
-    "packages/jwt": "0.1.0"
+    "packages/core": "0.1.1",
+    "packages/fs": "0.1.1",
+    "packages/jwt": "0.1.1"
 }
