@@ -1,17 +1,13 @@
 import assert from "node:assert";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import { type HttpRequest, HttpResponse, StatusCode, type ToHttpResponse } from "../http/index.js";
+import { type HttpRequest, StatusCode } from "../http/index.js";
 import { PATH_PARAMS } from "../routing/index.js";
 import { ValidationError } from "./error.js";
 import type { Extractor } from "./index.js";
 
-export class InvalidPathParamsError extends ValidationError implements ToHttpResponse {
+export class InvalidPathParamsError extends ValidationError {
     public constructor(issues: readonly StandardSchemaV1.Issue[]) {
-        super(issues, "path_param");
-    }
-
-    public toHttpResponse(): HttpResponse {
-        return HttpResponse.builder().status(StatusCode.BAD_REQUEST).body("Invalid path params");
+        super(StatusCode.BAD_REQUEST, "Invalid path params", issues, "path");
     }
 }
 
@@ -22,6 +18,26 @@ export class InvalidPathParamsError extends ValidationError implements ToHttpRes
  *
  * If the params cannot be parsed, it will reject the request with a
  * `400 Bad Request` response.
+ *
+ * @example
+ * ```ts
+ * import { pathParams } from "@taxum/core/extract";
+ * import { m, Router } from "@taxum/core/routing";
+ * import { z } from "zod";
+ *
+ * const pathParamsSchema = z.object({
+ *     foo: z.string(),
+ * });
+ *
+ * const handler = handler([pathParams(pathParamsSchema)], ({foo}) => {
+ *     // ...
+ * });
+ *
+ * const router = new Router()
+ *     .route("/users/:foo", m.post(handler));
+ * ```
+ *
+ * @throws {@link InvalidPathParamsError} if the params cannot be parsed.
  */
 export const pathParams =
     <T extends StandardSchemaV1>(schema: T): Extractor<StandardSchemaV1.InferOutput<T>> =>

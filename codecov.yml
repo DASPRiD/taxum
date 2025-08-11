@@ -7,6 +7,10 @@ component_management:
       name: Core
       paths:
         - packages/core/**
+    - component_id: fs
+      name: FS
+      paths:
+          - packages/fs/**
     - component_id: jwt
       name: JWT
       paths:

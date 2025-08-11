@@ -16,10 +16,18 @@ describe("layer:cors:vary", () => {
         const vary = Vary.list(headers);
         const header = vary.toHeader();
         assert.deepEqual(header, ["vary", "Origin, Content-Type"]);
+
+        const fromVary = Vary.from(["Origin", "Content-Type"]);
+        assert.deepEqual(fromVary, vary);
     });
 
     it("toHeader returns null if empty list", () => {
         const vary = Vary.list([]);
         assert.equal(vary.toHeader(), null);
+    });
+
+    it("returns original instance from from()", () => {
+        const vary = Vary.default();
+        assert.equal(Vary.from(vary), vary);
     });
 });

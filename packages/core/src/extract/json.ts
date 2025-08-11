@@ -1,43 +1,28 @@
 import consumers from "node:stream/consumers";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import MIMEType from "whatwg-mimetype";
-import {
-    type HeaderMap,
-    type HttpRequest,
-    HttpResponse,
-    StatusCode,
-    type ToHttpResponse,
-} from "../http/index.js";
-import { ValidationError } from "./error.js";
+import { type HeaderMap, type HttpRequest, StatusCode } from "../http/index.js";
+import { ExtractError, ValidationError } from "./error.js";
 import type { Extractor } from "./index.js";
 
-export class MissingJsonContentTypeError implements ToHttpResponse {
-    public toHttpResponse(): HttpResponse {
-        return HttpResponse.builder()
-            .status(StatusCode.UNSUPPORTED_MEDIA_TYPE)
-            .body("Expected request with `Content-Type: application/json`");
+export class MissingJsonContentTypeError extends ExtractError {
+    public constructor() {
+        super(
+            StatusCode.UNSUPPORTED_MEDIA_TYPE,
+            "Expected request with `Content-Type: application/json`",
+        );
     }
 }
 
-export class MalformedJsonError implements ToHttpResponse {
-    public readonly reason: string;
-
+export class MalformedJsonError extends ExtractError {
     public constructor(reason: string) {
-        this.reason = reason;
-    }
-
-    public toHttpResponse(): HttpResponse {
-        return HttpResponse.builder().status(StatusCode.BAD_REQUEST).body(this.reason);
+        super(StatusCode.BAD_REQUEST, reason);
     }
 }
 
-export class InvalidJsonError extends ValidationError implements ToHttpResponse {
+export class InvalidJsonError extends ValidationError {
     public constructor(issues: readonly StandardSchemaV1.Issue[]) {
-        super(issues, "body");
-    }
-
-    public toHttpResponse(): HttpResponse {
-        return HttpResponse.builder().status(StatusCode.UNPROCESSABLE_CONTENT).body("Invalid JSON");
+        super(StatusCode.UNPROCESSABLE_CONTENT, "Invalid JSON", issues, "body");
     }
 }
 
@@ -74,6 +59,10 @@ export class InvalidJsonError extends ValidationError implements ToHttpResponse 
  * const router = new Router()
  *     .route("/users", m.post(handler));
  * ```
+ *
+ * @throws {@link MissingJsonContentTypeError} if the request is lacking a JSON content type.
+ * @throws {@link MalformedJsonError} if the body is malformed.
+ * @throws {@link InvalidJsonError} if the JSON cannot be parsed.
  */
 export const json =
     <T extends StandardSchemaV1>(schema: T): Extractor<StandardSchemaV1.InferOutput<T>> =>

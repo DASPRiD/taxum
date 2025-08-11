@@ -14,6 +14,7 @@ import {
     NESTED_PATH,
     PATH_PARAMS,
     PathRouter,
+    ROUTE_NOT_FOUND,
     type Service,
 } from "../../src/routing/index.js";
 import { Route } from "../../src/routing/route.js";
@@ -32,15 +33,20 @@ describe("routing:PathRouter", () => {
         assert.equal(res?.status.code, 200);
     });
 
-    it("returns null if route is not found", async () => {
+    it("throws RouteNotFound if route is not found", async () => {
         const router = PathRouter.default();
         router.route(
             "/foo",
             m.get(() => "hello"),
         );
 
-        const res = await router.invoke(makeRequest("/does-not-exist"));
-        assert.equal(res, null);
+        try {
+            await router.invoke(makeRequest("/bar"));
+            assert.fail("Expected RouteNotFound");
+        } catch (error) {
+            assert.equal(error, ROUTE_NOT_FOUND);
+            return;
+        }
     });
 
     it("extracts path parameters", async () => {

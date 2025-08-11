@@ -6,5 +6,13 @@
     "includeVersion": false,
     "packageOptions": {
         "includeVersion": true
+    },
+    "plugin": ["typedoc-theme-oxide", "typedoc-plugin-mdn-links"],
+    "theme": "oxide",
+    "externalSymbolLinkMappings": {
+        "@types/node": {
+            "\"http\".IncomingMessage": "https://nodejs.org/api/http.html#class-httpincomingmessage",
+            "\"http\".ServerResponse": "https://nodejs.org/api/http.html#class-httpserverresponse"
+        }
     }
 }

@@ -10,7 +10,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { AddressInfo } from "node:net";
 import { HttpRequest } from "../http/index.js";
 import { getGlobalLogger } from "../logger/index.js";
-import type { Router } from "../routing/index.js";
+import type { Service } from "../routing/index.js";
 
 /**
  * Configuration options for starting a server.
@@ -70,11 +70,13 @@ export type ServeConfig = {
 };
 
 /**
- * Serve a router.
+ * Serve any service via HTTP.
  *
- * This method of running a service is intentionally simple and only supports the minimally required configuration.
- * If you need to support HTTPS and/or HTTP2, you should create your own listener. In most cases this should not be
- * required, as TLS termination and HTTP2 is usually handled by a reverse proxy in production.
+ * This method of running a service is intentionally simple and only supports
+ * the minimally required configuration. If you need to support HTTPS and/or
+ * HTTP2, you should create your own listener. In most cases this should not be
+ * required, as TLS termination and HTTP2 are usually handled by a reverse proxy
+ * in production.
  *
  * @example
  * ```ts
@@ -88,11 +90,11 @@ export type ServeConfig = {
  * });
  * ```
  */
-export const serve = async (router: Router, config?: ServeConfig): Promise<void> => {
+export const serve = async (service: Service, config?: ServeConfig): Promise<void> => {
     const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
         try {
             const httpRequests = HttpRequest.fromIncomingMessage(req, config?.trustProxy ?? false);
-            const response = await router.invoke(httpRequests);
+            const response = await service.invoke(httpRequests);
             await response.write(res);
         } catch (error) {
             getGlobalLogger().error("Uncaught error in router", error);

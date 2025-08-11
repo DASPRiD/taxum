@@ -1,14 +1,14 @@
 import assert from "node:assert";
 import { HeaderMap, type HttpRequest, HttpResponse, Method } from "../../http/index.js";
 import type { Layer, Service } from "../../routing/index.js";
-import { AllowCredentials } from "./allow-credentials.js";
-import { AllowHeaders } from "./allow-headers.js";
-import { AllowMethods } from "./allow-methods.js";
-import { AllowOrigin } from "./allow-origin.js";
-import { AllowPrivateNetwork } from "./allow-private-network.js";
-import { ExposeHeaders } from "./expose-headers.js";
-import { MaxAge } from "./max-age.js";
-import { Vary } from "./vary.js";
+import { AllowCredentials, type AllowCredentialsLike } from "./allow-credentials.js";
+import { AllowHeaders, type AllowHeadersLike } from "./allow-headers.js";
+import { AllowMethods, type AllowMethodsLike } from "./allow-methods.js";
+import { AllowOrigin, type AllowOriginLike } from "./allow-origin.js";
+import { AllowPrivateNetwork, type AllowPrivateNetworkLike } from "./allow-private-network.js";
+import { ExposeHeaders, type ExposeHeadersLike } from "./expose-headers.js";
+import { MaxAge, type MaxAgeLike } from "./max-age.js";
+import { Vary, type VaryLike } from "./vary.js";
 
 export * from "./allow-credentials.js";
 export * from "./allow-headers.js";
@@ -17,6 +17,7 @@ export * from "./allow-origin.js";
 export * from "./allow-private-network.js";
 export * from "./expose-headers.js";
 export * from "./max-age.js";
+export * from "./support.js";
 export * from "./vary.js";
 
 /**
@@ -31,6 +32,8 @@ export * from "./vary.js";
  *     .route("/", m.get(() => "Hello World))
  *     .layer(CorsLayer.permissive());
  * ```
+ *
+ * @see [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
  */
 export class CorsLayer implements Layer {
     private allowCredentials_ = AllowCredentials.default();
@@ -42,6 +45,14 @@ export class CorsLayer implements Layer {
     private maxAge_ = MaxAge.default();
     private vary_ = Vary.default();
 
+    /**
+     * A permissive configuration:
+     *
+     * - All request headers allowed.
+     * - All methods allowed.
+     * - All origins allowed.
+     * - All headers exposed.
+     */
     public static permissive(): CorsLayer {
         return new CorsLayer()
             .allowHeaders(AllowHeaders.any())
@@ -50,6 +61,17 @@ export class CorsLayer implements Layer {
             .exposeHeaders(ExposeHeaders.any());
     }
 
+    /**
+     * A very permissive configuration:
+     *
+     * - **Credentials allowed.**
+     * - The method received in `Access-Control-Request-Method` is sent back
+     *   as an allowed method.
+     * - The origin of the preflight request is sent back as an allowed origin.
+     * - The header names received in `Access-Control-Request-Headers` are sent
+     *   back as allowed headers.
+     * - No headers are currently exposed, but this may change in the future.
+     */
     public static veryPermissive(): CorsLayer {
         return new CorsLayer()
             .allowCredentials(AllowCredentials.yes())
@@ -58,46 +80,223 @@ export class CorsLayer implements Layer {
             .allowOrigin(AllowOrigin.mirrorRequest());
     }
 
-    public allowCredentials(allowCredentials: AllowCredentials): this {
-        this.allowCredentials_ = allowCredentials;
+    /**
+     * Sets the `Access-Control-Allow-Credentials` header.
+     *
+     * @see [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials)
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer } from "@taxum/core/layer/cors";
+     *
+     * const layer = CorsLayer.default().allowCredentials(true);
+     * ```
+     */
+    public allowCredentials(allowCredentials: AllowCredentialsLike): this {
+        this.allowCredentials_ = AllowCredentials.from(allowCredentials);
         return this;
     }
 
-    public allowHeaders(allowHeaders: AllowHeaders): this {
-        this.allowHeaders_ = allowHeaders;
+    /**
+     * Sets the `Access-Control-Allow-Headers` header.
+     *
+     * Note that `Access-Control-Allow-Headers` is required for requests that have
+     * `Access-Control-Request-Headers`.
+     *
+     * @see [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Headers)
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer } from "@taxum/core/layer/cors";
+     *
+     * const layer = CorsLayer.default().allowHeaders(["authorization", "accept"]);
+     * ```
+     *
+     * All headers can be allowed with:
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer, ANY } from "@taxum/core/layer/cors";
+     *
+     * const layer = CorsLayer.default().allowHeaders(ANY);
+     * ```
+     */
+    public allowHeaders(allowHeaders: AllowHeadersLike): this {
+        this.allowHeaders_ = AllowHeaders.from(allowHeaders);
         return this;
     }
 
-    public allowMethods(allowMethods: AllowMethods): this {
-        this.allowMethods_ = allowMethods;
+    /**
+     * Sets the `Access-Control-Allow-Methods` header.
+     *
+     * @see [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Methods)
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer } from "@taxum/core/layer/cors";
+     *
+     * const layer = CorsLayer.default().allowMethods(["GET", "POST"]);
+     * ```
+     *
+     * All methods can be allowed with:
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer, ANY } from "@taxum/core/layer/cors";
+     *
+     * const layer = CorsLayer.default().allowMethods(ANY);
+     * ```
+     */
+    public allowMethods(allowMethods: AllowMethodsLike): this {
+        this.allowMethods_ = AllowMethods.from(allowMethods);
         return this;
     }
 
-    public allowOrigin(allowOrigin: AllowOrigin): this {
-        this.allowOrigin_ = allowOrigin;
+    /**
+     * Sets the `Access-Control-Allow-Origin` header.
+     *
+     * @see [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin)
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer } from "@taxum/core/layer/cors";
+     *
+     * const layer = CorsLayer.default().allowOrigin("https://example.com");
+     * ```
+     *
+     * Multiple origins can be allowed with:
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer } from "@taxum/core/layer/cors";
+     *
+     * const layer = CorsLayer.default().allowOrigin(["http://example.com", "https://api.example.com"]);
+     * ```
+     *
+     * All origins can be allowed with:
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer, ANY } from "@taxum/core/layer/cors";
+     *
+     * const layer = CorsLayer.default().allowOrigin(ANY);
+     * ```
+     *
+     * You can also use a function to dynamically determine the allowed origin:
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer, ANY } from "@taxum/core/layer/cors";
+     *
+     * const layer = CorsLayer.default().allowOrigin((origin, parts) => {
+     *     if (req.head.headers.get("x-custom-header") === "true") {
+     *         return "https://example.com";
+     *     }
+     * });
+     */
+    public allowOrigin(allowOrigin: AllowOriginLike): this {
+        this.allowOrigin_ = AllowOrigin.from(allowOrigin);
         return this;
     }
 
-    public allowPrivateNetwork(allowPrivateNetwork: AllowPrivateNetwork): this {
-        this.allowPrivateNetwork_ = allowPrivateNetwork;
+    /**
+     * Sets the `Access-Control-Allow-Private-Network` header.
+     *
+     * @see [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Private-Network)
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer } from "@taxum/core/layer/cors";
+     *
+     * const layer = CorsLayer.default().allowPrivateNetwork(true);
+     * ```
+     */
+    public allowPrivateNetwork(allowPrivateNetwork: AllowPrivateNetworkLike): this {
+        this.allowPrivateNetwork_ = AllowPrivateNetwork.from(allowPrivateNetwork);
         return this;
     }
 
-    public exposeHeaders(exposeHeaders: ExposeHeaders): this {
-        this.exposeHeaders_ = exposeHeaders;
+    /**
+     * Sets the `Access-Control-Expose-Headers` header.
+     *
+     * @see [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Expose-Headers)
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer } from "@taxum/core/layer/cors";
+     *
+     * const layer = CorsLayer.default().exposeHeaders(["content-encoding"]);
+     * ````
+     *
+     * All headers can be allowed with:
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer, ANY } from "@taxum/core/layer/cors";
+     *
+     * const layer = CorsLayer.default().exposeHeaders(ANY);
+     * ```
+     */
+    public exposeHeaders(exposeHeaders: ExposeHeadersLike): this {
+        this.exposeHeaders_ = ExposeHeaders.from(exposeHeaders);
         return this;
     }
 
-    public maxAge(maxAge: MaxAge): this {
-        this.maxAge_ = maxAge;
+    /**
+     * Sets the `Access-Control-Max-Age` header.
+     *
+     * @see [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age)
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer } from "@taxum/core/layer/cors";
+     *
+     * const layer = CorsLayer.default().maxAge(600);
+     * ```
+     *
+     * By default, the header will not be set which disables caching and will
+     * require a preflight request for each request.
+     *
+     * Note that each browser has a maximum internal value that takes precedence
+     * when the `Access-Control-Max-Age` header is greater.
+     *
+     * If you need more flexibility, you can supply a function which can
+     * dynamically decide the max-age based on the origin and other parts of
+     * each preflight request:
+     *
+     * @example
+     * ```ts
+     * import { CorsLayer } from "@taxum/core/layer/cors";
+     * import { MaxAge } from "@taxum/core/layer/cors/max-age";
+     *
+     * const layer = CorsLayer.default().maxAge((origin, parts) => 600);
+     * ```
+     */
+    public maxAge(maxAge: MaxAgeLike): this {
+        this.maxAge_ = MaxAge.from(maxAge);
         return this;
     }
 
-    public vary(vary: Vary): this {
-        this.vary_ = vary;
+    /**
+     * Sets the `Vary` header.
+     *
+     * In contrast to other headers, this one has a non-empty default of
+     * {@link PREFLIGHT_REQUEST_HEADERS}.
+     *
+     * You only need to set this if you want to remove some of these defaults,
+     * or if you use a function for one of the other headers and want to add a
+     * `vary` header accordingly.
+     *
+     * @see [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Vary)
+     */
+    public vary(vary: VaryLike): this {
+        this.vary_ = Vary.from(vary);
         return this;
     }
 
+    /**
+     * @throws {@link !Error} if the CORS configuration is invalid.
+     */
     public layer(inner: Service): Service {
         this.ensureUsableCorsRules();
 

@@ -1,33 +1,22 @@
 import consumers from "node:stream/consumers";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { parseSearchParams } from "nested-search-params";
-import {
-    type HttpRequest,
-    HttpResponse,
-    Method,
-    StatusCode,
-    type ToHttpResponse,
-} from "../http/index.js";
-import { ValidationError } from "./error.js";
+import { type HttpRequest, Method, StatusCode } from "../http/index.js";
+import { ExtractError, ValidationError } from "./error.js";
 import type { Extractor } from "./index.js";
 
-export class MissingFormDataContentTypeError implements ToHttpResponse {
-    public toHttpResponse(): HttpResponse {
-        return HttpResponse.builder()
-            .status(StatusCode.UNSUPPORTED_MEDIA_TYPE)
-            .body("Expected request with `Content-Type: application/x-www-form-urlencoded`");
+export class MissingFormDataContentTypeError extends ExtractError {
+    public constructor() {
+        super(
+            StatusCode.UNSUPPORTED_MEDIA_TYPE,
+            "Expected request with `Content-Type: application/x-www-form-urlencoded`",
+        );
     }
 }
 
-export class InvalidFormDataError extends ValidationError implements ToHttpResponse {
+export class InvalidFormDataError extends ValidationError {
     public constructor(issues: readonly StandardSchemaV1.Issue[]) {
-        super(issues, "body");
-    }
-
-    public toHttpResponse(): HttpResponse {
-        return HttpResponse.builder()
-            .status(StatusCode.UNPROCESSABLE_CONTENT)
-            .body("Invalid form data");
+        super(StatusCode.UNPROCESSABLE_CONTENT, "Invalid form data", issues, "body");
     }
 }
 
@@ -38,7 +27,7 @@ export class InvalidFormDataError extends ValidationError implements ToHttpRespo
  *
  * The source of the form data depends on the request method:
  *
- * - If the request has a method of `GET` or `HEAD", the form data will be read
+ * - If the request has a method of `GET` or `HEAD`, the form data will be read
  *   from the query string.
  * - If the request has a different method, the form will be read from the body
  *   of the request. It must have a `content-type` of
@@ -73,6 +62,9 @@ export class InvalidFormDataError extends ValidationError implements ToHttpRespo
  * const router = new Router()
  *     .route("/users", m.post(handler));
  * ```
+ *
+ * @throws {@link MissingFormDataContentTypeError} if the request is not `GET` or `HEAD` and is lacking a form data content type.
+ * @throws {@link InvalidFormDataError} if the form data cannot be parsed.
  */
 export const form =
     <T extends StandardSchemaV1>(schema: T): Extractor<StandardSchemaV1.InferOutput<T>> =>

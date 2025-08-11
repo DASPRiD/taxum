@@ -29,12 +29,18 @@ describe("layer:cors:allow-private-network", () => {
             "true",
         ]);
         assert.equal(apn.toHeader("https://example.com", createParts(false)), null);
+
+        const fromApn = AllowPrivateNetwork.from(true);
+        assert.deepEqual(fromApn, apn);
     });
 
     it("no returns null regardless of request header", () => {
         const apn = AllowPrivateNetwork.no();
         assert.equal(apn.toHeader("https://example.com", createParts(true)), null);
         assert.equal(apn.toHeader("https://example.com", createParts(false)), null);
+
+        const fromApn = AllowPrivateNetwork.from(false);
+        assert.deepEqual(fromApn, apn);
     });
 
     it("predicate returns header only if predicate returns true and request header is 'true'", () => {
@@ -47,6 +53,9 @@ describe("layer:cors:allow-private-network", () => {
         ]);
         assert.equal(apn.toHeader("https://notallowed.com", createParts(true)), null);
         assert.equal(apn.toHeader("https://allowed.com", createParts(false)), null);
+
+        const fromApn = AllowPrivateNetwork.from(pred);
+        assert.deepEqual(fromApn, apn);
     });
 
     it("toHeader returns null if origin is null and inner is predicate", () => {
@@ -54,5 +63,10 @@ describe("layer:cors:allow-private-network", () => {
         const apn = AllowPrivateNetwork.predicate(pred);
 
         assert.equal(apn.toHeader(null, createParts(true)), null);
+    });
+
+    it("returns original instance from from()", () => {
+        const apn = AllowPrivateNetwork.default();
+        assert.equal(AllowPrivateNetwork.from(apn), apn);
     });
 });

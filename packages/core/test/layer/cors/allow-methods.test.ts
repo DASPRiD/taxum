@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { HeaderMap, Method, Parts } from "../../../src/http/index.js";
-import { AllowMethods } from "../../../src/layer/cors/index.js";
+import { AllowMethods, ANY, MIRROR_REQUEST } from "../../../src/layer/cors/index.js";
 
 describe("layer:cors:allow-methods", () => {
     const partsWithRequestMethod = new Parts(
@@ -26,6 +26,9 @@ describe("layer:cors:allow-methods", () => {
     it("none returns null header", () => {
         const am = AllowMethods.none();
         assert.equal(am.toHeader(partsWithRequestMethod), null);
+
+        const fromAm = AllowMethods.from(null);
+        assert.deepEqual(fromAm, am);
     });
 
     it("any returns wildcard *", () => {
@@ -35,6 +38,9 @@ describe("layer:cors:allow-methods", () => {
             "access-control-allow-methods",
             "*",
         ]);
+
+        const fromAm = AllowMethods.from(ANY);
+        assert.deepEqual(fromAm, am);
     });
 
     it("exact returns single method string", () => {
@@ -44,6 +50,21 @@ describe("layer:cors:allow-methods", () => {
             "access-control-allow-methods",
             "PATCH",
         ]);
+
+        const fromAm = AllowMethods.from("PATCH");
+        assert.deepEqual(fromAm, am);
+    });
+
+    it("exact with Method instance returns single method string", () => {
+        const am = AllowMethods.exact(Method.PATCH);
+        assert(!am.isWildcard());
+        assert.deepEqual(am.toHeader(partsWithRequestMethod), [
+            "access-control-allow-methods",
+            "PATCH",
+        ]);
+
+        const fromAm = AllowMethods.from(Method.PATCH);
+        assert.deepEqual(fromAm, am);
     });
 
     it("list returns joined methods string", () => {
@@ -53,6 +74,21 @@ describe("layer:cors:allow-methods", () => {
             "access-control-allow-methods",
             "PUT,DELETE",
         ]);
+
+        const fromAm = AllowMethods.from(["PUT", "DELETE"]);
+        assert.deepEqual(fromAm, am);
+    });
+
+    it("list with Method instances returns joined methods string", () => {
+        const am = AllowMethods.list([Method.PUT, Method.DELETE]);
+        assert(!am.isWildcard());
+        assert.deepEqual(am.toHeader(partsWithRequestMethod), [
+            "access-control-allow-methods",
+            "PUT,DELETE",
+        ]);
+
+        const fromAm = AllowMethods.from([Method.PUT, Method.DELETE]);
+        assert.deepEqual(fromAm, am);
     });
 
     it("mirrorRequest mirrors access-control-request-method when present", () => {
@@ -61,6 +97,9 @@ describe("layer:cors:allow-methods", () => {
             "access-control-allow-methods",
             "POST",
         ]);
+
+        const fromAm = AllowMethods.from(MIRROR_REQUEST);
+        assert.deepEqual(fromAm, am);
     });
 
     it("mirrorRequest returns null if access-control-request-method not present", () => {
@@ -72,5 +111,10 @@ describe("layer:cors:allow-methods", () => {
         assert(AllowMethods.any().isWildcard());
         assert(!AllowMethods.none().isWildcard());
         assert(!AllowMethods.exact("GET").isWildcard());
+    });
+
+    it("returns original instance from from()", () => {
+        const am = AllowMethods.default();
+        assert.equal(AllowMethods.from(am), am);
     });
 });

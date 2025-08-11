@@ -15,6 +15,9 @@ export class HttpResponse {
     public body: Body;
     public extensions: Extensions;
 
+    /**
+     * Creates a new {@link HttpResponse}.
+     */
     public constructor(
         status: StatusCode,
         headers: HeaderMap,
@@ -28,8 +31,7 @@ export class HttpResponse {
     }
 
     /**
-     * Creates a new immutable `HttpResponse` instance from the given
-     * {@link HttpResponseLike} object.
+     * Creates a new {@link HttpResponse} from a {@link HttpResponseLike} value.
      */
     public static from(response: HttpResponseLike): HttpResponse {
         if (isHttpResponseLikePart(response)) {
@@ -70,7 +72,7 @@ export class HttpResponse {
     }
 
     /**
-     * Creates and returns a new instance of the HttpResponseBuilder.
+     * Creates a new {@link HttpResponseBuilder}.
      */
     public static builder(): HttpResponseBuilder {
         return new HttpResponseBuilder();
@@ -78,7 +80,7 @@ export class HttpResponse {
 
     /**
      * Writes the response data, including headers and body, to the provided
-     * `ServerResponse`.
+     * {@link ServerResponse}.
      */
     public async write(res: ServerResponse): Promise<void> {
         res.writeHead(

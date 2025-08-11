@@ -19,11 +19,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           scopes: |
-            server
-            openapi
-            client
-            integration-([a-z-]+)
-            docs
+            core
+            fs
+            jwt
+            examples
           subjectPattern: ^(?![A-Z]).+$
           subjectPatternError: |
             The subject "{subject}" found in the pull request title "{title}"

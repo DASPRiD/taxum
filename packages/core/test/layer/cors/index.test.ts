@@ -11,17 +11,7 @@ import {
     noContentResponse,
     StatusCode,
 } from "../../../src/http/index.js";
-import {
-    AllowCredentials,
-    AllowHeaders,
-    AllowMethods,
-    AllowOrigin,
-    AllowPrivateNetwork,
-    CorsLayer,
-    ExposeHeaders,
-    MaxAge,
-    Vary,
-} from "../../../src/layer/cors/index.js";
+import { ANY, CorsLayer } from "../../../src/layer/cors/index.js";
 import type { Service } from "../../../src/routing/index.js";
 
 describe("layer:cors:index", () => {
@@ -47,9 +37,7 @@ describe("layer:cors:index", () => {
         });
 
         it("allowCredentials cannot be combined with wildcard headers", () => {
-            const layer = new CorsLayer()
-                .allowCredentials(AllowCredentials.yes())
-                .allowHeaders(AllowHeaders.any());
+            const layer = new CorsLayer().allowCredentials(true).allowHeaders(ANY);
 
             assert.throws(() => {
                 layer.layer(dummyService);
@@ -57,9 +45,7 @@ describe("layer:cors:index", () => {
         });
 
         it("allowCredentials cannot be combined with wildcard methods", () => {
-            const layer = new CorsLayer()
-                .allowCredentials(AllowCredentials.yes())
-                .allowMethods(AllowMethods.any());
+            const layer = new CorsLayer().allowCredentials(true).allowMethods(ANY);
 
             assert.throws(() => {
                 layer.layer(dummyService);
@@ -67,9 +53,7 @@ describe("layer:cors:index", () => {
         });
 
         it("allowCredentials cannot be combined with wildcard origin", () => {
-            const layer = new CorsLayer()
-                .allowCredentials(AllowCredentials.yes())
-                .allowOrigin(AllowOrigin.any());
+            const layer = new CorsLayer().allowCredentials(true).allowOrigin(ANY);
 
             assert.throws(() => {
                 layer.layer(dummyService);
@@ -77,9 +61,7 @@ describe("layer:cors:index", () => {
         });
 
         it("allowCredentials cannot be combined with wildcard expose", () => {
-            const layer = new CorsLayer()
-                .allowCredentials(AllowCredentials.yes())
-                .exposeHeaders(ExposeHeaders.any());
+            const layer = new CorsLayer().allowCredentials(true).exposeHeaders(ANY);
 
             assert.throws(() => {
                 layer.layer(dummyService);
@@ -108,10 +90,10 @@ describe("layer:cors:index", () => {
 
         it("adds correct CORS headers on OPTIONS request", async () => {
             const cors = new CorsLayer()
-                .allowMethods(AllowMethods.any())
-                .allowHeaders(AllowHeaders.any())
-                .allowOrigin(AllowOrigin.any())
-                .maxAge(MaxAge.exact(60))
+                .allowMethods(ANY)
+                .allowHeaders(ANY)
+                .allowOrigin(ANY)
+                .maxAge(60)
                 .layer(dummyService);
 
             const req = makeRequest(Method.OPTIONS, "https://example.com", {
@@ -141,11 +123,11 @@ describe("layer:cors:index", () => {
             };
 
             const cors = new CorsLayer()
-                .allowCredentials(AllowCredentials.yes())
-                .allowOrigin(AllowOrigin.exact("https://example.com"))
-                .exposeHeaders(ExposeHeaders.list(["X-Custom-Header"]))
-                .allowPrivateNetwork(AllowPrivateNetwork.yes())
-                .vary(Vary.list(["Accept-Encoding"]))
+                .allowCredentials(true)
+                .allowOrigin("https://example.com")
+                .exposeHeaders(["X-Custom-Header"])
+                .allowPrivateNetwork(true)
+                .vary(["Accept-Encoding"])
                 .layer(innerService);
 
             const req = makeRequest(Method.GET, "https://example.com");

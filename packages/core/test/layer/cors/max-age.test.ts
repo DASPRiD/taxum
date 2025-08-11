@@ -14,6 +14,9 @@ describe("layer:cors:max-age", () => {
     it("none returns null", () => {
         const maxAge = MaxAge.none();
         assert.equal(maxAge.toHeader("https://example.com", parts), null);
+
+        const fromMaxAge = MaxAge.from(null);
+        assert.deepEqual(fromMaxAge, maxAge);
     });
 
     it("exact returns header with string value", () => {
@@ -22,6 +25,9 @@ describe("layer:cors:max-age", () => {
             "access-control-max-age",
             "3600",
         ]);
+
+        const fromMaxAge = MaxAge.from(3600);
+        assert.deepEqual(fromMaxAge, maxAge);
     });
 
     it("dynamic returns header with function result", () => {
@@ -35,11 +41,19 @@ describe("layer:cors:max-age", () => {
             "access-control-max-age",
             "1234",
         ]);
+
+        const fromMaxAge = MaxAge.from(fn);
+        assert.deepEqual(fromMaxAge, maxAge);
     });
 
     it("dynamic returns null if origin is null", () => {
         const fn: DynamicMaxAge = () => 1234;
         const maxAge = MaxAge.dynamic(fn);
         assert.equal(maxAge.toHeader(null, parts), null);
+    });
+
+    it("returns original instance from from()", () => {
+        const maxAge = MaxAge.default();
+        assert.equal(MaxAge.from(maxAge), maxAge);
     });
 });

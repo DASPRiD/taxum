@@ -23,6 +23,8 @@ import type { ExtensionKey, HttpRequest } from "../http/index.js";
  * const router = new Router()
  *     .route("/users", m.get(handler));
  * ```
+ *
+ * @throws {@link !Error} if the extension is missing and `required` is true.
  */
 export const extension =
     <T, B extends boolean = false>(key: ExtensionKey<T>, required?: B) =>

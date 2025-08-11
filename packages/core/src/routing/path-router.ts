@@ -32,7 +32,7 @@ export const NESTED_PATH = new ExtensionKey<string>("NestedPath");
 /**
  * @internal
  */
-export class PathRouter {
+export class PathRouter implements Service {
     private readonly routes: Map<number, Endpoint>;
     private readonly node: Node;
     private prevRouteId: number;
@@ -178,11 +178,11 @@ export class PathRouter {
         }
     }
 
-    public async invoke(req: HttpRequest): Promise<HttpResponse | null> {
+    public async invoke(req: HttpRequest): Promise<HttpResponse> {
         const match = this.node.at(req.uri.pathname);
 
         if (!match) {
-            return null;
+            throw ROUTE_NOT_FOUND;
         }
 
         req.extensions.insert(PATH_PARAMS, match.pathParams);
@@ -202,6 +202,8 @@ export class PathRouter {
         return nextId;
     }
 }
+
+export const ROUTE_NOT_FOUND = Symbol("RouteNotFound");
 
 class NestedPath<T> implements Service<T> {
     private readonly inner: Service<T>;

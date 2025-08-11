@@ -18,12 +18,18 @@ describe("layer:cors:allow-credentials", () => {
             "access-control-allow-credentials",
             "true",
         ]);
+
+        const fromAc = AllowCredentials.from(true);
+        assert.deepEqual(fromAc, ac);
     });
 
     it("no returns false", () => {
         const ac = AllowCredentials.no();
         assert.equal(ac.isTrue(), false);
         assert.equal(ac.toHeader("https://example.com", parts), null);
+
+        const fromAc = AllowCredentials.from(false);
+        assert.deepEqual(fromAc, ac);
     });
 
     it("predicate returns true when predicate returns true", () => {
@@ -38,6 +44,9 @@ describe("layer:cors:allow-credentials", () => {
 
         assert.equal(ac.toHeader("https://notallowed.com", parts), null);
         assert.equal(ac.toHeader(null, parts), null);
+
+        const fromAc = AllowCredentials.from(pred);
+        assert.deepEqual(fromAc, ac);
     });
 
     it("toHeader returns header if origin is null and inner is boolean true", () => {
@@ -49,5 +58,10 @@ describe("layer:cors:allow-credentials", () => {
         const pred: AllowCredentialsPredicate = () => false;
         const ac = AllowCredentials.predicate(pred);
         assert.equal(ac.toHeader("https://any.com", parts), null);
+    });
+
+    it("returns original instance from from()", () => {
+        const ac = AllowCredentials.default();
+        assert.equal(AllowCredentials.from(ac), ac);
     });
 });

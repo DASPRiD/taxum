@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { HeaderMap, Method, Parts } from "../../../src/http/index.js";
-import { AllowHeaders } from "../../../src/layer/cors/index.js";
+import { AllowHeaders, ANY, MIRROR_REQUEST } from "../../../src/layer/cors/index.js";
 
 describe("layer:cors:allow-headers", () => {
     const partsWithRequestHeaders = new Parts(
@@ -28,6 +28,9 @@ describe("layer:cors:allow-headers", () => {
     it("none returns null header", () => {
         const ah = AllowHeaders.none();
         assert.equal(ah.toHeader(partsWithRequestHeaders), null);
+
+        const fromAh = AllowHeaders.from(null);
+        assert.deepEqual(fromAh, ah);
     });
 
     it("any returns wildcard *", () => {
@@ -37,6 +40,9 @@ describe("layer:cors:allow-headers", () => {
             "access-control-allow-headers",
             "*",
         ]);
+
+        const fromAh = AllowHeaders.from(ANY);
+        assert.deepEqual(fromAh, ah);
     });
 
     it("list returns joined headers string", () => {
@@ -46,6 +52,9 @@ describe("layer:cors:allow-headers", () => {
             "access-control-allow-headers",
             "X-Foo,X-Bar",
         ]);
+
+        const fromAh = AllowHeaders.from(["X-Foo", "X-Bar"]);
+        assert.deepEqual(fromAh, ah);
     });
 
     it("mirrorRequest mirrors access-control-request-headers when present", () => {
@@ -54,6 +63,9 @@ describe("layer:cors:allow-headers", () => {
             "access-control-allow-headers",
             "X-Custom-Header, X-Another-Header",
         ]);
+
+        const fromAh = AllowHeaders.from(MIRROR_REQUEST);
+        assert.deepEqual(fromAh, ah);
     });
 
     it("mirrorRequest returns null if access-control-request-headers not present", () => {
@@ -65,5 +77,10 @@ describe("layer:cors:allow-headers", () => {
         assert(AllowHeaders.any().isWildcard());
         assert(!AllowHeaders.none().isWildcard());
         assert(!AllowHeaders.list(["X"]).isWildcard());
+    });
+
+    it("returns original instance from from()", () => {
+        const ah = AllowHeaders.default();
+        assert.equal(AllowHeaders.from(ah), ah);
     });
 });

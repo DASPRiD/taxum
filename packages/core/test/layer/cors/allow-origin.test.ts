@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { HeaderMap, Method, Parts } from "../../../src/http/index.js";
-import { AllowOrigin, type AllowOriginPredicate } from "../../../src/layer/cors/index.js";
+import {
+    AllowOrigin,
+    type AllowOriginPredicate,
+    ANY,
+    MIRROR_REQUEST,
+} from "../../../src/layer/cors/index.js";
 
 describe("layer:cors:allow-origin", () => {
     const parts = new Parts(Method.GET, new URL("http://localhost"), "1.1", new HeaderMap());
@@ -19,6 +24,9 @@ describe("layer:cors:allow-origin", () => {
             "access-control-allow-origin",
             "*",
         ]);
+
+        const fromAo = AllowOrigin.from(ANY);
+        assert.deepEqual(fromAo, ao);
     });
 
     it("exact returns exact origin", async () => {
@@ -32,6 +40,9 @@ describe("layer:cors:allow-origin", () => {
             "access-control-allow-origin",
             "https://allowed.com",
         ]);
+
+        const fromAo = AllowOrigin.from("https://allowed.com");
+        assert.deepEqual(fromAo, ao);
     });
 
     it("list throws if '*' included", () => {
@@ -48,6 +59,9 @@ describe("layer:cors:allow-origin", () => {
             "https://allowed.com",
         ]);
         assert.equal(await ao.toHeader("https://notallowed.com", parts), null);
+
+        const fromAo = AllowOrigin.from(["https://allowed.com", "https://alsoallowed.com"]);
+        assert.deepEqual(fromAo, ao);
     });
 
     it("predicate returns true if predicate returns true", async () => {
@@ -60,6 +74,9 @@ describe("layer:cors:allow-origin", () => {
             "https://allowed.com",
         ]);
         assert.equal(await ao.toHeader("https://notallowed.com", parts), null);
+
+        const fromAo = AllowOrigin.from(pred);
+        assert.deepEqual(fromAo, ao);
     });
 
     it("predicate can return Promise<boolean>", async () => {
@@ -82,6 +99,9 @@ describe("layer:cors:allow-origin", () => {
             "https://any.com",
         ]);
         assert.equal(await ao.toHeader(null, parts), null);
+
+        const fromAo = AllowOrigin.from(MIRROR_REQUEST);
+        assert.deepEqual(fromAo, ao);
     });
 
     it("toHeader returns null if origin is null and inner is list or predicate", async () => {
@@ -90,5 +110,10 @@ describe("layer:cors:allow-origin", () => {
 
         const aoPred = AllowOrigin.predicate(() => true);
         assert.equal(await aoPred.toHeader(null, parts), null);
+    });
+
+    it("returns original instance from from()", () => {
+        const ao = AllowOrigin.default();
+        assert.equal(AllowOrigin.from(ao), ao);
     });
 });

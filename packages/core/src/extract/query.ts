@@ -1,16 +1,12 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { parseSearchParams } from "nested-search-params";
-import { type HttpRequest, HttpResponse, StatusCode, type ToHttpResponse } from "../http/index.js";
+import { type HttpRequest, StatusCode } from "../http/index.js";
 import { ValidationError } from "./error.js";
 import type { Extractor } from "./index.js";
 
-export class InvalidQueryDataError extends ValidationError implements ToHttpResponse {
+export class InvalidQueryDataError extends ValidationError {
     public constructor(issues: readonly StandardSchemaV1.Issue[]) {
-        super(issues, "search_params");
-    }
-
-    public toHttpResponse(): HttpResponse {
-        return HttpResponse.builder().status(StatusCode.BAD_REQUEST).body("Invalid query params");
+        super(StatusCode.BAD_REQUEST, "Invalid query params", issues, "search_params");
     }
 }
 
@@ -41,6 +37,8 @@ export class InvalidQueryDataError extends ValidationError implements ToHttpResp
  * const router = new Router()
  *     .route("/users", m.get(handler));
  * ```
+ *
+ * @throws {@link InvalidQueryDataError} if the query cannot be parsed.
  */
 export const query =
     <T extends StandardSchemaV1>(schema: T): Extractor<StandardSchemaV1.InferOutput<T>> =>

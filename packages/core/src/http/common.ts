@@ -19,6 +19,16 @@ export const noContentResponse: ToHttpResponse = {
     },
 };
 
+/**
+ * Represents a type that can be serialized into JSON format.
+ *
+ * This type encompasses common JSON-compatible values including strings,
+ * numbers, booleans, null, arrays of JSON-serializable values, and objects
+ * with JSON-serializable properties.
+ *
+ * Additionally, it includes objects that implement a `toJSON` method to define
+ * their custom serialization logic.
+ */
 export type JsonSerializable =
     | string
     | number

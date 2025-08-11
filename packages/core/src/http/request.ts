@@ -17,6 +17,9 @@ export class Parts {
     public readonly headers: HeaderMap;
     public readonly extensions: Extensions;
 
+    /**
+     * Creates a new {@link Parts}.
+     */
     public constructor(
         method: Method,
         uri: URL,
@@ -31,10 +34,22 @@ export class Parts {
         this.extensions = extensions ?? new Extensions();
     }
 
+    /**
+     * Creates a new {@link Parts} with the provided URI.
+     */
     public withUri(uri: URL): Parts {
         return new Parts(this.method, uri, this.version, this.headers, this.extensions);
     }
 
+    /**
+     * Creates a new {@link Parts} from the provided {@link IncomingMessage}.
+     *
+     * If `trustProxy` is `true`, the `X-Forwarded-Proto` and `X-Forwarded-Host`
+     * headers will be used to determine the protocol and host of the request.
+     *
+     * Otherwise, the protocol and host will be determined from the
+     * `IncomingMessage`.
+     */
     public static fromIncomingMessage(message: IncomingMessage, trustProxy: boolean): Parts {
         const headers = HeaderMap.fromIncomingMessage(message);
         const localProtocol =
@@ -77,6 +92,9 @@ export class HttpRequest {
     public readonly body: Readable;
     public readonly connectInfo: SocketAddress;
 
+    /**
+     * Creates a new {@link HttpRequest}.
+     */
     public constructor(head: Parts, body: Readable, connectInfo?: SocketAddress) {
         this.head = head;
         this.body = body;
@@ -88,10 +106,19 @@ export class HttpRequest {
             });
     }
 
+    /**
+     * Creates a new {@link HttpRequestBuilder}.
+     */
     public static builder(): HttpRequestBuilder {
         return new HttpRequestBuilder();
     }
 
+    /**
+     * Creates a new {@link HttpRequest} from the provided {@link IncomingMessage}.
+     *
+     * @see {@link Parts.fromIncomingMessage} for more information about the `trustProxy`
+     *      parameter.
+     */
     public static fromIncomingMessage(message: IncomingMessage, trustProxy: boolean): HttpRequest {
         return new HttpRequest(
             Parts.fromIncomingMessage(message, trustProxy),
@@ -105,10 +132,16 @@ export class HttpRequest {
         );
     }
 
+    /**
+     * Creates a new {@link HttpRequest} with the provided body.
+     */
     public withBody(body: Readable): HttpRequest {
         return new HttpRequest(this.head, body, this.connectInfo);
     }
 
+    /**
+     * Creates a new {@link HttpRequest} with the provided URI.
+     */
     public withUri(uri: URL): HttpRequest {
         return new HttpRequest(this.head.withUri(uri), this.body, this.connectInfo);
     }

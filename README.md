@@ -1,6 +1,6 @@
-# taxum
+# Taxum
 
-`taxum` is a composable and type-safe HTTP framework for Node.js, heavily inspired by Rust's
+Taxum is a composable and type-safe HTTP framework for Node.js, heavily inspired by Rust's
 [Axum](https://github.com/tokio-rs/axum) and [Tower](https://github.com/tower-rs/tower). It brings the same declarative,
 middleware-driven architecture to the JavaScript/TypeScript ecosystem, combining ergonomic route composition with deep
 integration of the type system.

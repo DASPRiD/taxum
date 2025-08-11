@@ -18,14 +18,25 @@ export class Body implements ToHttpResponse {
     public readonly contentTypeHint: string | null;
     private inner: Readable | null;
 
+    /**
+     * Creates a new {@link Body}.
+     *
+     * @throws {@link !Error} if the provided stream is not readable.
+     */
     public constructor(stream: Readable, sizeHint?: SizeHint, contentTypeHint?: string) {
-        assert(stream.readable, "Body must be readable");
+        /* node:coverage ignore next 3 */
+        if (!stream.readable) {
+            throw new Error("Body must be readable");
+        }
 
         this.inner = stream;
         this.sizeHint = sizeHint ?? SizeHint.unbounded();
         this.contentTypeHint = contentTypeHint ?? null;
     }
 
+    /**
+     * Creates a new {@link Body} from a {@link BodyLike} value.
+     */
     public static from(body: BodyLike): Body {
         if (body === null) {
             return new Body(Readable.from([]), SizeHint.exact(0));
@@ -64,7 +75,7 @@ export class Body implements ToHttpResponse {
      *
      * Ensures that the body is readable before accessing it.
      *
-     * @throws {Error} if the body has already been consumed.
+     * @throws {assert.AssertionError} if the body has already been consumed.
      */
     public read(): Readable {
         const inner = this.inner;

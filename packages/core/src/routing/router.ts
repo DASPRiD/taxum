@@ -5,12 +5,13 @@ import {
     type HttpResponseLike,
     StatusCode,
 } from "../http/index.js";
+import type { setGlobalLogger } from "../logger/index.js";
 import { type ErrorHandler, runWithErrorHandler } from "./eror-handler.js";
 import { Fallback } from "./fallback.js";
 import { type Handler, HandlerService } from "./handler.js";
 import type { Layer } from "./layer.js";
 import type { MethodRouter } from "./method-router.js";
-import { PathRouter } from "./path-router.js";
+import { PathRouter, ROUTE_NOT_FOUND } from "./path-router.js";
 import { Route } from "./route.js";
 import type { Service } from "./service.js";
 
@@ -32,8 +33,28 @@ export const ORIGINAL_URI = new ExtensionKey("OriginalUri");
  *
  * It allows nesting of sub-routers, adding layers, defining fallback handlers,
  * and processing requests.
+ *
+ * ## Error Handling
+ *
+ * Every route and service in Taxum is allowed to be fallible, as throwing
+ * errors in an essential part of the application workflow. Taxum ensures that
+ * errors never short-circuit the request-response cycle by wrapping each route
+ * and every layered route in a `MapErrorToResponse` service.
+ *
+ * This means that you can safely throw errors from your routes and services,
+ * and Taxum will ensure that they are handled properly. By default, Taxum will
+ * convert any error into a `500 Internal Server Error` response, unless they
+ * implement the `ToHttpResponse` interface, in which case they will be
+ * converted to the appropriate response.
+ *
+ * If an error results in a `5xx` response, Taxum will log the error. Unless
+ * changes, this will use the `console`. You can change the error logger by
+ * calling {@link setGlobalLogger}.
+ *
+ * You can also change the error handler to customize the way errors are
+ * converted to responses. See {@link Router.errorHandler} for more details.
  */
-export class Router {
+export class Router implements Service {
     private pathRouter = PathRouter.default();
     private catchAllFallback = Fallback.default(defaultFallbackRoute);
     private errorHandler_: ErrorHandler | null = null;
@@ -160,13 +181,16 @@ export class Router {
         req.extensions.insert(ORIGINAL_URI, new URL(req.uri));
 
         return runWithErrorHandler(this.errorHandler_, async () => {
-            let res = await this.pathRouter.invoke(req);
+            try {
+                return await this.pathRouter.invoke(req);
+            } catch (error) {
+                if (error === ROUTE_NOT_FOUND) {
+                    return await this.catchAllFallback.route.invoke(req);
+                }
 
-            if (!res) {
-                res = await this.catchAllFallback.route.invoke(req);
+                /* node:coverage ignore next 2 */
+                throw error;
             }
-
-            return res;
         });
     }
 }

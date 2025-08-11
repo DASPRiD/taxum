@@ -2,6 +2,12 @@ import type { Parts } from "../../http/request.js";
 
 export type AllowPrivateNetworkPredicate = (origin: string, parts: Parts) => boolean;
 
+/**
+ * Holds configuration for how to set the `Access-Control-Allow-Private-Network` header.
+ *
+ * @see [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Private-Network)
+ * @see {@link CorsLayer.allowPrivateNetwork}
+ */
 export class AllowPrivateNetwork {
     private readonly inner: boolean | AllowPrivateNetworkPredicate;
 
@@ -13,14 +19,35 @@ export class AllowPrivateNetwork {
         return AllowPrivateNetwork.no();
     }
 
+    public static from(like: AllowPrivateNetworkLike): AllowPrivateNetwork {
+        if (like instanceof AllowPrivateNetwork) {
+            return like;
+        }
+
+        if (typeof like === "boolean") {
+            return like ? AllowPrivateNetwork.yes() : AllowPrivateNetwork.no();
+        }
+
+        return AllowPrivateNetwork.predicate(like);
+    }
+
+    /**
+     * Allows private network requests.
+     */
     public static yes(): AllowPrivateNetwork {
         return new AllowPrivateNetwork(true);
     }
 
+    /**
+     * Disallows private network requests.
+     */
     public static no(): AllowPrivateNetwork {
         return new AllowPrivateNetwork(false);
     }
 
+    /**
+     * Allows private network requests, based on a given predicate.
+     */
     public static predicate(predicate: AllowPrivateNetworkPredicate): AllowPrivateNetwork {
         return new AllowPrivateNetwork(predicate);
     }
@@ -47,3 +74,5 @@ export class AllowPrivateNetwork {
         return [ALLOW_PRIVATE_NETWORK, "true"];
     }
 }
+
+export type AllowPrivateNetworkLike = AllowPrivateNetwork | boolean | AllowPrivateNetworkPredicate;

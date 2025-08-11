@@ -1,11 +1,18 @@
 import type { Parts } from "../../http/request.js";
+import { ANY, MIRROR_REQUEST } from "./support.js";
 
 export type AllowOriginPredicate = (origin: string, parts: Parts) => Promise<boolean> | boolean;
 
+/**
+ * Holds configuration for how to set the `Access-Control-Allow-Origin` header.
+ *
+ * @see [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin)
+ * @see {@link CorsLayer.allowOrigin}
+ */
 export class AllowOrigin {
-    private readonly inner: string | string[] | AllowOriginPredicate;
+    private readonly inner: typeof MIRROR_REQUEST | string | string[] | AllowOriginPredicate;
 
-    private constructor(inner: string | string[] | AllowOriginPredicate) {
+    private constructor(inner: typeof MIRROR_REQUEST | string | string[] | AllowOriginPredicate) {
         this.inner = inner;
     }
 
@@ -13,14 +20,49 @@ export class AllowOrigin {
         return AllowOrigin.list([]);
     }
 
+    public static from(like: AllowOriginLike): AllowOrigin {
+        if (like instanceof AllowOrigin) {
+            return like;
+        }
+
+        if (like === ANY) {
+            return AllowOrigin.any();
+        }
+
+        if (like === MIRROR_REQUEST) {
+            return AllowOrigin.mirrorRequest();
+        }
+
+        if (typeof like === "string") {
+            return AllowOrigin.exact(like);
+        }
+
+        if (Array.isArray(like)) {
+            return AllowOrigin.list(like);
+        }
+
+        return AllowOrigin.predicate(like);
+    }
+
+    /**
+     * Allows any origin by sending a wildcard (`*`).
+     */
     public static any(): AllowOrigin {
         return new AllowOrigin("*");
     }
 
+    /**
+     * Allows a specific origin.
+     */
     public static exact(origin: string): AllowOrigin {
         return new AllowOrigin(origin);
     }
 
+    /**
+     * Allows a list of origins.
+     *
+     * @throws {@link !Error} If the list contains a wildcard (`*`).
+     */
     public static list(origins: string[]): AllowOrigin {
         if (origins.includes("*")) {
             throw new Error(
@@ -31,14 +73,23 @@ export class AllowOrigin {
         return new AllowOrigin(origins);
     }
 
+    /**
+     * Allows a list of origins, based on a given predicate.
+     */
     public static predicate(predicate: AllowOriginPredicate): AllowOrigin {
         return new AllowOrigin(predicate);
     }
 
+    /**
+     * Allows any origin, based on a given predicate.
+     */
     public static mirrorRequest(): AllowOrigin {
-        return new AllowOrigin(() => true);
+        return new AllowOrigin(MIRROR_REQUEST);
     }
 
+    /**
+     * @internal
+     */
     public isWildcard(): boolean {
         return this.inner === "*";
     }
@@ -57,6 +108,10 @@ export class AllowOrigin {
             return null;
         }
 
+        if (this.inner === MIRROR_REQUEST) {
+            return [name, origin];
+        }
+
         if (typeof this.inner === "function") {
             return (await this.inner(origin, parts)) ? [name, origin] : null;
         }
@@ -64,3 +119,11 @@ export class AllowOrigin {
         return this.inner.includes(origin) ? [name, origin] : null;
     }
 }
+
+export type AllowOriginLike =
+    | AllowOrigin
+    | string
+    | string[]
+    | typeof ANY
+    | typeof MIRROR_REQUEST
+    | AllowOriginPredicate;
