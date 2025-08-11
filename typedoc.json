@@ -1,5 +1,5 @@
 {
-    "name": "taxum",
+    "name": "Taxum",
     "entryPointStrategy": "packages",
     "entryPoints": ["packages/*"],
     "exclude": ["packages/examples"],

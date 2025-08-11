@@ -36,6 +36,9 @@ export const JWT = new ExtensionKey<JWTVerifyResult>("JWT");
  * If verification succeeds, the decoded JWT is stored in the request's
  * extensions under the {@link JWT} key.
  *
+ * The service will throw an {@link UnauthorizedError} if the JWT is missing or
+ * is not valid, unless `allowUnauthorized` is set to `true`.
+ *
  * @example
  * ```ts
  * import {JwtLayer} from "@taxum/jwt";
@@ -45,6 +48,8 @@ export const JWT = new ExtensionKey<JWTVerifyResult>("JWT");
  *     .route("/" m.get(() => "I'm protected!"))
  *     .layer(new JwtLayer(new Uint8Array());
  * ```
+ *
+ * @see [jose](https://github.com/panva/jose)
  */
 export class JwtLayer implements Layer {
     private readonly key: CryptoKey | KeyObject | JWK | Uint8Array;
@@ -52,6 +57,11 @@ export class JwtLayer implements Layer {
     private allowUnauthorized_: boolean;
     private debug_: boolean;
 
+    /**
+     * Creates a new {@link JwtLayer}.
+     *
+     * @see [jose](https://github.com/panva/jose/blob/main/docs/jwt/verify/functions/jwtVerify.md)
+     */
     public constructor(key: CryptoKey | KeyObject | JWK | Uint8Array) {
         this.key = key;
         this.verifyOptions_ = undefined;
@@ -59,16 +69,36 @@ export class JwtLayer implements Layer {
         this.debug_ = false;
     }
 
+    /**
+     * Sets the verify options.
+     *
+     * The options can either be static options or a function which returns the
+     * options.
+     *
+     * @see [JWTVerifyOptions](https://github.com/panva/jose/blob/main/docs/jwt/verify/interfaces/JWTVerifyOptions.md)
+     */
     public verifyOptions(verifyOptions: JWTVerifyOptions | (() => JWTVerifyOptions)): this {
         this.verifyOptions_ = verifyOptions;
         return this;
     }
 
+    /**
+     * Sets whether to allow unauthorized requests.
+     *
+     * If set to `true`, unauthorized requests will be passed through to the
+     * inner service without setting the {@link JWT} extension.
+     */
     public allowUnauthorized(allow: boolean): this {
         this.allowUnauthorized_ = allow;
         return this;
     }
 
+    /**
+     * Sets whether to expose error details in the response body.
+     *
+     * This can be helpful to debug issues with the configuration, but
+     * **must not** be enabled in production!
+     */
     public debug(enabled: boolean): this {
         this.debug_ = enabled;
         return this;
@@ -139,6 +169,9 @@ class Jwt implements Service {
     }
 }
 
+/**
+ * Error thrown when the JWT is missing or invalid.
+ */
 export class UnauthorizedError implements ToHttpResponse {
     public readonly reason: string;
     public readonly expose: boolean;

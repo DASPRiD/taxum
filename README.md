@@ -1,5 +1,10 @@
 # Taxum
 
+[![Test](https://github.com/DASPRiD/taxum/actions/workflows/test.yml/badge.svg)](https://github.com/DASPRiD/taxum/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/DASPRiD/taxum/graph/badge.svg?token=fMAHt3CqfR)](https://codecov.io/gh/DASPRiD/taxum)
+
+---
+
 Taxum is a composable and type-safe HTTP framework for Node.js, heavily inspired by Rust's
 [Axum](https://github.com/tokio-rs/axum) and [Tower](https://github.com/tower-rs/tower). It brings the same declarative,
 middleware-driven architecture to the JavaScript/TypeScript ecosystem, combining ergonomic route composition with deep
@@ -24,4 +29,14 @@ You can find several examples in the [examples](https://github.com/DASPRiD/taxum
 
 ## Documentation
 
-To see further examples, guides, and full API docs, visit the [documentation](https://dasprid.github.io/taxum).
+To check out docs, visit [dasprid.github.io/taxum](https://dasprid.github.io/taxum/).
+
+## Changelog
+
+Detailed changes for each release are documented in the [CHANGELOG](https://github.com/dasprid/taxum/blob/main/packages/fs/CHANGELOG.md)
+
+## License
+
+[BSD-3-Clause](https://github.com/dasprid/taxum/blob/main/LICENSE)
+
+Copyright (c) 2025-present, Ben Scholzen 'DASPRiD
