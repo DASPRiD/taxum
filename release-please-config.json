@@ -6,8 +6,7 @@
         "packages/jwt": {}
     },
     "release-type": "node",
-    "initial-version": "1.0.0",
     "plugins": ["node-workspace"],
     "prerelease": true,
-    "prerelease-type": "beta"
+    "prerelease-type": "rc"
 }
