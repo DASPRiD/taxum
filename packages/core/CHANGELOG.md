@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/DASPRiD/taxum/compare/core-v0.1.1...core-v0.2.0) (2025-08-12)
+
+
+### Features
+
+* **core:** rename handler() to extractHandler() and support positional argument extractors ([978ab6a](https://github.com/DASPRiD/taxum/commit/978ab6a209b2207e045050d0f7b2c6db34307c54))
+
 ## [0.1.1](https://github.com/DASPRiD/taxum/compare/core-v0.1.0...core-v0.1.1) (2025-08-11)
 
 
