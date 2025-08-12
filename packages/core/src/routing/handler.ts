@@ -12,29 +12,91 @@ import type { Service } from "./service.js";
 export type Handler = (req: HttpRequest) => Promise<HttpResponseLike> | HttpResponseLike;
 
 /**
- * Creates a handler function that processes an HTTP request using the provided
+ * @see {@link extractHandler}
+ */
+export type ExtractHandler = {
+    // Array form
+    <Extractors extends readonly AnyExtractor[], Args extends ExtractorResults<Extractors>>(
+        extractors: Extractors,
+        fn: (...args: Args) => Promise<HttpResponseLike> | HttpResponseLike,
+    ): Handler;
+
+    // Positional form
+    <Extractors extends readonly AnyExtractor[], Args extends ExtractorResults<Extractors>>(
+        ...args: [
+            ...Extractors,
+            fn: (...args: Args) => Promise<HttpResponseLike> | HttpResponseLike,
+        ]
+    ): Handler;
+};
+
+/**
+ * Creates a request handler that processes an HTTP request using the provided
  * extractors and function.
  *
- * @typeParam Extractors - a tuple type representing the array of extractor functions.
- * @typeParam Args - a tuple type representing the results derived from the extractors.
+ * This allows you to separate request data parsing (via extractors) from
+ * business logic (the handler), making route definitions cleaner and more
+ * type-safe.
  *
- * @param extractors - an array of functions used to extract data from the
- *        incoming HTTP request. Each extractor function is expected to accept
- *        an HttpRequest object and return a value or a Promise resolving to a
- *        value.
- * @param fn - a function that takes the extracted values and processes them,
- *        returning either a synchronous or asynchronous HTTP-like response
- *        object.
+ * You can either pass in each extractor individually as positional arguments
+ * or all extractors as a single array as the first argument.
+ *
+ * ## Behavior
+ *
+ * - All extractors are executed in parallel via `Promise.all()`.
+ * - If an extractor throws, the error is propagated to the router’s
+ *   error handler.
+ * - The order of extractor definitions determines the order of arguments
+ *   passed to the handler.
+ *
+ * @example
+ * ```ts
+ * import { extractHandler } from "@taxum/core/routing";
+ * import { pathParam, json } from "@taxum/core/extract";
+ * import { z } from "zod";
+ *
+ * const handler = extractHandler(
+ *     pathParam(z.uuid()),
+ *     json(z.object({ name: z.string() }})),
+ *     (id, body) => {
+ *         // do something with `id` and `body`
+ *     },
+ * );
+ * ```
+ *
+ * @example
+ * ```ts
+ * import { extractHandler } from "@taxum/core/routing";
+ * import { pathParam, json } from "@taxum/core/extract";
+ * import { z } from "zod";
+ *
+ * const handler = extractHandler(
+ *     [
+ *         pathParam(z.uuid()),
+ *         json(z.object({ name: z.string() }})),
+ *     ],
+ *     (id, body) => {
+ *         // do something with `id` and `body`
+ *     },
+ * );
+ * ```
  */
-export const handler = <
-    Extractors extends readonly AnyExtractor[],
-    Args extends ExtractorResults<Extractors>,
->(
-    extractors: Extractors,
-    fn: (...args: Args) => Promise<HttpResponseLike> | HttpResponseLike,
-): Handler => {
+export const extractHandler: ExtractHandler = (...args: unknown[]): Handler => {
+    let extractors: readonly AnyExtractor[];
+    let fn: (...args: unknown[]) => Promise<HttpResponseLike> | HttpResponseLike;
+
+    if (Array.isArray(args[0])) {
+        extractors = args[0] as readonly AnyExtractor[];
+        fn = args[1] as (...args: unknown[]) => Promise<HttpResponseLike> | HttpResponseLike;
+    } else {
+        extractors = args.slice(0, -1) as readonly AnyExtractor[];
+        fn = args[args.length - 1] as (
+            ...args: unknown[]
+        ) => Promise<HttpResponseLike> | HttpResponseLike;
+    }
+
     return async (req: HttpRequest) => {
-        const values = (await Promise.all(extractors.map((e) => e(req)))) as unknown as Args;
+        const values = await Promise.all(extractors.map((e) => e(req)));
         return fn(...values);
     };
 };
