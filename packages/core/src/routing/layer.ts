@@ -4,22 +4,30 @@ import type { Service } from "./service.js";
 /**
  * Represents a Layer that can wrap a service for adding functionality.
  */
-export type Layer<S = HttpResponse, T = HttpResponse> = {
+export type Layer<T = HttpResponse, S = HttpResponse> = {
     layer: (inner: Service<S>) => Service<T>;
 };
 
-export type LayerFn<S = HttpResponse, T = HttpResponse> = (inner: Service<S>) => Service<T>;
+export type LayerFn<T = HttpResponse, S = HttpResponse> = (inner: Service<S>) => Service<T>;
 
 /**
  * Returns a new {@link Layer} that wraps a service with a function.
+ *
+ * @example
+ * ```ts
+ * import { layerFn } from "@taxum/core/routing";
+ * import { m, Router } from "@taxum/core/routing";
+ *
+ * const layer = layerFn((inner) => new MyService(inner));
+ * ```
  */
-export const layerFn = <S = HttpResponse, T = HttpResponse>(f: LayerFn<S, T>): Layer<S, T> =>
-    new FnLayer<S, T>(f);
+export const layerFn = <T = HttpResponse, S = HttpResponse>(f: LayerFn<T, S>): Layer<T, S> =>
+    new FnLayer<T, S>(f);
 
-class FnLayer<S = HttpResponse, T = HttpResponse> implements Layer<S, T> {
-    private readonly f: LayerFn<S, T>;
+class FnLayer<T = HttpResponse, S = HttpResponse> implements Layer<T, S> {
+    private readonly f: LayerFn<T, S>;
 
-    public constructor(f: LayerFn<S, T>) {
+    public constructor(f: LayerFn<T, S>) {
         this.f = f;
     }
 
