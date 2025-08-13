@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/DASPRiD/taxum/compare/core-v0.2.0...core-v0.3.0) (2025-08-13)
+
+
+### Features
+
+* **core:** add serviceLayerFn helper ([ea55dbd](https://github.com/DASPRiD/taxum/commit/ea55dbd2793331b943027ef052b2f36e7186e932))
+
+
+### Bug Fixes
+
+* **core:** update Layer usage typings ([4668613](https://github.com/DASPRiD/taxum/commit/4668613576413f1847c936d682f8ad3007433c44))
+
 ## [0.2.0](https://github.com/DASPRiD/taxum/compare/core-v0.1.1...core-v0.2.0) (2025-08-12)
 
 
