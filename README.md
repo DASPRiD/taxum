@@ -35,4 +35,4 @@ To check out docs, visit [taxum.js.org](https://taxum.js.org).
 
 [BSD-3-Clause](https://github.com/dasprid/taxum/blob/main/LICENSE)
 
-Copyright (c) 2025-present, Ben Scholzen 'DASPRiD
+Copyright (c) 2025-present, Ben Scholzen 'DASPRiD'

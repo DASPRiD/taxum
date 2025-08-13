@@ -23,4 +23,4 @@ Detailed changes for each release are documented in the [CHANGELOG](https://gith
 
 [BSD-3-Clause](https://github.com/dasprid/taxum/blob/main/LICENSE)
 
-Copyright (c) 2025-present, Ben Scholzen 'DASPRiD
+Copyright (c) 2025-present, Ben Scholzen 'DASPRiD'
