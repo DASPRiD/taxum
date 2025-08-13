@@ -1,19 +1,19 @@
 {
-  "name": "@taxum/examples",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "json": "pnpm example ./src/json.ts",
-    "layers": "pnpm example ./src/layers.ts",
-    "nest": "pnpm example ./src/nest.ts",
-    "path-param": "pnpm example ./src/path-param.ts",
-    "simple": "pnpm example ./src/simple.ts",
-    "example": "tsx -C taxum --watch",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@taxum/core": "workspace:*",
-    "zod": "^4.0.14"
-  }
+    "name": "@taxum/examples",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "json": "pnpm example ./src/json.ts",
+        "layers": "pnpm example ./src/layers.ts",
+        "nest": "pnpm example ./src/nest.ts",
+        "path-param": "pnpm example ./src/path-param.ts",
+        "simple": "pnpm example ./src/simple.ts",
+        "example": "tsx -C taxum --watch",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@taxum/core": "workspace:*",
+        "zod": "^4.0.14"
+    }
 }
