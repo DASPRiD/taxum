@@ -14,7 +14,7 @@ router.
 
 ## Documentation
 
-To check out docs, visit [dasprid.github.io/taxum](https://dasprid.github.io/taxum/).
+To check out docs, visit [taxum.js.org](https://taxum.js.org).
 
 ## Changelog
 
