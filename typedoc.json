@@ -7,12 +7,35 @@
     "packageOptions": {
         "includeVersion": true
     },
-    "plugin": ["typedoc-theme-oxide", "typedoc-plugin-mdn-links"],
-    "theme": "oxide",
+    "plugin": ["typedoc-plugin-mdn-links"],
     "externalSymbolLinkMappings": {
         "@types/node": {
             "\"http\".IncomingMessage": "https://nodejs.org/api/http.html#class-httpincomingmessage",
             "\"http\".ServerResponse": "https://nodejs.org/api/http.html#class-httpserverresponse"
+        },
+        "@standard-schema/spec": {
+            "StandardSchemaV1.Issue": "https://github.com/standard-schema/standard-schema#the-interface"
         }
-    }
+    },
+    "projectDocuments": [
+        "docs/getting-started.md",
+        "docs/layering.md",
+        "docs/nesting.md",
+        "docs/extensions.md",
+        "docs/error-handling.md",
+        "docs/logging.md",
+        "docs/static-files.md",
+        "docs/authentication.md",
+        "docs/testing.md"
+    ],
+    "outputs": [
+        {
+            "name": "html",
+            "path": "./docs-dist"
+        }
+    ],
+    "navigationLinks": {
+        "GitHub": "https://github.com/DASPRiD/taxum"
+    },
+    "visibilityFilters": {}
 }
