@@ -296,7 +296,7 @@ export class MethodRouter implements Service {
      *
      * @param layer - the layer to be applied to the endpoints.
      */
-    public layer(layer: Layer<HttpResponse, HttpResponseLike>): MethodRouter {
+    public layer(layer: Layer<HttpResponseLike>): MethodRouter {
         const map = (route: Route) => route.layer(layer);
 
         return new MethodRouter(

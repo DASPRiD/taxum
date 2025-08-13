@@ -138,7 +138,7 @@ export class PathRouter implements Service {
         }
     }
 
-    public layer(layer: Layer<HttpResponse, HttpResponseLike>): PathRouter {
+    public layer(layer: Layer<HttpResponseLike>): PathRouter {
         const routes = new Map(
             this.routes.entries().map(([id, endpoint]) => [id, endpoint.layer(layer)]),
         );
@@ -146,7 +146,7 @@ export class PathRouter implements Service {
         return new PathRouter(routes, this.node, this.prevRouteId);
     }
 
-    public routeLayer(layer: Layer<HttpResponse, HttpResponseLike>): PathRouter {
+    public routeLayer(layer: Layer<HttpResponseLike>): PathRouter {
         assert(
             this.routes.size > 0,
             "Adding a routeLayer before any routes is a no-op. Add the routes you want the layer to apply to first.",

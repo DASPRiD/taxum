@@ -150,7 +150,7 @@ export class Router implements Service {
      *
      * @param layer - the layer to be applied to the endpoints.
      */
-    public layer(layer: Layer<HttpResponse, HttpResponseLike>): this {
+    public layer(layer: Layer<HttpResponseLike>): this {
         this.pathRouter = this.pathRouter.layer(layer);
         this.catchAllFallback = this.catchAllFallback.map((route) => route.layer(layer));
         return this;
@@ -159,7 +159,7 @@ export class Router implements Service {
     /**
      * Applies the specified layer to all previously registered routes.
      */
-    public routeLayer(layer: Layer<HttpResponse, HttpResponseLike>): this {
+    public routeLayer(layer: Layer<HttpResponseLike>): this {
         this.pathRouter = this.pathRouter.routeLayer(layer);
         return this;
     }

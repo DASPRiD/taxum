@@ -22,7 +22,7 @@ export class Route implements Service {
         this.inner = new MapErrorToResponse(new MapToHttpResponse(inner));
     }
 
-    public layer(layer: Layer<HttpResponse, HttpResponseLike>): Route {
+    public layer(layer: Layer<HttpResponseLike>): Route {
         return new Route(layer.layer(this));
     }
 
