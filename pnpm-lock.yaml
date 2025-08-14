@@ -67,8 +67,8 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2
       zod:
-        specifier: ^4.0.14
-        version: 4.0.14
+        specifier: ^4.0.17
+        version: 4.0.17
 
   packages/examples:
     dependencies:
@@ -1090,6 +1090,9 @@ packages:
   zod@4.0.14:
     resolution: {integrity: sha512-nGFJTnJN6cM2v9kXL+SOBq3AtjQby3Mv5ySGFof5UGRHrRioSJ5iG680cYNjE/yWk671nROcpPj4hAS8nyLhSw==}
 
+  zod@4.0.17:
+    resolution: {integrity: sha512-1PHjlYRevNxxdy2JZ8JcNAw7rX8V9P1AKkP+x/xZfxB0K5FYfuV+Ug6P/6NVSR2jHQ+FzDDoDHS04nYUsOIyLQ==}
+
 snapshots:
 
   '@babel/code-frame@7.27.1':
@@ -1972,3 +1975,5 @@ snapshots:
   yocto-queue@1.2.1: {}
 
   zod@4.0.14: {}
+
+  zod@4.0.17: {}

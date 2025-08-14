@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import type { ServerResponse } from "node:http";
 import { describe, it } from "node:test";
 import { callNodeRequestHandler } from "node-mock-http";
 import { Body } from "../../src/http/body.js";
@@ -143,7 +144,7 @@ describe("http:response", () => {
                 const res = new HttpResponse(status, headers, body);
 
                 const response = await callNodeRequestHandler(async (_, serverResponse) => {
-                    await res.write(serverResponse);
+                    await res.write(serverResponse as unknown as ServerResponse);
                 }, {});
 
                 assert.equal(response.headers["content-type"], "text/plain");
