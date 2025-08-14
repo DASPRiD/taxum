@@ -37,7 +37,6 @@
         "range-parser": "^1.2.1"
     },
     "devDependencies": {
-        "@types/node": "^24.1.0",
         "@types/range-parser": "^1.2.7"
     }
 }
