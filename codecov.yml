@@ -3,6 +3,10 @@ comment:
 
 component_management:
   individual_components:
+    - component_id: cookie
+      name: Cookie
+      paths:
+        - packages/cookie/**
     - component_id: core
       name: Core
       paths:

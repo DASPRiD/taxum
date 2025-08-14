@@ -39,7 +39,11 @@ export class HeaderMap implements ToHttpResponseParts {
      */
     public static fromArray(array: HeadersArray): HeaderMap {
         const map = new HeaderMap();
-        map.extend(array);
+
+        for (const [key, value] of array) {
+            map.append(key, value);
+        }
+
         return map;
     }
 

@@ -1,0 +1,42 @@
+{
+    "name": "@taxum/fs",
+    "version": "0.0.1",
+    "type": "module",
+    "author": "Ben Scholzen 'DASPRiD'",
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "node",
+        "typescript",
+        "server",
+        "http",
+        "cookie",
+        "jar"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/dasprid/taxum.git"
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "test": "tsx -C taxum --test --test-reporter=spec",
+        "test:ci": " pnpm test",
+        "typecheck": "tsc --noEmit"
+    },
+    "exports": {
+        ".": {
+            "types": [
+                "./dist/index.d.ts",
+                "./src/index.ts"
+            ],
+            "taxum": "./src/index.ts",
+            "default": "./dist/index.js"
+        }
+    },
+    "dependencies": {
+        "@taxum/core": "workspace:*"
+    },
+    "devDependencies": {
+        "temporal-polyfill": "^0.3.0",
+        "temporal-spec": "^0.3.0"
+    }
+}
