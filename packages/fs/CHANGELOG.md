@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0](https://github.com/DASPRiD/taxum/compare/fs-v0.1.3...fs-v0.2.0) (2025-08-14)
+
+
+### Features
+
+* add ToHttpResponseParts and update ToHttpResponse to use unique symbols ([467d4c6](https://github.com/DASPRiD/taxum/commit/467d4c672c09b7fe39103ad6835ef44cb4a0638a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 0.4.0
+
 ## [0.1.3](https://github.com/DASPRiD/taxum/compare/fs-v0.1.2...fs-v0.1.3) (2025-08-13)
 
 
