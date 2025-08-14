@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/DASPRiD/taxum/compare/core-v0.3.0...core-v0.4.0) (2025-08-14)
+
+
+### Features
+
+* add ToHttpResponseParts and update ToHttpResponse to use unique symbols ([467d4c6](https://github.com/DASPRiD/taxum/commit/467d4c672c09b7fe39103ad6835ef44cb4a0638a))
+
 ## [0.3.0](https://github.com/DASPRiD/taxum/compare/core-v0.2.0...core-v0.3.0) (2025-08-13)
 
 
