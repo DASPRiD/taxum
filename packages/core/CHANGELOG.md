@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/DASPRiD/taxum/compare/core-v0.4.0...core-v0.5.0) (2025-08-14)
+
+
+### Features
+
+* add cookie package ([#17](https://github.com/DASPRiD/taxum/issues/17)) ([5a16b1d](https://github.com/DASPRiD/taxum/commit/5a16b1d3a21d60fd000c8f00c6b7d258606e85c6))
+
 ## [0.4.0](https://github.com/DASPRiD/taxum/compare/core-v0.3.0...core-v0.4.0) (2025-08-14)
 
 
