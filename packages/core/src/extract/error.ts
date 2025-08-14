@@ -1,5 +1,10 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import { HttpResponse, type StatusCode, type ToHttpResponse } from "../http/index.js";
+import {
+    HttpResponse,
+    type StatusCode,
+    TO_HTTP_RESPONSE,
+    type ToHttpResponse,
+} from "../http/index.js";
 
 /**
  * Base class for errors thrown during extraction.
@@ -13,7 +18,7 @@ export class ExtractError implements ToHttpResponse {
         this.message = message;
     }
 
-    public toHttpResponse(): HttpResponse {
+    public [TO_HTTP_RESPONSE](): HttpResponse {
         return HttpResponse.builder().status(this.status).body(this.message);
     }
 }

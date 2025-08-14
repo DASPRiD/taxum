@@ -8,6 +8,7 @@ import {
     Method,
     StatusCode,
     type SupportedEncodings,
+    TO_HTTP_RESPONSE,
 } from "@taxum/core/http";
 import { SetStatusLayer } from "@taxum/core/layer/set-status";
 import { getGlobalLogger } from "@taxum/core/logger";
@@ -225,7 +226,7 @@ export class ServeDir implements Service {
             return await this.tryInvoke(req);
         } catch (error) {
             getGlobalLogger().error("Failed to read file", error);
-            return StatusCode.INTERNAL_SERVER_ERROR.toHttpResponse();
+            return StatusCode.INTERNAL_SERVER_ERROR[TO_HTTP_RESPONSE]();
         }
     }
 
@@ -235,7 +236,7 @@ export class ServeDir implements Service {
                 return this.fallback_.invoke(req);
             }
 
-            return StatusCode.METHOD_NOT_ALLOWED.toHttpResponse();
+            return StatusCode.METHOD_NOT_ALLOWED[TO_HTTP_RESPONSE]();
         }
 
         const pathToFile = this.variant.buildAndValidatePath(this.base, req.uri.pathname);
@@ -277,10 +278,10 @@ export class ServeDir implements Service {
                 return this.handleNotFound(req);
 
             case "precondition_failed":
-                return StatusCode.PRECONDITION_FAILED.toHttpResponse();
+                return StatusCode.PRECONDITION_FAILED[TO_HTTP_RESPONSE]();
 
             case "not_modified":
-                return StatusCode.NOT_MODIFIED.toHttpResponse();
+                return StatusCode.NOT_MODIFIED[TO_HTTP_RESPONSE]();
         }
     }
 
@@ -289,7 +290,7 @@ export class ServeDir implements Service {
             return this.fallback_.invoke(req);
         }
 
-        return StatusCode.NOT_FOUND.toHttpResponse();
+        return StatusCode.NOT_FOUND[TO_HTTP_RESPONSE]();
     }
 }
 

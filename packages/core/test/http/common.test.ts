@@ -7,12 +7,13 @@ import {
     noContentResponse,
     Redirect,
     StatusCode,
+    TO_HTTP_RESPONSE,
 } from "../../src/http/index.js";
 
 describe("http:common", () => {
     describe("noContentResponse", () => {
         it("returns a 204 no content response", async () => {
-            const res = noContentResponse.toHttpResponse();
+            const res = noContentResponse[TO_HTTP_RESPONSE]();
             assert.equal(res.status.code, 204);
 
             const body = await consumers.text(res.body.read());
@@ -22,7 +23,7 @@ describe("http:common", () => {
 
     describe("jsonResponse", () => {
         it("returns a JSON response with content-type header", async () => {
-            const res = jsonResponse({ ok: true }).toHttpResponse();
+            const res = jsonResponse({ ok: true })[TO_HTTP_RESPONSE]();
             assert.equal(res.status.code, 200);
             assert.equal(res.headers.get("content-type"), "application/json");
 
@@ -34,7 +35,7 @@ describe("http:common", () => {
     describe("jsonResponse", () => {
         it("returns an HTML response with content-type header", async () => {
             const html = "<h1>Hello</h1>";
-            const res = htmlResponse(html).toHttpResponse();
+            const res = htmlResponse(html)[TO_HTTP_RESPONSE]();
             assert.equal(res.status.code, 200);
             assert.equal(res.headers.get("content-type"), "text/html");
 
@@ -67,7 +68,7 @@ describe("http:common", () => {
 
         for (const { label, redirect, expectedStatus, expectedLocation } of testCases) {
             it(`returns correct response for ${label}`, async () => {
-                const res = redirect.toHttpResponse();
+                const res = redirect[TO_HTTP_RESPONSE]();
                 assert.equal(res.status.code, expectedStatus.code);
                 assert.equal(res.headers.get("location"), expectedLocation);
 
@@ -78,7 +79,7 @@ describe("http:common", () => {
 
         it("handles URL object as redirect target", async () => {
             const url = new URL("https://example.com/foo");
-            const res = Redirect.to(url).toHttpResponse();
+            const res = Redirect.to(url)[TO_HTTP_RESPONSE]();
             assert.equal(res.status.code, 303);
             assert.equal(res.headers.get("location"), url.toString());
         });

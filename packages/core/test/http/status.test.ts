@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
-import { StatusCode } from "../../src/http/index.js";
+import { StatusCode, TO_HTTP_RESPONSE } from "../../src/http/index.js";
 
 describe("http:status", () => {
     describe("StatusCode", () => {
@@ -41,7 +41,7 @@ describe("http:status", () => {
         });
 
         it("toHttpResponse returns HttpResponse with status and no body", async () => {
-            const res = StatusCode.OK.toHttpResponse();
+            const res = StatusCode.OK[TO_HTTP_RESPONSE]();
             assert.equal(res.status, StatusCode.OK);
             assert.equal(await consumers.text(res.body.read()), "");
         });

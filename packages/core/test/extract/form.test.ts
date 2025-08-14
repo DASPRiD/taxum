@@ -7,7 +7,7 @@ import {
     InvalidFormDataError,
     MissingFormDataContentTypeError,
 } from "../../src/extract/index.js";
-import { HttpRequest, StatusCode } from "../../src/http/index.js";
+import { HttpRequest, StatusCode, TO_HTTP_RESPONSE } from "../../src/http/index.js";
 
 describe("extract:form", () => {
     const schema = z.object({
@@ -52,7 +52,7 @@ describe("extract:form", () => {
 
     it("MissingFormDataContentTypeError produces 415 response", async () => {
         const err = new MissingFormDataContentTypeError();
-        const res = err.toHttpResponse();
+        const res = err[TO_HTTP_RESPONSE]();
 
         assert.equal(res.status, StatusCode.UNSUPPORTED_MEDIA_TYPE);
         assert.equal(
@@ -71,7 +71,7 @@ describe("extract:form", () => {
         ];
 
         const err = new InvalidFormDataError(issues);
-        const res = err.toHttpResponse();
+        const res = err[TO_HTTP_RESPONSE]();
 
         assert.equal(res.status, StatusCode.UNPROCESSABLE_CONTENT);
         assert.deepEqual(await consumers.text(res.body.read()), "Invalid form data");

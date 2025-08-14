@@ -9,7 +9,7 @@ import {
     MalformedJsonError,
     MissingJsonContentTypeError,
 } from "../../src/extract/index.js";
-import { HttpRequest, StatusCode } from "../../src/http/index.js";
+import { HttpRequest, StatusCode, TO_HTTP_RESPONSE } from "../../src/http/index.js";
 
 describe("extract:json", () => {
     const schema = z.object({ foo: z.string() });
@@ -103,7 +103,7 @@ describe("extract:json", () => {
 
     it("MissingJsonContentTypeError produces 415 response", async () => {
         const err = new MissingJsonContentTypeError();
-        const res = err.toHttpResponse();
+        const res = err[TO_HTTP_RESPONSE]();
 
         assert.equal(res.status, StatusCode.UNSUPPORTED_MEDIA_TYPE);
         assert.equal(
@@ -114,7 +114,7 @@ describe("extract:json", () => {
 
     it("MalformedJsonError produces 400 response", async () => {
         const err = new MalformedJsonError("Unexpected end of JSON input");
-        const res = err.toHttpResponse();
+        const res = err[TO_HTTP_RESPONSE]();
 
         assert.equal(res.status, StatusCode.BAD_REQUEST);
         assert.equal(await consumers.text(res.body.read()), "Unexpected end of JSON input");
@@ -130,7 +130,7 @@ describe("extract:json", () => {
         ];
 
         const err = new InvalidJsonError(issues);
-        const res = err.toHttpResponse();
+        const res = err[TO_HTTP_RESPONSE]();
 
         assert.equal(res.status, StatusCode.UNPROCESSABLE_CONTENT);
         assert.deepEqual(await consumers.text(res.body.read()), "Invalid JSON");

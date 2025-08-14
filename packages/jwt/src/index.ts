@@ -13,6 +13,7 @@ import {
     type HttpRequest,
     HttpResponse,
     StatusCode,
+    TO_HTTP_RESPONSE,
     type ToHttpResponse,
 } from "@taxum/core/http";
 import type { Layer, Service } from "@taxum/core/routing";
@@ -134,7 +135,7 @@ class Jwt implements Service {
         const jwtOrError = await this.resolveJwt(req);
 
         if (jwtOrError instanceof UnauthorizedError) {
-            return this.allowUnauthorized ? this.inner.invoke(req) : jwtOrError.toHttpResponse();
+            return this.allowUnauthorized ? this.inner.invoke(req) : jwtOrError[TO_HTTP_RESPONSE]();
         }
 
         req.extensions.insert(JWT, jwtOrError);
@@ -181,7 +182,7 @@ export class UnauthorizedError implements ToHttpResponse {
         this.expose = expose;
     }
 
-    public toHttpResponse(): HttpResponse {
+    public [TO_HTTP_RESPONSE](): HttpResponse {
         return HttpResponse.builder()
             .status(StatusCode.UNAUTHORIZED)
             .body(this.expose ? this.reason : null);

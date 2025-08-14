@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import { Readable } from "node:stream";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
-import { HttpRequest, HttpResponse, isToHttpResponse, StatusCode } from "../../src/http/index.js";
+import {
+    HttpRequest,
+    HttpResponse,
+    isToHttpResponse,
+    StatusCode,
+    TO_HTTP_RESPONSE,
+} from "../../src/http/index.js";
 import { RequestBodyLimitLayer } from "../../src/layer/limit.js";
 import type { Service } from "../../src/routing/index.js";
 
@@ -65,7 +71,7 @@ describe("layer:limit", () => {
                     return HttpResponse.builder().body("should not reach here");
                 } catch (err) {
                     if (isToHttpResponse(err)) {
-                        return err.toHttpResponse();
+                        return err[TO_HTTP_RESPONSE]();
                     }
 
                     throw err;

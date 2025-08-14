@@ -4,6 +4,7 @@ import {
     type HttpResponse,
     LazyWrappedReadable,
     StatusCode,
+    TO_HTTP_RESPONSE,
     type ToHttpResponse,
 } from "../http/index.js";
 import type { Layer, Service } from "../routing/index.js";
@@ -58,7 +59,7 @@ class RequestBodyLimit implements Service {
         const contentLength = Number.parseInt(rawContentLength, 10);
 
         if (!Number.isNaN(contentLength) && contentLength > this.limit) {
-            return Promise.resolve(StatusCode.CONTENT_TOO_LARGE.toHttpResponse());
+            return Promise.resolve(StatusCode.CONTENT_TOO_LARGE[TO_HTTP_RESPONSE]());
         }
 
         const limit = this.limit;
@@ -85,7 +86,7 @@ class RequestBodyLimit implements Service {
 }
 
 class ContentTooLargeError extends Error implements ToHttpResponse {
-    public toHttpResponse(): HttpResponse {
-        return StatusCode.CONTENT_TOO_LARGE.toHttpResponse();
+    public [TO_HTTP_RESPONSE](): HttpResponse {
+        return StatusCode.CONTENT_TOO_LARGE[TO_HTTP_RESPONSE]();
     }
 }

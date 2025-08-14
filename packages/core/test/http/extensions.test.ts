@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { ExtensionKey, Extensions } from "../../src/http/index.js";
+import {
+    ExtensionKey,
+    Extensions,
+    HttpResponse,
+    HttpResponseParts,
+    TO_HTTP_RESPONSE_PARTS,
+} from "../../src/http/index.js";
 
 describe("http:extension", () => {
     describe("ExtensionKey", () => {
@@ -96,5 +102,16 @@ describe("http:extension", () => {
         const b = new Extensions();
         const result = a.extend(b);
         assert.equal(result, a);
+    });
+
+    it("adds to response parts", () => {
+        const key = new ExtensionKey<number>("a");
+        const extensions = new Extensions();
+        extensions.insert(key, 1);
+
+        const res = HttpResponse.builder().body(null);
+        const parts = new HttpResponseParts(res);
+        extensions[TO_HTTP_RESPONSE_PARTS](parts);
+        assert.equal(res.extensions.get(key), 1);
     });
 });

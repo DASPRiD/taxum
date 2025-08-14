@@ -1,8 +1,14 @@
 import type { ServerResponse } from "node:http";
 import { Body, type BodyLike, isBodyLike } from "./body.js";
 import { type ExtensionKey, Extensions } from "./extensions.js";
-import { HeaderMap } from "./headers.js";
+import { HeaderMap, type HeadersArray } from "./headers.js";
 import { StatusCode } from "./status.js";
+import { isToHttpResponse, TO_HTTP_RESPONSE, type ToHttpResponse } from "./to-response.js";
+import {
+    HttpResponseParts,
+    TO_HTTP_RESPONSE_PARTS,
+    type ToHttpResponseParts,
+} from "./to-response-parts.js";
 
 /**
  * Represents an HTTP response.
@@ -38,37 +44,47 @@ export class HttpResponse {
             return responseLikePartToResponse(response);
         }
 
-        let result: HttpResponse;
-        let headers: HeaderMap;
-        let extensions: Extensions;
-
-        if (response.length === 3) {
-            result = responseLikePartToResponse(response[2]);
-            headers = result.headers;
-            headers.extend(response[1]);
-            extensions = result.extensions;
-        } else {
-            result = responseLikePartToResponse(response[1]);
-            headers = result.headers;
-            extensions = result.extensions;
+        if (response.length === 1) {
+            return responseLikePartToResponse(response[0] as HttpResponseLikePart);
         }
 
-        if (response[0] instanceof StatusCode) {
-            result.status = response[0];
-            result.headers = headers;
-            return result;
+        const leading = response.slice(0, -1);
+        const res = responseLikePartToResponse(response.at(-1) as HttpResponseLikePart);
+
+        if (leading[0] instanceof HttpResponse) {
+            const [first, ...rest] = leading as [HttpResponse, ...ToHttpResponsePartsLike[]];
+            HttpResponse.extendFromParts(rest, res);
+            res.status = first.status;
+            res.headers.extend(first.headers);
+            res.extensions.extend(first.extensions);
+            return res;
         }
 
-        if (typeof response[0] === "number") {
-            result.status = StatusCode.fromCode(response[0]);
-            result.headers = headers;
-            return result;
+        if (leading[0] instanceof StatusCode) {
+            const [first, ...rest] = leading as [StatusCode, ...ToHttpResponsePartsLike[]];
+            HttpResponse.extendFromParts(rest, res);
+            res.status = first;
+            return res;
         }
 
-        headers.extend(response[0].headers);
-        extensions = extensions.extend(response[0].extensions);
+        if (typeof leading[0] === "number") {
+            const [first, ...rest] = leading as [number, ...ToHttpResponsePartsLike[]];
+            HttpResponse.extendFromParts(rest, res);
+            res.status = StatusCode.fromCode(first);
+            return res;
+        }
 
-        return new HttpResponse(response[0].status, headers, result.body, extensions);
+        HttpResponse.extendFromParts(leading as ToHttpResponsePartsLike[], res);
+        return res;
+    }
+
+    private static extendFromParts(parts: ToHttpResponsePartsLike[], res: HttpResponse): void {
+        const responseParts = new HttpResponseParts(res);
+
+        for (const part of parts) {
+            const toResponseParts = Array.isArray(part) ? HeaderMap.fromArray(part) : part;
+            toResponseParts[TO_HTTP_RESPONSE_PARTS](responseParts);
+        }
     }
 
     /**
@@ -162,64 +178,46 @@ export class HttpResponseBuilder {
 export type HttpResponseLikePart = HttpResponse | ToHttpResponse | BodyLike;
 
 /**
- * Represents HTTP headers for a request or response.
- *
- * This type can be either a {@link HeaderMap} or an array of string tuples
- * representing key-value pairs.
+ * Represents a type that can be used as a response part.
  */
-export type HttpHeadersPart = HeaderMap | [string, string][];
+export type ToHttpResponsePartsLike = ToHttpResponseParts | HeadersArray;
 
 /**
- * Represents a type that denotes different forms of an HTTP response-like
- * object.
+ * Represents a value that can be converted into a full {@link HttpResponse}.
  *
- * Possible variations:
+ * This type allows for flexible construction of HTTP responses from various
+ * forms of input. Possible structures include:
  *
- * - A single {@link HttpResponseLikePart}.
- * - A tuple with a status code {@link StatusCode} and an
- *   {@link HttpResponseLikePart}.
- * - A tuple with a numeric status code and an {@link HttpResponseLikePart}.
- * - A tuple with an {@link HttpResponse} object and an
- *   {@link HttpResponseLikePart}.
- * - A tuple with a status code {@link StatusCode}, HTTP headers
- *   ({@link HttpHeadersPart}), and an {@link HttpResponseLikePart}.
- * - A tuple with a numeric status code, HTTP headers ({@link HttpHeadersPart}),
- *   and an {@link HttpResponseLikePart}.
- * - A tuple with an {@link HttpResponse} object, HTTP headers
- *   ({@link HttpHeadersPart}), and an {@link HttpResponseLikePart}.
+ * 1. A single {@link HttpResponseLikePart}:
+ *    - Directly represents a complete response, a response-convertible object,
+ *      or a body-like value.
  *
- * When the individual elements are merged, the left-most parts take priority
- * over any to their right. This means that parts further on the left override
- * the status code and individual headers which might have been set by parts
- * to their right.
+ * 2. An array where the last element is a {@link HttpResponseLikePart} and
+ *    preceding elements are {@link ToHttpResponsePartsLike}:
+ *    - The last element is converted first into a base response.
+ *    - Leading elements are applied from left to right, overriding values
+ *      from the previous elements.
+ *
+ * 3. A tuple starting with a status code ({@link StatusCode} or `number`) or
+ *    an {@link HttpResponse}, followed by zero or more
+ *    {@link ToHttpResponsePartsLike}, and ending with a
+ *    {@link HttpResponseLikePart}:
+ *    - The last element is converted first into a base response.
+ *    - Middle {@link ToHttpResponsePartsLike} elements are merged in order,
+ *      overriding the base response.
+ *    - The first element (status code, number, or {@link HttpResponse}) is
+ *      applied last, overriding any previous status, headers, or extensions.
+ *
+ * ## Merging behavior
+ *
+ * Except for the leading element in tuple forms, later elements override the
+ * values of earlier elements. For example, headers and status from later
+ * parts replace those from earlier ones.
  */
 export type HttpResponseLike =
     | HttpResponseLikePart
-    | [StatusCode, HttpResponseLikePart]
-    | [number, HttpResponseLikePart]
-    | [HttpResponse, HttpResponseLikePart]
-    | [StatusCode, HttpHeadersPart, HttpResponseLikePart]
-    | [number, HttpHeadersPart, HttpResponseLikePart]
-    | [HttpResponse, HttpHeadersPart, HttpResponseLikePart];
-
-/**
- * An interface for objects that can be converted into an HTTP response.
- */
-export type ToHttpResponse = {
-    toHttpResponse(): HttpResponse;
-};
-
-/**
- * Determines if a given value implements `ToHttpResponse`.
- */
-export const isToHttpResponse = (value: unknown): value is ToHttpResponse => {
-    return (
-        typeof value === "object" &&
-        value !== null &&
-        "toHttpResponse" in value &&
-        typeof value.toHttpResponse === "function"
-    );
-};
+    | [...ToHttpResponsePartsLike[], HttpResponseLikePart]
+    | [StatusCode | number | HttpResponse, ...ToHttpResponsePartsLike[], HttpResponseLikePart];
 
 const responseLikePartToResponse = (part: HttpResponseLikePart): HttpResponse => {
     if (part instanceof HttpResponse) {
@@ -227,10 +225,10 @@ const responseLikePartToResponse = (part: HttpResponseLikePart): HttpResponse =>
     }
 
     if (isToHttpResponse(part)) {
-        return part.toHttpResponse();
+        return part[TO_HTTP_RESPONSE]();
     }
 
-    return Body.from(part).toHttpResponse();
+    return Body.from(part)[TO_HTTP_RESPONSE]();
 };
 
 const isHttpResponseLikePart = (value: unknown): value is HttpResponseLikePart => {

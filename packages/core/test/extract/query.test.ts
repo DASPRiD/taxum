@@ -3,7 +3,7 @@ import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import { z } from "zod";
 import { InvalidQueryDataError, query } from "../../src/extract/index.js";
-import { HttpRequest, StatusCode } from "../../src/http/index.js";
+import { HttpRequest, StatusCode, TO_HTTP_RESPONSE } from "../../src/http/index.js";
 
 describe("extract:query", () => {
     const schema = z.object({
@@ -57,7 +57,7 @@ describe("extract:query", () => {
         ];
 
         const err = new InvalidQueryDataError(issues);
-        const res = err.toHttpResponse();
+        const res = err[TO_HTTP_RESPONSE]();
 
         assert.equal(res.status, StatusCode.BAD_REQUEST);
         assert.deepEqual(await consumers.text(res.body.read()), "Invalid query params");

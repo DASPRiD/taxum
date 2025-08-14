@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import { type HttpRequest, HttpResponse, noContentResponse } from "../../src/http/index.js";
+import {
+    type HttpRequest,
+    HttpResponse,
+    noContentResponse,
+    TO_HTTP_RESPONSE,
+} from "../../src/http/index.js";
 import type { Router, Service } from "../../src/routing/index.js";
 import { type ServeConfig, serve } from "../../src/server/index.js";
 
@@ -71,7 +76,7 @@ describe("server:index", () => {
 
         it("calls onListen with address info", async () => {
             let listenCalled = false;
-            const router = makeMockRouter({ invoke: () => noContentResponse.toHttpResponse() });
+            const router = makeMockRouter({ invoke: () => noContentResponse[TO_HTTP_RESPONSE]() });
             const controller = new AbortController();
 
             const config: ServeConfig = {
@@ -88,7 +93,7 @@ describe("server:index", () => {
         });
 
         it("unrefs server when unrefOnStart is true", async () => {
-            const router = makeMockRouter({ invoke: () => noContentResponse.toHttpResponse() });
+            const router = makeMockRouter({ invoke: () => noContentResponse[TO_HTTP_RESPONSE]() });
             const controller = new AbortController();
 
             const config: ServeConfig = {
@@ -101,7 +106,7 @@ describe("server:index", () => {
         });
 
         it("shuts down via abortSignal", async () => {
-            const router = makeMockRouter({ invoke: () => noContentResponse.toHttpResponse() });
+            const router = makeMockRouter({ invoke: () => noContentResponse[TO_HTTP_RESPONSE]() });
             const controller = new AbortController();
 
             const config: ServeConfig = {
@@ -118,7 +123,7 @@ describe("server:index", () => {
             const router = makeMockRouter({
                 invoke: () =>
                     new Promise((resolve) =>
-                        setTimeout(() => resolve(noContentResponse.toHttpResponse()), 2000),
+                        setTimeout(() => resolve(noContentResponse[TO_HTTP_RESPONSE]()), 2000),
                     ),
             });
             const controller = new AbortController();
@@ -137,7 +142,7 @@ describe("server:index", () => {
         });
 
         it("handles Ctrl+C signals if catchCtrlC is true", async () => {
-            const router = makeMockRouter({ invoke: () => noContentResponse.toHttpResponse() });
+            const router = makeMockRouter({ invoke: () => noContentResponse[TO_HTTP_RESPONSE]() });
             const controller = new AbortController();
 
             const config: ServeConfig = {

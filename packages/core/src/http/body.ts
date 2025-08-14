@@ -2,9 +2,10 @@ import assert from "node:assert";
 import { Buffer } from "node:buffer";
 import { Readable } from "node:stream";
 import { HeaderMap } from "./headers.js";
-import { HttpResponse, type ToHttpResponse } from "./response.js";
+import { HttpResponse } from "./response.js";
 import { SizeHint } from "./size-hint.js";
 import { StatusCode } from "./status.js";
+import { TO_HTTP_RESPONSE, type ToHttpResponse } from "./to-response.js";
 
 /**
  * Represents the body of an HTTP message, allowing for handling of various body
@@ -84,7 +85,7 @@ export class Body implements ToHttpResponse {
         return inner;
     }
 
-    public toHttpResponse(): HttpResponse {
+    public [TO_HTTP_RESPONSE](): HttpResponse {
         const headers = new HeaderMap();
 
         if (this.contentTypeHint) {

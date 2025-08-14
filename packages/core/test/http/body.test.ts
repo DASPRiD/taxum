@@ -3,7 +3,7 @@ import { Buffer } from "node:buffer";
 import { Readable } from "node:stream";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
-import { Body, isBodyLike, SizeHint, StatusCode } from "../../src/http/index.js";
+import { Body, isBodyLike, SizeHint, StatusCode, TO_HTTP_RESPONSE } from "../../src/http/index.js";
 
 describe("http:body", () => {
     describe("Body", () => {
@@ -95,7 +95,7 @@ describe("http:body", () => {
         describe("toHttpResponse()", () => {
             it("creates HttpResponse with 200 OK and content-type", () => {
                 const body = Body.from("content");
-                const res = body.toHttpResponse();
+                const res = body[TO_HTTP_RESPONSE]();
 
                 assert.equal(res.status, StatusCode.OK);
                 assert.equal(res.headers.get("content-type"), "text/plain; charset=utf-8");
@@ -104,7 +104,7 @@ describe("http:body", () => {
             it("omits content-type header if not hinted", () => {
                 const stream = Readable.from(["x"]);
                 const body = new Body(stream, SizeHint.unbounded());
-                const res = body.toHttpResponse();
+                const res = body[TO_HTTP_RESPONSE]();
 
                 assert(!res.headers.containsKey("content-type"));
             });

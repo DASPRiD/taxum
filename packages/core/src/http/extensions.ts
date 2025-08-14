@@ -1,3 +1,9 @@
+import {
+    type HttpResponseParts,
+    TO_HTTP_RESPONSE_PARTS,
+    type ToHttpResponseParts,
+} from "./to-response-parts.js";
+
 /**
  * Represents a unique identifier for an extension, defined by a symbol.
  *
@@ -33,7 +39,7 @@ export class ExtensionKey<T> {
  * The accessors use {@link ExtensionKey}s to guarantee type-safety with the
  * associated values.
  */
-export class Extensions {
+export class Extensions implements ToHttpResponseParts {
     private readonly map = new Map<symbol, unknown>();
 
     /**
@@ -94,5 +100,9 @@ export class Extensions {
         }
 
         return this;
+    }
+
+    public [TO_HTTP_RESPONSE_PARTS](res: HttpResponseParts): void {
+        res.extensions.extend(this);
     }
 }

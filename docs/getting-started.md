@@ -81,3 +81,5 @@ const router = new Router()
 // the server gets closed. 
 await serve(router, { port: 8080 });
 ```
+
+You can return any value from your handlers that implements {@link @taxum/core!http.HttpResponseLike}.

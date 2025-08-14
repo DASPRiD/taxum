@@ -10,13 +10,14 @@ import {
     Method,
     noContentResponse,
     StatusCode,
+    TO_HTTP_RESPONSE,
 } from "../../../src/http/index.js";
 import { ANY, CorsLayer } from "../../../src/layer/cors/index.js";
 import type { Service } from "../../../src/routing/index.js";
 
 describe("layer:cors:index", () => {
     const dummyService: Service = {
-        invoke: () => noContentResponse.toHttpResponse(),
+        invoke: () => noContentResponse[TO_HTTP_RESPONSE](),
     };
 
     describe("CorsLayer", () => {

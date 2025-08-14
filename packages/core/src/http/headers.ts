@@ -1,4 +1,9 @@
 import type { IncomingMessage } from "node:http";
+import {
+    type HttpResponseParts,
+    TO_HTTP_RESPONSE_PARTS,
+    type ToHttpResponseParts,
+} from "./to-response-parts.js";
 
 /**
  * Represents a case-insensitive map for HTTP headers.
@@ -6,7 +11,7 @@ import type { IncomingMessage } from "node:http";
  * Allows insertion, appending, removal, clearing, and extending of key-value
  * pairs.
  */
-export class HeaderMap {
+export class HeaderMap implements ToHttpResponseParts {
     protected readonly map: Map<string, string[]>;
 
     /**
@@ -27,6 +32,15 @@ export class HeaderMap {
         }
 
         this.map = new Map(map.entries().map(([key, values]) => [key.toLowerCase(), values]));
+    }
+
+    /**
+     * Creates a new {@link HeaderMap} from an array of key-value pairs.
+     */
+    public static fromArray(array: HeadersArray): HeaderMap {
+        const map = new HeaderMap();
+        map.extend(array);
+        return map;
     }
 
     /**
@@ -175,4 +189,13 @@ export class HeaderMap {
             this.insert(item[0], item[1]);
         }
     }
+
+    public [TO_HTTP_RESPONSE_PARTS](res: HttpResponseParts): void {
+        res.headers.extend(this);
+    }
 }
+
+/**
+ * Array representation of HTTP headers.
+ */
+export type HeadersArray = [string, string][];

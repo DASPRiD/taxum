@@ -3,7 +3,7 @@ import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import { z } from "zod";
 import { InvalidPathParamsError, pathParam, pathParams } from "../../src/extract/index.js";
-import { HttpRequest, StatusCode } from "../../src/http/index.js";
+import { HttpRequest, StatusCode, TO_HTTP_RESPONSE } from "../../src/http/index.js";
 import { PATH_PARAMS } from "../../src/routing/index.js";
 
 describe("extract:path", () => {
@@ -125,7 +125,7 @@ describe("extract:path", () => {
         ];
 
         const err = new InvalidPathParamsError(issues);
-        const res = err.toHttpResponse();
+        const res = err[TO_HTTP_RESPONSE]();
 
         assert.equal(res.status, StatusCode.BAD_REQUEST);
         assert.deepEqual(await consumers.text(res.body.read()), "Invalid path params");

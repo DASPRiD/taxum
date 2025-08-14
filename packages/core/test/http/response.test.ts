@@ -9,7 +9,6 @@ import {
     HeaderMap,
     HttpResponse,
     HttpResponseBuilder,
-    isToHttpResponse,
     StatusCode,
 } from "../../src/http/index.js";
 
@@ -19,83 +18,85 @@ describe("http:response", () => {
             const status = StatusCode.OK;
             const headers = new HeaderMap();
             const body = Body.from("test");
-            const resp = new HttpResponse(status, headers, body);
-            assert.equal(resp.status, status);
-            assert.equal(resp.headers, headers);
-            assert.equal(resp.body, body);
-            assert(resp.extensions);
+            const res = new HttpResponse(status, headers, body);
+            assert.equal(res.status, status);
+            assert.equal(res.headers, headers);
+            assert.equal(res.body, body);
+            assert(res.extensions);
         });
 
         it("defaults extensions if not provided", () => {
-            const resp = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
-            assert(resp.extensions.isEmpty());
+            const res = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
+            assert(res.extensions.isEmpty());
         });
 
         describe("from()", () => {
-            it("accepts an HttpResponse instance", () => {
-                const resp = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("x"));
-                const result = HttpResponse.from(resp);
-                assert.equal(result.status, resp.status);
+            it("accepts a single HttpResponseLikePart", () => {
+                const res = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
+                const result = HttpResponse.from(res);
+                assert.equal(result.status, res.status);
                 assert.deepEqual(result.headers.getAll("x-test"), []);
             });
 
-            it("accepts [StatusCode, HttpResponseLikePart]", () => {
-                const baseResp = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("x"));
-                const tuple: [StatusCode, HttpResponse] = [StatusCode.NOT_FOUND, baseResp];
+            it("accepts a tuple with a single HttpResponseLikePart", () => {
+                const res = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
+                const result = HttpResponse.from([res]);
+                assert.equal(result.status, res.status);
+                assert.deepEqual(result.headers.getAll("x-test"), []);
+            });
+
+            it("accepts a tuple with ToHttpResponsePartsLike and HttpResponseLikePart", () => {
+                const res = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
+                const result = HttpResponse.from([[["x-test", "foo"]], res]);
+                assert.equal(result.status, res.status);
+                assert.deepEqual(result.headers.getAll("x-test"), ["foo"]);
+            });
+
+            it("applies first element last when it is a StatusCode", () => {
+                const base = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
+                const tuple: [StatusCode, HttpResponse] = [StatusCode.NOT_FOUND, base];
                 const result = HttpResponse.from(tuple);
+
                 assert.equal(result.status, StatusCode.NOT_FOUND);
             });
 
-            it("accepts [number, HttpResponseLikePart]", () => {
-                const baseResp = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("x"));
-                const tuple: [number, HttpResponse] = [404, baseResp];
+            it("applies first element last when it is a number", () => {
+                const base = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
+                const tuple: [number, HttpResponse] = [404, base];
                 const result = HttpResponse.from(tuple);
                 assert.equal(result.status.code, 404);
             });
 
-            it("accepts [HttpResponse, HttpResponseLikePart]", () => {
-                const baseResp = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("x"));
-                const tuple: [HttpResponse, HttpResponse] = [baseResp, baseResp];
+            it("applies first element last when it is an HttpResponse", () => {
+                const base = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
+                const tuple: [HttpResponse, HttpResponse] = [base, base];
                 const result = HttpResponse.from(tuple);
-                assert.equal(result.status, baseResp.status);
+                assert.equal(result.status, base.status);
             });
 
-            it("accepts [StatusCode, HeaderMap, HttpResponseLikePart]", () => {
-                const headers = new HeaderMap();
-                headers.append("x", "y");
-                const baseResp = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("x"));
-                const tuple: [StatusCode, HeaderMap, HttpResponse] = [
-                    StatusCode.OK,
-                    headers,
-                    baseResp,
+            it("applies middle elements from left to right", () => {
+                const headers1 = new HeaderMap();
+                headers1.append("a", "b");
+
+                const headers2 = new HeaderMap();
+                headers2.append("c", "d");
+
+                const base = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
+                const tuple: [StatusCode, HeaderMap, HeaderMap, HttpResponse] = [
+                    StatusCode.ACCEPTED,
+                    headers1,
+                    headers2,
+                    base,
                 ];
+
                 const result = HttpResponse.from(tuple);
-                assert.equal(result.headers.get("x"), "y");
+
+                assert.equal(result.headers.get("a"), "b");
+                assert.equal(result.headers.get("c"), "d");
+                assert.equal(result.status, StatusCode.ACCEPTED);
             });
 
-            it("accepts [number, HeaderMap, HttpResponseLikePart]", () => {
-                const headers = new HeaderMap();
-                headers.append("x", "y");
-                const baseResp = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("x"));
-                const tuple: [number, HeaderMap, HttpResponse] = [200, headers, baseResp];
-                const result = HttpResponse.from(tuple);
-                assert.equal(result.headers.get("x"), "y");
-            });
-
-            it("accepts [HttpResponse, HeaderMap, HttpResponseLikePart]", () => {
-                const headers = new HeaderMap();
-                headers.append("x", "y");
-                const baseResp = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from("x"));
-                const tuple: [HttpResponse, HeaderMap, HttpResponse] = [
-                    baseResp,
-                    headers,
-                    baseResp,
-                ];
-                const result = HttpResponse.from(tuple);
-                assert.equal(result.headers.get("x"), "y");
-            });
-
-            it("merges headers and extensions correctly", () => {
+            it("applies first HttpResponse last, overriding headers and extensions", () => {
                 const key = new ExtensionKey<number>("foo");
 
                 const templateHeaders = new HeaderMap();
@@ -107,7 +108,7 @@ describe("http:response", () => {
                 const templateRes = new HttpResponse(
                     StatusCode.OK,
                     templateHeaders,
-                    Body.from("x"),
+                    Body.from(""),
                     templateExtensions,
                 );
 
@@ -157,22 +158,22 @@ describe("http:response", () => {
     describe("HttpResponseBuilder", () => {
         it("defaults status to OK", () => {
             const builder = new HttpResponseBuilder();
-            const resp = builder.body("");
-            assert.equal(resp.status, StatusCode.OK);
+            const res = builder.body("");
+            assert.equal(res.status, StatusCode.OK);
         });
 
         it("status() sets status from StatusCode instance", () => {
             const builder = new HttpResponseBuilder();
             builder.status(StatusCode.NOT_FOUND);
-            const resp = builder.body("");
-            assert.equal(resp.status, StatusCode.NOT_FOUND);
+            const res = builder.body("");
+            assert.equal(res.status, StatusCode.NOT_FOUND);
         });
 
         it("status() sets status from number", () => {
             const builder = new HttpResponseBuilder();
             builder.status(404);
-            const resp = builder.body("");
-            assert.equal(resp.status.code, 404);
+            const res = builder.body("");
+            assert.equal(res.status.code, 404);
         });
 
         it("headers() extends headers", () => {
@@ -180,16 +181,16 @@ describe("http:response", () => {
             const headers = new HeaderMap();
             headers.append("x", "y");
             builder.headers(headers);
-            const resp = builder.body("");
-            assert.equal(resp.headers.get("x"), "y");
+            const res = builder.body("");
+            assert.equal(res.headers.get("x"), "y");
         });
 
         it("header() appends header", () => {
             const builder = new HttpResponseBuilder();
             builder.header("x", "y");
             builder.header("x", "z");
-            const resp = builder.body("");
-            const vals = resp.headers.getAll("x");
+            const res = builder.body("");
+            const vals = res.headers.getAll("x");
             assert.deepEqual(vals, ["y", "z"]);
         });
 
@@ -214,21 +215,8 @@ describe("http:response", () => {
 
         it("body() creates HttpResponse with given body", () => {
             const builder = new HttpResponseBuilder();
-            const resp = builder.body("hello");
-            assert(resp.body);
-        });
-    });
-
-    describe("Helpers", () => {
-        it("isToHttpResponse detects correct objects", () => {
-            const obj = {
-                toHttpResponse() {
-                    return new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
-                },
-            };
-            assert(isToHttpResponse(obj));
-            assert(!isToHttpResponse({}));
-            assert(!isToHttpResponse(null));
+            const res = builder.body("hello");
+            assert(res.body);
         });
     });
 });

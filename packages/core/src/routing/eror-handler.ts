@@ -1,5 +1,11 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { type HttpRequest, HttpResponse, isToHttpResponse, StatusCode } from "../http/index.js";
+import {
+    type HttpRequest,
+    HttpResponse,
+    isToHttpResponse,
+    StatusCode,
+    TO_HTTP_RESPONSE,
+} from "../http/index.js";
 import { getGlobalLogger } from "../logger/index.js";
 import type { Service } from "./service.js";
 
@@ -16,7 +22,7 @@ export type ErrorHandler = (error: unknown) => HttpResponse;
  */
 export const defaultErrorHandler = (error: unknown) => {
     if (isToHttpResponse(error)) {
-        const res = error.toHttpResponse();
+        const res = error[TO_HTTP_RESPONSE]();
 
         if (res.status.isServerError()) {
             getGlobalLogger().error("failed to serve request", error);

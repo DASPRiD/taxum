@@ -1,4 +1,5 @@
-import { HttpResponse, type ToHttpResponse } from "./response.js";
+import { HttpResponse } from "./response.js";
+import { TO_HTTP_RESPONSE, type ToHttpResponse } from "./to-response.js";
 
 const codeMap = new Map<number, StatusCode>();
 
@@ -477,7 +478,7 @@ export class StatusCode implements ToHttpResponse {
         return `StatusCode(${this.code} ${this.phrase})`;
     }
 
-    public toHttpResponse(): HttpResponse {
+    public [TO_HTTP_RESPONSE](): HttpResponse {
         return HttpResponse.builder().status(this).body(null);
     }
 }

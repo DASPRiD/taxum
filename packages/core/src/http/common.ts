@@ -7,15 +7,16 @@
  * @packageDocumentation
  */
 
-import { HttpResponse, type ToHttpResponse } from "./response.js";
+import { HttpResponse } from "./response.js";
 import { StatusCode } from "./status.js";
+import { TO_HTTP_RESPONSE, type ToHttpResponse } from "./to-response.js";
 
 /**
  * An empty response with 204 No Content status.
  */
 export const noContentResponse: ToHttpResponse = {
-    toHttpResponse: (): HttpResponse => {
-        return StatusCode.NO_CONTENT.toHttpResponse();
+    [TO_HTTP_RESPONSE]: (): HttpResponse => {
+        return StatusCode.NO_CONTENT[TO_HTTP_RESPONSE]();
     },
 };
 
@@ -42,7 +43,7 @@ export type JsonSerializable =
  * A JSON response with the content-type header set to application/json.
  */
 export const jsonResponse = (value: JsonSerializable): ToHttpResponse => ({
-    toHttpResponse: (): HttpResponse => {
+    [TO_HTTP_RESPONSE]: (): HttpResponse => {
         return HttpResponse.builder()
             .header("content-type", "application/json")
             .body(JSON.stringify(value));
@@ -53,7 +54,7 @@ export const jsonResponse = (value: JsonSerializable): ToHttpResponse => ({
  * An HTML response with the content-type header set to text/html.
  */
 export const htmlResponse = (html: string): ToHttpResponse => ({
-    toHttpResponse: (): HttpResponse => {
+    [TO_HTTP_RESPONSE]: (): HttpResponse => {
         return HttpResponse.builder()
             .header("content-type", "text/html")
             .body(JSON.stringify(html));
@@ -121,7 +122,7 @@ export class Redirect implements ToHttpResponse {
         return new Redirect(StatusCode.PERMANENT_REDIRECT, uri);
     }
 
-    public toHttpResponse(): HttpResponse {
+    public [TO_HTTP_RESPONSE](): HttpResponse {
         return HttpResponse.builder()
             .status(this.statusCode)
             .header("location", this.uri.toString())
