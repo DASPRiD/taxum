@@ -1,5 +1,6 @@
 {
     "name": "@taxum/jwt",
+    "description": "JWT integration for Taxum",
     "version": "0.2.1",
     "type": "module",
     "author": "Ben Scholzen 'DASPRiD'",

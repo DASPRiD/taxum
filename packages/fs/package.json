@@ -1,5 +1,6 @@
 {
     "name": "@taxum/fs",
+    "description": "File system integration for Taxum",
     "version": "0.2.1",
     "type": "module",
     "author": "Ben Scholzen 'DASPRiD'",
