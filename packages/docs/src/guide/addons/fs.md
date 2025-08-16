@@ -1,13 +1,31 @@
----
-title: Static Files
----
-
-# Static Files
+# Serving Static Files
 
 Taxum supports serving static files from your filesystem via the {@link @taxum/fs!ServeDir | ServeDir} service.
 
 You have two options to serve files: You can either nest the `ServeDir` service under a given nested route or you can
 serve files standalone.
+
+## Installation
+
+::: code-group
+
+```sh [npm]
+$ npm add @taxum/fs
+```
+
+```sh [pnpm]
+$ pnpm add @taxum/fs
+```
+
+```sh [yarn]
+$ yarn add @taxum/fs
+```
+
+```sh [bun]
+$ bun add @taxum/fs
+```
+
+:::
 
 ## Nested
 

@@ -16,12 +16,14 @@
         "lefthook": "^1.12.3",
         "tsx": "^4.20.4",
         "typedoc": "^0.28.10",
+        "typedoc-plugin-markdown": "^4.8.1",
         "typedoc-plugin-mdn-links": "^5.0.8",
+        "typedoc-vitepress-theme": "^1.1.2",
         "typescript": "^5.9.2"
     },
     "scripts": {
         "build": "pnpm -r build",
-        "build:docs": "typedoc",
+        "build:api-docs": "typedoc",
         "test": "FORCE_COLOR=1 pnpm --parallel --no-sort test",
         "test:ci": "c8 --reporter=lcov pnpm --parallel --no-sort --no-bail test:ci",
         "typecheck": "pnpm --parallel typecheck",

@@ -1,14 +1,10 @@
----
-title: Extensions
----
-
 # Extensions
 
 Taxum allows keeping track of state within the request lifecycle through extensions. Extensions are typed values on the
 `HttpRequest` (to carry state for downstream services) and `HttpResponse` (to carry state for upstream services).
 
-A few of the standard layers make use of extensions to provide state to your handlers, e.g. the
-{@link @taxum/core!layer/client-ip | Client IP layer}. You can easily define your own extensions like this:
+A few of the built-in layers make use of extensions to provide state to your handlers, e.g., the  Client IP layer. You
+can define your own extensions like this:
 
 ```ts
 import { ExtensionKey } from "@taxum/core/http";

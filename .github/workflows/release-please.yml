@@ -60,10 +60,10 @@ jobs:
           cache: 'pnpm'
 
       - name: Install Dependencies
-        run: pnpm --filter=!@taxum/examples install
+        run: pnpm --filter=!@taxum/examples --filter=!@taxum/docs install
 
       - name: Build
-        run: pnpm --filter=!@taxum/examples -r build
+        run: pnpm --filter=!@taxum/examples --filter=!@taxum/docs -r build
 
       - name: Set publishing config
         run: pnpm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
@@ -71,7 +71,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish
-        run: pnpm --filter=!@taxum/examples -r publish --access public
+        run: pnpm --filter=!@taxum/examples --filter=!@taxum/docs -r publish --access public
 
   publish-docs:
     name: Publish docs

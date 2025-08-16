@@ -1,10 +1,30 @@
----
-title: Authentication
----
-
-# Authentication
+# JWT Authentication
 
 Taxum comes with JWT authentication built-in, powered by [jose](https://github.com/panva/jose).
+
+## Installation
+
+::: code-group
+
+```sh [npm]
+$ npm add @taxum/jwt jose
+```
+
+```sh [pnpm]
+$ pnpm add @taxum/jwt jose
+```
+
+```sh [yarn]
+$ yarn add @taxum/jwt jose
+```
+
+```sh [bun]
+$ bun add @taxum/jwt jose
+```
+
+:::
+
+## Examples
 
 In most cases you'll have an identity provider which has its keys available via JWKSets. The following example
 demonstrates integration with Auth0:

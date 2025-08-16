@@ -2,12 +2,12 @@
     "name": "Taxum",
     "entryPointStrategy": "packages",
     "entryPoints": ["packages/*"],
-    "exclude": ["packages/examples"],
-    "includeVersion": false,
-    "packageOptions": {
-        "includeVersion": true
-    },
-    "plugin": ["typedoc-plugin-mdn-links"],
+    "exclude": ["packages/examples", "packages/docs"],
+    "plugin": [
+        "typedoc-plugin-mdn-links",
+        "typedoc-plugin-markdown",
+        "typedoc-vitepress-theme"
+    ],
     "externalSymbolLinkMappings": {
         "@types/node": {
             "\"http\".IncomingMessage": "https://nodejs.org/api/http.html#class-httpincomingmessage",
@@ -17,25 +17,6 @@
             "StandardSchemaV1.Issue": "https://github.com/standard-schema/standard-schema#the-interface"
         }
     },
-    "projectDocuments": [
-        "docs/getting-started.md",
-        "docs/layering.md",
-        "docs/nesting.md",
-        "docs/extensions.md",
-        "docs/error-handling.md",
-        "docs/logging.md",
-        "docs/static-files.md",
-        "docs/authentication.md",
-        "docs/testing.md"
-    ],
-    "outputs": [
-        {
-            "name": "html",
-            "path": "./docs-dist"
-        }
-    ],
-    "navigationLinks": {
-        "GitHub": "https://github.com/DASPRiD/taxum"
-    },
-    "visibilityFilters": {}
+    "docsRoot": "./packages/docs/src",
+    "out" : "./packages/docs/src/api"
 }

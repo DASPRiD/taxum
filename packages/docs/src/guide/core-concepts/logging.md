@@ -1,7 +1,3 @@
----
-title: Logging
----
-
 # Logging
 
 By default, all errors and warnings will be logged to the `console` as is. You might want to modify this to use your

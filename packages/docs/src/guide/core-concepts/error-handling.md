@@ -1,13 +1,9 @@
----
-title: Error Handling
----
-
 # Error Handling
 
 In Taxum, errors are handled after every registered layer and handler. The default behavior is as follows:
 
-- Any error that implements {@link @taxum/core!http.ToHttpResponse | ToHttpResponse} will be converted to a response
-  and returned as is.
+- Any error that implements [ToHttpResponse](/api/@taxum/core/http/type-aliases/ToHttpResponse.html) will be converted
+  to a response and returned as is.
 - Any other error will be converted to an empty `500` response.
 - Any error that results in a `5xx` response will be logged through the global logger.
 
