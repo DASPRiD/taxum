@@ -77,6 +77,10 @@ export default withMermaid(
                                 link: "/guide/core-concepts/nesting",
                             },
                             {
+                                text: "Middleware",
+                                link: "/guide/core-concepts/middleware",
+                            },
+                            {
                                 text: "Error Handling",
                                 link: "/guide/core-concepts/error-handling",
                             },
@@ -97,10 +101,6 @@ export default withMermaid(
                     {
                         text: "Layers",
                         items: [
-                            {
-                                text: "Overview",
-                                link: "/guide/layers",
-                            },
                             {
                                 text: "Compression",
                                 link: "/guide/layers/compression",
