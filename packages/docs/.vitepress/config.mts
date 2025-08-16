@@ -1,7 +1,24 @@
-import { defineConfig } from "vitepress";
+import * as fs from "node:fs";
+import { fileURLToPath } from "node:url";
+import { type DefaultTheme, defineConfig } from "vitepress";
 import { groupIconMdPlugin, groupIconVitePlugin } from "vitepress-plugin-group-icons";
 import { withMermaid } from "vitepress-plugin-mermaid";
-import typedocSidebar from "../src/api/typedoc-sidebar.json" with { type: "json" };
+
+let typedocSidebar: DefaultTheme.SidebarItem[];
+
+try {
+    typedocSidebar = JSON.parse(
+        fs.readFileSync(
+            fileURLToPath(new URL("../src/api/typedoc-sidebar.json", import.meta.url)),
+            "utf-8",
+        ),
+    );
+} catch {
+    console.error(
+        "typedoc-sidebar.json missing; did you forget to run `pnpm run build:api-docs` in root?",
+    );
+    process.exit(1);
+}
 
 export default withMermaid(
     defineConfig({
