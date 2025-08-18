@@ -16,7 +16,8 @@ import {
     TO_HTTP_RESPONSE,
     type ToHttpResponse,
 } from "@taxum/core/http";
-import type { Layer, Service } from "@taxum/core/routing";
+import type { HttpLayer } from "@taxum/core/layer";
+import type { HttpService } from "@taxum/core/service";
 import {
     type CryptoKey,
     type JWK,
@@ -52,7 +53,7 @@ export const JWT = new ExtensionKey<JWTVerifyResult>("JWT");
  *
  * @see [jose](https://github.com/panva/jose)
  */
-export class JwtLayer implements Layer {
+export class JwtLayer implements HttpLayer {
     private readonly key: CryptoKey | KeyObject | JWK | Uint8Array;
     private verifyOptions_: JWTVerifyOptions | (() => JWTVerifyOptions) | undefined;
     private allowUnauthorized_: boolean;
@@ -105,20 +106,20 @@ export class JwtLayer implements Layer {
         return this;
     }
 
-    public layer(inner: Service): Service {
+    public layer(inner: HttpService): HttpService {
         return new Jwt(inner, this.key, this.verifyOptions_, this.allowUnauthorized_, this.debug_);
     }
 }
 
-class Jwt implements Service {
-    private readonly inner: Service;
+class Jwt implements HttpService {
+    private readonly inner: HttpService;
     private readonly key: CryptoKey | KeyObject | JWK | Uint8Array;
     private readonly verifyOptions: JWTVerifyOptions | (() => JWTVerifyOptions) | undefined;
     private readonly allowUnauthorized: boolean;
     private readonly debug: boolean;
 
     public constructor(
-        inner: Service,
+        inner: HttpService,
         key: CryptoKey | KeyObject | JWK | Uint8Array,
         verifyOptions: JWTVerifyOptions | (() => JWTVerifyOptions) | undefined,
         allowUnauthorized: boolean,

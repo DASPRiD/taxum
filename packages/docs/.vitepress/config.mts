@@ -99,31 +99,31 @@ export default withMermaid(
                         ],
                     },
                     {
-                        text: "Layers",
+                        text: "Middleware",
                         items: [
                             {
                                 text: "Compression",
-                                link: "/guide/layers/compression",
+                                link: "/guide/middleware/compression",
                             },
                             {
                                 text: "Decompression",
-                                link: "/guide/layers/decompression",
+                                link: "/guide/middleware/decompression",
                             },
                             {
                                 text: "Request Body Limit",
-                                link: "/guide/layers/limit",
+                                link: "/guide/middleware/limit",
                             },
                             {
                                 text: "CORS",
-                                link: "/guide/layers/cors",
+                                link: "/guide/middleware/cors",
                             },
                             {
                                 text: "Client IP",
-                                link: "/guide/layers/client-ip",
+                                link: "/guide/middleware/client-ip",
                             },
                             {
                                 text: "Request ID",
-                                link: "/guide/layers/request-id",
+                                link: "/guide/middleware/request-id",
                             },
                         ],
                     },

@@ -7,22 +7,22 @@ import {
     Method,
     type SizeHint,
 } from "../http/index.js";
+import type { HttpLayer } from "../layer/index.js";
 import { getGlobalLogger } from "../logger/index.js";
-import { MapErrorToResponse } from "./eror-handler.js";
-import type { Layer, Service } from "./index.js";
-import { MapToHttpResponse } from "./util.js";
+import type { HttpService } from "../service/index.js";
+import { CatchError, MapToHttpResponse } from "../util/index.js";
 
 /**
  * @internal
  */
-export class Route implements Service {
-    private readonly inner: Service;
+export class Route implements HttpService {
+    private readonly inner: HttpService;
 
-    public constructor(inner: Service<HttpResponseLike>) {
-        this.inner = new MapErrorToResponse(new MapToHttpResponse(inner));
+    public constructor(inner: HttpService<HttpResponseLike>) {
+        this.inner = new CatchError(new MapToHttpResponse(inner));
     }
 
-    public layer(layer: Layer<HttpResponseLike>): Route {
+    public layer(layer: HttpLayer<HttpResponseLike>): Route {
         return new Route(layer.layer(this));
     }
 

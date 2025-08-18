@@ -10,7 +10,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { AddressInfo } from "node:net";
 import { HttpRequest } from "../http/index.js";
 import { getGlobalLogger } from "../logger/index.js";
-import type { Service } from "../routing/index.js";
+import type { HttpService } from "../service/index.js";
 
 /**
  * Configuration options for starting a server.
@@ -90,7 +90,7 @@ export type ServeConfig = {
  * });
  * ```
  */
-export const serve = async (service: Service, config?: ServeConfig): Promise<void> => {
+export const serve = async (service: HttpService, config?: ServeConfig): Promise<void> => {
     const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
         try {
             const httpRequests = HttpRequest.fromIncomingMessage(req, config?.trustProxy ?? false);

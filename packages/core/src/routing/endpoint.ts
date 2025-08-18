@@ -1,5 +1,5 @@
 import type { HttpResponseLike } from "../http/index.js";
-import type { Layer } from "./layer.js";
+import type { HttpLayer } from "../layer/index.js";
 import type { MethodRouter } from "./method-router.js";
 import type { Route } from "./route.js";
 
@@ -37,7 +37,7 @@ export class Endpoint {
         });
     }
 
-    public layer(layer: Layer<HttpResponseLike>): Endpoint {
+    public layer(layer: HttpLayer<HttpResponseLike>): Endpoint {
         switch (this.inner.type) {
             case "method_router":
                 return Endpoint.methodRouter(this.inner.router.layer(layer));

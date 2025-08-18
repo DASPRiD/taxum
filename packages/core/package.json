@@ -38,6 +38,14 @@
             "taxum": "./src/http/index.ts",
             "default": "./dist/http/index.js"
         },
+        "./layer": {
+            "types": [
+                "./dist/layer/index.d.ts",
+                "./src/layer/index.ts"
+            ],
+            "taxum": "./src/layer/index.ts",
+            "default": "./dist/layer/index.js"
+        },
         "./logger": {
             "types": [
                 "./dist/logger/index.d.ts",
@@ -46,69 +54,77 @@
             "taxum": "./src/logger/index.ts",
             "default": "./dist/logger/index.js"
         },
-        "./layer/cors": {
+        "./middleware/builder": {
             "types": [
-                "./dist/layer/cors/index.d.ts",
-                "./src/layer/cors/index.ts"
+                "./dist/middleware/builder.d.ts",
+                "./src/middleware/builder.ts"
             ],
-            "taxum": "./src/layer/cors/index.ts",
-            "default": "./dist/layer/cors/index.js"
+            "taxum": "./src/middleware/builder.ts",
+            "default": "./dist/middleware/builder.js"
         },
-        "./layer/client-ip": {
+        "./middleware/cors": {
             "types": [
-                "./dist/layer/client-ip.d.ts",
-                "./src/layer/client-ip.ts"
+                "./dist/middleware/cors/index.d.ts",
+                "./src/middleware/cors/index.ts"
             ],
-            "taxum": "./src/layer/client-ip.ts",
-            "default": "./dist/layer/client-ip.js"
+            "taxum": "./src/middleware/cors/index.ts",
+            "default": "./dist/middleware/cors/index.js"
         },
-        "./layer/compression": {
+        "./middleware/client-ip": {
             "types": [
-                "./dist/layer/compression.d.ts",
-                "./src/layer/compression.ts"
+                "./dist/middleware/client-ip.d.ts",
+                "./src/middleware/client-ip.ts"
             ],
-            "taxum": "./src/layer/compression.ts",
-            "default": "./dist/layer/compression.js"
+            "taxum": "./src/middleware/client-ip.ts",
+            "default": "./dist/middleware/client-ip.js"
         },
-        "./layer/decompression": {
+        "./middleware/compression": {
             "types": [
-                "./dist/layer/decompression.d.ts",
-                "./src/layer/decompression.ts"
+                "./dist/middleware/compression.d.ts",
+                "./src/middleware/compression.ts"
             ],
-            "taxum": "./src/layer/decompression.ts",
-            "default": "./dist/layer/decompression.js"
+            "taxum": "./src/middleware/compression.ts",
+            "default": "./dist/middleware/compression.js"
         },
-        "./layer/from-fn": {
+        "./middleware/decompression": {
             "types": [
-                "./dist/layer/from-fn.d.ts",
-                "./src/layer/from-fn.ts"
+                "./dist/middleware/decompression.d.ts",
+                "./src/middleware/decompression.ts"
             ],
-            "taxum": "./src/layer/from-fn.ts",
-            "default": "./dist/layer/from-fn.js"
+            "taxum": "./src/middleware/decompression.ts",
+            "default": "./dist/middleware/decompression.js"
         },
-        "./layer/limit": {
+        "./middleware/from-fn": {
             "types": [
-                "./dist/layer/limit.d.ts",
-                "./src/layer/limit.ts"
+                "./dist/middleware/from-fn.d.ts",
+                "./src/middleware/from-fn.ts"
             ],
-            "taxum": "./src/layer/limit.ts",
-            "default": "./dist/layer/limit.js"
+            "taxum": "./src/middleware/from-fn.ts",
+            "default": "./dist/middleware/from-fn.js"
         },
-        "./layer/request-id": {
+        "./middleware/limit": {
             "types": [
-                "./dist/layer/request-id.d.ts",
-                "./src/layer/request-id.ts"
+                "./dist/middleware/limit.d.ts",
+                "./src/middleware/limit.ts"
             ],
-            "taxum": "./src/layer/request-id.ts",
-            "default": "./dist/layer/request-id.js"
+            "taxum": "./src/middleware/limit.ts",
+            "default": "./dist/middleware/limit.js"
         },
-        "./layer/set-status": {
+        "./middleware/request-id": {
             "types": [
-                "./dist/layer/set-status.d.ts",
-                "./src/layer/set-status.ts"
+                "./dist/middleware/request-id.d.ts",
+                "./src/middleware/request-id.ts"
             ],
-            "taxum": "./src/layer/set-status.ts",
-            "default": "./dist/layer/set-status.js"
+            "taxum": "./src/middleware/request-id.ts",
+            "default": "./dist/middleware/request-id.js"
+        },
+        "./middleware/set-status": {
+            "types": [
+                "./dist/middleware/set-status.d.ts",
+                "./src/middleware/set-status.ts"
+            ],
+            "taxum": "./src/middleware/set-status.ts",
+            "default": "./dist/middleware/set-status.js"
         },
         "./routing": {
             "types": [
@@ -125,6 +141,22 @@
             ],
             "taxum": "./src/server/index.ts",
             "default": "./dist/server/index.js"
+        },
+        "./service": {
+            "types": [
+                "./dist/service/index.d.ts",
+                "./src/service/index.ts"
+            ],
+            "taxum": "./src/service/index.ts",
+            "default": "./dist/service/index.js"
+        },
+        "./util": {
+            "types": [
+                "./dist/util/index.d.ts",
+                "./src/util/index.ts"
+            ],
+            "taxum": "./src/util/index.ts",
+            "default": "./dist/util/index.js"
         }
     },
     "dependencies": {

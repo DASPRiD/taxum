@@ -6,7 +6,7 @@ import { Readable } from "node:stream";
 import consumers from "node:stream/consumers";
 import { before, beforeEach, describe, it, mock } from "node:test";
 import { Encoding, HttpRequest, HttpResponse, StatusCode } from "@taxum/core/http";
-import type { Service } from "@taxum/core/routing";
+import type { HttpService } from "@taxum/core/service";
 import type { Ranges } from "range-parser";
 
 describe("serve-dir", () => {
@@ -79,7 +79,7 @@ describe("serve-dir", () => {
     });
 
     it("calls fallback on method not allowed if configured", async () => {
-        const fallback: Service = {
+        const fallback: HttpService = {
             invoke: () => HttpResponse.from("fallback"),
         };
 
@@ -96,7 +96,7 @@ describe("serve-dir", () => {
     });
 
     it("overrides status code on not found service fallback", async () => {
-        const fallback: Service = {
+        const fallback: HttpService = {
             invoke: () => HttpResponse.from("fallback"),
         };
 
@@ -154,7 +154,7 @@ describe("serve-dir", () => {
             type: "file_not_found",
         }));
 
-        const fallback: Service = {
+        const fallback: HttpService = {
             invoke: () => HttpResponse.from("fallback"),
         };
 

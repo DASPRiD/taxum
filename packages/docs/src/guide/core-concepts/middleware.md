@@ -18,6 +18,24 @@ When middleware is added at any point, Taxum will automatically wrap it with two
 - A layer which converts any `HttpResponseLike` value into an `HttpResponse`.
 - A layer which converts any thrown errors into an `HttpResponse`.
 
+## Applying Multiple Middleware
+
+It's recommended to use [ServiceBuilder](/api/@taxum/core/middleware/builder/classes/ServiceBuilder.html) to apply
+multiple middleware at once, instead of calling `layer` (or `routeLayer`) repeatedly:
+
+```ts
+import { ServiceBuilder } from '@taxum/core/middleware/builder';
+import { m, Router } from '@taxum/core/routing';
+
+const router = new Router()
+    .route("/", m.get(() => "Hello world"))
+    .layer(
+        ServiceBuilder.create()
+            .compression()
+            .requestBodyLimit(1024 * 1024)
+    );
+```
+
 ## Ordering
 
 When you add middleware with `Router.layer` (or similar), all previously added routes will be wrapped in the middleware.
@@ -63,21 +81,46 @@ That is:
 It's a little more complicated in practice because any middleware is free to return early and not call the next layer,
 for example, if a request cannot be authorized, but it's a useful mental model to have.
 
+As previously mentioned, it's recommended to add multiple middleware using `ServiceBuilder`, however this impacts
+ordering:
+
+```ts
+import { ServiceBuilder } from '@taxum/core/middleware/builder';
+import { m, Router } from '@taxum/core/routing';
+
+const router = new Router()
+    .route("/", m.get(() => "Hello world"))
+    .layer(
+        ServiceBuilder.create()
+            .withLayer(layerOne)
+            .withLayer(layerTwo)
+            .withLayer(layerThree)
+    );
+```
+
+`ServiceBuilder` works by composing all layers into one such that they run top to bottom. So with the previous code,
+`layerOne` would receive the request first, then `layerTwo`, then `layerThree`, then `handler`. Then the response would
+bubble back up through `layerThree`, then `layerTwo` and finally `layerOne`.
+
+Executing middleware top to bottom is generally easier to understand and follow mentally which is one of the reasons
+`ServiceBuilder` is recommended.
+
 ## Writing Middleware
 
 Taxum offers many ways of writing middleware, at different levels of abstraction and with different pros and cons.
 
-### `@taxum/core/routing/serviceLayerFn`
+### `@taxum/core/middleware/from-fn/fromFn`
 
 This is the simplest and most familiar way of writing middleware. You pass in a function which receives the request and
 the next service in line:
 
 ```ts
-import { m, Router, serviceLayerFn } from '@taxum/core/routing';
+import { fromFn } from '@taxum/core/middleware/from-fn';
+import { m, Router } from '@taxum/core/routing';
 
 const router = new Router()
     .route("/", m.get(() => "Hello world"))
-    .layer(serviceLayerFn(async (req, next) => {
+    .layer(fromFn(async (req, next) => {
         // Do something with the request
         const res = await next.invoke(req);
         // Do something with the response
@@ -86,16 +129,19 @@ const router = new Router()
     }));
 ```
 
-### `@taxum/core/routing/layerFn`
+### `@taxum/core/layer/layerFn`
 
-If you have a service written as a class implementing `Service`, you can use `layerFn` to turn it into a layer:
+If you have a service written as a class implementing [Service](/api/@taxum/core/service/type-aliases/Service.html), you
+can use [layerFn](/api/@taxum/core/layer/classes/LayerFn.html) to turn it into a layer:
 
 ```ts
 import type { HttpRequest, HttpResponse } from "@taxum/core/http";
-import { layerFn, m, Router, Service } from '@taxum/core/routing';
+import { layerFn } from '@taxum/core/layer';
+import { m, Router } from '@taxum/core/routing';
+import type { HttpService } from '@taxum/core/service';
 
-class MyService implements Service {
-    public constructor(private readonly inner: Service) {
+class MyService implements HttpService {
+    public constructor(private readonly inner: HttpService) {
     }
 
     async invoke(req: HttpRequest): Promise<HttpResponse> {
@@ -115,16 +161,18 @@ const router = new Router()
 This allows you to have a service defined once and add configuration to it at the point of usage, e.g., when you are
 using the middleware in different places.
 
-### `@taxum/core/routing/Layer`
+### `@taxum/core/layer/Layer`
 
-The most complex approach is to write a class implementing `Layer`:
+The most complex approach is to write a class implementing [Layer](/api/@taxum/core/layer/type-aliases/Layer.html):
 
 ```ts
 import type { HttpRequest, HttpResponse } from "@taxum/core/http";
-import { layerFn, m, Layer, Router, Service } from '@taxum/core/routing';
+import type { HttpLayer } from '@taxum/core/layer';
+import { m, Router } from '@taxum/core/routing';
+import type { HttpService } from '@taxum/core/service';
 
-class MyService implements Service {
-    public constructor(private readonly inner: Service) {
+class MyService implements HttpService {
+    public constructor(private readonly inner: HttpService) {
     }
 
     async invoke(req: HttpRequest): Promise<HttpResponse> {
@@ -136,8 +184,8 @@ class MyService implements Service {
     }
 }
 
-class MyLayer implements Layer {
-    public layer(inner: Service): Service {
+class MyLayer implements HttpLayer {
+    public layer(inner: HttpService): HttpService {
         return new MyService(inner);
     }
 }

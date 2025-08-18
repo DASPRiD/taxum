@@ -18,7 +18,7 @@ import { PassThrough, pipeline, Readable, type Transform } from "node:stream";
  * ```ts
  * import { LazyWrappedReadable } from "@taxum/core/http";
  * import { m, Router } from "@taxum/core/routing";
- * import { fromFn } from "@taxum/core/layer";
+ * import { fromFn } from "@taxum/core/middleware";
  *
  * const transformLayer = fromFn((req, next) => {
  *     return next.invoke(req.withBody(

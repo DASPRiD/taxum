@@ -10,11 +10,12 @@ import {
     type SupportedEncodings,
     TO_HTTP_RESPONSE,
 } from "@taxum/core/http";
-import { SetStatusLayer } from "@taxum/core/layer/set-status";
 import { getGlobalLogger } from "@taxum/core/logger";
-import type { Service } from "@taxum/core/routing";
+import { SetStatusLayer } from "@taxum/core/middleware/set-status";
+import type { HttpService } from "@taxum/core/service";
 import { type OpenFileOutput, openFile } from "./open-file.js";
 import { isErrnoException } from "./util.js";
+
 /* node:coverage enable */
 
 /**
@@ -39,12 +40,12 @@ import { isErrnoException } from "./util.js";
  * const service = new ServeDir("assets");
  * ```
  */
-export class ServeDir implements Service {
+export class ServeDir implements HttpService {
     private readonly base: string;
     private readonly precompressedVariants: PrecompressedVariants;
     private readonly variant: ServeVariant;
     private callFallbackOnMethodNotAllowed_: boolean;
-    private fallback_: Service | null;
+    private fallback_: HttpService | null;
 
     /**
      * Creates a new {@link ServeDir}.
@@ -182,7 +183,7 @@ export class ServeDir implements Service {
      *     .fallback(new ServeFile("assets/not_found.html"));
      * ```
      */
-    public fallback(fallback: Service): this {
+    public fallback(fallback: HttpService): this {
         this.fallback_ = fallback;
         return this;
     }
@@ -204,7 +205,7 @@ export class ServeDir implements Service {
      *     .notFoundService(new ServeFile("assets/not_found.html"));
      * ```
      */
-    public notFoundService(fallback: Service): this {
+    public notFoundService(fallback: HttpService): this {
         this.fallback_ = new SetStatusLayer(StatusCode.NOT_FOUND).layer(fallback);
         return this;
     }

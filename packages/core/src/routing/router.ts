@@ -5,15 +5,15 @@ import {
     type HttpResponseLike,
     StatusCode,
 } from "../http/index.js";
+import type { HttpLayer } from "../layer/index.js";
 import type { setGlobalLogger } from "../logger/index.js";
-import { type ErrorHandler, runWithErrorHandler } from "./eror-handler.js";
+import type { HttpService } from "../service/index.js";
+import { type ErrorHandler, runWithErrorHandler } from "../util/index.js";
 import { Fallback } from "./fallback.js";
 import { type Handler, HandlerService } from "./handler.js";
-import type { Layer } from "./layer.js";
 import type { MethodRouter } from "./method-router.js";
 import { PathRouter, ROUTE_NOT_FOUND } from "./path-router.js";
 import { Route } from "./route.js";
-import type { Service } from "./service.js";
 
 const defaultFallbackRoute = new Route({
     invoke: () => StatusCode.NOT_FOUND,
@@ -54,7 +54,7 @@ export const ORIGINAL_URI = new ExtensionKey("OriginalUri");
  * You can also change the error handler to customize the way errors are
  * converted to responses. See {@link Router.errorHandler} for more details.
  */
-export class Router implements Service {
+export class Router implements HttpService {
     private pathRouter = PathRouter.default();
     private catchAllFallback = Fallback.default(defaultFallbackRoute);
     private errorHandler_: ErrorHandler | null = null;
@@ -84,7 +84,7 @@ export class Router implements Service {
         return this;
     }
 
-    public nestService(path: string, service: Service<HttpResponseLike>): this {
+    public nestService(path: string, service: HttpService<HttpResponseLike>): this {
         this.pathRouter.nestService(path, service);
         return this;
     }
@@ -150,7 +150,7 @@ export class Router implements Service {
      *
      * @param layer - the layer to be applied to the endpoints.
      */
-    public layer(layer: Layer<HttpResponseLike>): this {
+    public layer(layer: HttpLayer<HttpResponseLike>): this {
         this.pathRouter = this.pathRouter.layer(layer);
         this.catchAllFallback = this.catchAllFallback.map((route) => route.layer(layer));
         return this;
@@ -159,7 +159,7 @@ export class Router implements Service {
     /**
      * Applies the specified layer to all previously registered routes.
      */
-    public routeLayer(layer: Layer<HttpResponseLike>): this {
+    public routeLayer(layer: HttpLayer<HttpResponseLike>): this {
         this.pathRouter = this.pathRouter.routeLayer(layer);
         return this;
     }

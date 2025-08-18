@@ -1,29 +1,12 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import {
-    type HttpRequest,
-    HttpResponse,
-    noContentResponse,
-    TO_HTTP_RESPONSE,
-} from "../../src/http/index.js";
-import type { Router, Service } from "../../src/routing/index.js";
+import { HttpResponse, noContentResponse, TO_HTTP_RESPONSE } from "../../src/http/index.js";
 import { type ServeConfig, serve } from "../../src/server/index.js";
+import type { HttpService } from "../../src/service/index.js";
 
-class MockRouter {
-    private readonly service: Service;
-
-    public constructor(service: Service) {
-        this.service = service;
-    }
-
-    public async invoke(req: HttpRequest): Promise<HttpResponse> {
-        return this.service.invoke(req);
-    }
-}
-
-const makeMockRouter = (service: Service): Router => {
-    return new MockRouter(service) as unknown as Router;
-};
+const makeMockService = (f: () => Promise<HttpResponse> | HttpResponse): HttpService => ({
+    invoke: f,
+});
 
 describe("server:index", () => {
     describe("serve", () => {
@@ -34,7 +17,7 @@ describe("server:index", () => {
         });
 
         it("responds with a successful response from router", async () => {
-            const router = makeMockRouter({ invoke: () => HttpResponse.builder().body(null) });
+            const service = makeMockService(() => HttpResponse.builder().body(null));
             const controller = new AbortController();
 
             const config: ServeConfig = {
@@ -46,7 +29,7 @@ describe("server:index", () => {
                 abortSignal: controller.signal,
             };
 
-            await serve(router, config);
+            await serve(service, config);
         });
 
         it("handles uncaught errors with 500", async (t) => {
@@ -54,10 +37,8 @@ describe("server:index", () => {
                 // Suppress actual console.error output.
             });
 
-            const router = makeMockRouter({
-                invoke: () => {
-                    throw new Error("boom");
-                },
+            const service = makeMockService(() => {
+                throw new Error("boom");
             });
             const controller = new AbortController();
 
@@ -70,13 +51,13 @@ describe("server:index", () => {
                 abortSignal: controller.signal,
             };
 
-            await serve(router, config);
+            await serve(service, config);
             assert.match(spy.mock.calls[0].arguments[0], /Uncaught error in router/i);
         });
 
         it("calls onListen with address info", async () => {
             let listenCalled = false;
-            const router = makeMockRouter({ invoke: () => noContentResponse[TO_HTTP_RESPONSE]() });
+            const service = makeMockService(() => noContentResponse[TO_HTTP_RESPONSE]());
             const controller = new AbortController();
 
             const config: ServeConfig = {
@@ -88,12 +69,12 @@ describe("server:index", () => {
                 abortSignal: controller.signal,
             };
 
-            await serve(router, config);
+            await serve(service, config);
             assert.ok(listenCalled);
         });
 
         it("unrefs server when unrefOnStart is true", async () => {
-            const router = makeMockRouter({ invoke: () => noContentResponse[TO_HTTP_RESPONSE]() });
+            const service = makeMockService(() => noContentResponse[TO_HTTP_RESPONSE]());
             const controller = new AbortController();
 
             const config: ServeConfig = {
@@ -102,11 +83,11 @@ describe("server:index", () => {
                 abortSignal: controller.signal,
             };
 
-            await serve(router, config);
+            await serve(service, config);
         });
 
         it("shuts down via abortSignal", async () => {
-            const router = makeMockRouter({ invoke: () => noContentResponse[TO_HTTP_RESPONSE]() });
+            const service = makeMockService(() => noContentResponse[TO_HTTP_RESPONSE]());
             const controller = new AbortController();
 
             const config: ServeConfig = {
@@ -116,16 +97,16 @@ describe("server:index", () => {
                 },
             };
 
-            await serve(router, config);
+            await serve(service, config);
         });
 
         it("shuts down after shutdownTimeout", async (t) => {
-            const router = makeMockRouter({
-                invoke: () =>
+            const service = makeMockService(
+                () =>
                     new Promise((resolve) =>
                         setTimeout(() => resolve(noContentResponse[TO_HTTP_RESPONSE]()), 2000),
                     ),
-            });
+            );
             const controller = new AbortController();
             t.mock.timers.enable({ apis: ["setTimeout"] });
 
@@ -138,11 +119,11 @@ describe("server:index", () => {
                 abortSignal: controller.signal,
             };
 
-            await serve(router, config);
+            await serve(service, config);
         });
 
         it("handles Ctrl+C signals if catchCtrlC is true", async () => {
-            const router = makeMockRouter({ invoke: () => noContentResponse[TO_HTTP_RESPONSE]() });
+            const service = makeMockService(() => noContentResponse[TO_HTTP_RESPONSE]());
             const controller = new AbortController();
 
             const config: ServeConfig = {
@@ -153,7 +134,7 @@ describe("server:index", () => {
                 abortSignal: controller.signal,
             };
 
-            await serve(router, config);
+            await serve(service, config);
         });
     });
 });

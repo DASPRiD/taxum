@@ -138,7 +138,7 @@ describe("routing:handler", () => {
             const service = new HandlerService(handler);
 
             const req = HttpRequest.builder().body(null);
-            const res = await service.invoke(req);
+            const res = HttpResponse.from(await service.invoke(req));
 
             assert.equal(await consumers.text(res.body.read()), "hello");
         });

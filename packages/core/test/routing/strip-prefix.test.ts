@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { HttpRequest, HttpResponse } from "../../src/http/index.js";
-import type { Service } from "../../src/routing/index.js";
 import { StripPrefix } from "../../src/routing/strip-prefix.js";
+import type { HttpService } from "../../src/service/index.js";
 
 describe("routing:strip-prefix", () => {
     const testCases: [string, string, string | null, string][] = [
@@ -42,7 +42,7 @@ describe("routing:strip-prefix", () => {
         it(name, async () => {
             const expectedPath = expected ?? uriPath;
 
-            const innerService: Service = {
+            const innerService: HttpService = {
                 invoke: async (req) => {
                     assert.equal(req.uri.pathname, expectedPath);
                     return HttpResponse.builder().body(null);
@@ -58,7 +58,7 @@ describe("routing:strip-prefix", () => {
     }
 
     it("throws if prefix does not start with '/'", async () => {
-        const innerService: Service = {
+        const innerService: HttpService = {
             invoke: async () => HttpResponse.builder().body(null),
         };
 

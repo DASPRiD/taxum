@@ -1,6 +1,6 @@
 import type { AnyExtractor, Extractor } from "../extract/index.js";
-import { type HttpRequest, HttpResponse, type HttpResponseLike } from "../http/index.js";
-import type { Service } from "./service.js";
+import type { HttpRequest, HttpResponseLike } from "../http/index.js";
+import type { HttpService } from "../service/index.js";
 
 /**
  * Represents a function that handles an HTTP request and returns an HTTP
@@ -129,14 +129,14 @@ export type ExtractorResults<T extends readonly AnyExtractor[]> = {
 /**
  * A service that wraps a handler function.
  */
-export class HandlerService implements Service {
+export class HandlerService implements HttpService<HttpResponseLike> {
     private readonly handler: Handler;
 
     public constructor(handler: Handler) {
         this.handler = handler;
     }
 
-    public async invoke(req: HttpRequest): Promise<HttpResponse> {
-        return HttpResponse.from(await this.handler(req));
+    public async invoke(req: HttpRequest): Promise<HttpResponseLike> {
+        return this.handler(req);
     }
 }

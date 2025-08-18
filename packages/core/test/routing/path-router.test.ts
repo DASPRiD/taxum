@@ -7,17 +7,17 @@ import {
     jsonResponse,
     StatusCode,
 } from "../../src/http/index.js";
+import type { HttpLayer } from "../../src/layer/index.js";
 import { Endpoint } from "../../src/routing/endpoint.js";
 import {
-    type Layer,
     m,
     NESTED_PATH,
     PATH_PARAMS,
     PathRouter,
     ROUTE_NOT_FOUND,
-    type Service,
 } from "../../src/routing/index.js";
 import { Route } from "../../src/routing/route.js";
+import type { HttpService } from "../../src/service/index.js";
 
 const makeRequest = (path: string) => HttpRequest.builder().path(path).body(null);
 
@@ -67,7 +67,7 @@ describe("routing:PathRouter", () => {
 
     it("applies layer to all routes", async () => {
         const spy = mock.fn(
-            (inner: Service): Service => ({
+            (inner: HttpService): HttpService => ({
                 invoke: (req) => inner.invoke(req),
             }),
         );
@@ -86,8 +86,8 @@ describe("routing:PathRouter", () => {
     it("throws if applying route layer before adding any routes", () => {
         const router = PathRouter.default();
 
-        const dummyLayer: Layer = {
-            layer: (inner: Service) => inner,
+        const dummyLayer: HttpLayer = {
+            layer: (inner) => inner,
         };
 
         assert.throws(() => {
@@ -97,7 +97,7 @@ describe("routing:PathRouter", () => {
 
     it("applies the given route layer to all routes", async () => {
         const spy = mock.fn(
-            (inner: Service): Service => ({
+            (inner: HttpService): HttpService => ({
                 invoke: (req) => inner.invoke(req),
             }),
         );
@@ -136,7 +136,7 @@ describe("routing:PathRouter", () => {
     it("nests routes with non-method-router endpoints", async () => {
         const leaf = PathRouter.default();
 
-        const service: Service<HttpResponseLike> = {
+        const service: HttpService<HttpResponseLike> = {
             invoke: async () => "leaf service",
         };
 
@@ -276,7 +276,7 @@ describe("routing:PathRouter", () => {
     it("nests a service at a given path with layers applied", async () => {
         const router = PathRouter.default();
 
-        const service: Service<HttpResponseLike> = {
+        const service: HttpService<HttpResponseLike> = {
             invoke: async (req) => {
                 const nestedPath = req.extensions.get(NESTED_PATH);
                 return jsonResponse({ nestedPath });
@@ -316,7 +316,7 @@ describe("routing:PathRouter", () => {
     it("supports nested path with trailing slash", async () => {
         const router = PathRouter.default();
 
-        const service: Service<HttpResponseLike> = {
+        const service: HttpService<HttpResponseLike> = {
             invoke: async (req) => {
                 return jsonResponse(req.extensions.get(NESTED_PATH) ?? null);
             },
@@ -340,7 +340,7 @@ describe("routing:PathRouter", () => {
     it("matches nested path without trailing slash", async () => {
         const router = PathRouter.default();
 
-        const service: Service<HttpResponseLike> = {
+        const service: HttpService<HttpResponseLike> = {
             invoke: async (req) => jsonResponse(req.extensions.get(NESTED_PATH) ?? null),
         };
 

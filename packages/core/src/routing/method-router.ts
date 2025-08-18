@@ -6,12 +6,12 @@ import {
     Method,
     StatusCode,
 } from "../http/index.js";
+import type { HttpLayer } from "../layer/index.js";
+import type { HttpService } from "../service/index.js";
 import { Fallback } from "./fallback.js";
 import { type Handler, HandlerService } from "./handler.js";
-import type { Layer } from "./layer.js";
 import { MethodFilter } from "./method-filter.js";
 import { Route } from "./route.js";
-import type { Service } from "./service.js";
 
 const defaultFallbackRoute = new Route({
     invoke: () => StatusCode.METHOD_NOT_ALLOWED,
@@ -57,7 +57,7 @@ export const m = {
  * supports a fallback mechanism and the ability to apply middleware layers to
  * all endpoints.
  */
-export class MethodRouter implements Service {
+export class MethodRouter implements HttpService {
     private getEndpoint: MethodEndpoint;
     private headEndpoint: MethodEndpoint;
     private deleteEndpoint: MethodEndpoint;
@@ -294,9 +294,9 @@ export class MethodRouter implements Service {
     /**
      * Applies the specified layer to all endpoint mappings within this router.
      *
-     * @param layer - the layer to be applied to the endpoints.
+     * @param layer - the middleware to be applied to the endpoints.
      */
-    public layer(layer: Layer<HttpResponseLike>): MethodRouter {
+    public layer(layer: HttpLayer<HttpResponseLike>): MethodRouter {
         const map = (route: Route) => route.layer(layer);
 
         return new MethodRouter(

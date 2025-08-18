@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import consumers from "node:stream/consumers";
 import { describe, it, mock } from "node:test";
 import { HttpRequest, StatusCode } from "../../src/http/index.js";
-import { any, MethodFilter, MethodRouter, type Service } from "../../src/routing/index.js";
+import { any, MethodFilter, MethodRouter } from "../../src/routing/index.js";
+import type { HttpService } from "../../src/service/index.js";
 
 const METHODS = [
     ["GET", "get"],
@@ -47,7 +48,7 @@ describe("routing:method-router", () => {
 
             it(`layer applies to ${method} handler`, async () => {
                 const spy = mock.fn(
-                    (inner: Service): Service => ({
+                    (inner: HttpService): HttpService => ({
                         invoke: (req) => inner.invoke(req),
                     }),
                 );

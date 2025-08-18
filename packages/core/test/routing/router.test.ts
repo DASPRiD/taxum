@@ -7,15 +7,10 @@ import {
     type HttpResponseLike,
     StatusCode,
 } from "../../src/http/index.js";
-import {
-    type ErrorHandler,
-    type Handler,
-    type Layer,
-    MethodRouter,
-    m,
-    Router,
-    type Service,
-} from "../../src/routing/index.js";
+import type { HttpLayer } from "../../src/layer/index.js";
+import { type Handler, MethodRouter, m, Router } from "../../src/routing/index.js";
+import type { HttpService } from "../../src/service/index.js";
+import type { ErrorHandler } from "../../src/util/index.js";
 
 describe("routing:Router", () => {
     it("routes a request to a matching method handler", async () => {
@@ -65,7 +60,7 @@ describe("routing:Router", () => {
     it("applies layer to all routes and fallback", async () => {
         const logs: string[] = [];
 
-        const loggingLayer: Layer = {
+        const loggingLayer: HttpLayer = {
             layer: (inner) => ({
                 invoke: (req) => {
                     logs.push(req.uri.pathname);
@@ -97,7 +92,7 @@ describe("routing:Router", () => {
     it("applies a layer to all routes", async () => {
         const logs: string[] = [];
 
-        const loggingLayer: Layer = {
+        const loggingLayer: HttpLayer = {
             layer: (inner) => ({
                 invoke: (req) => {
                     logs.push(req.uri.pathname);
@@ -143,7 +138,7 @@ describe("routing:Router", () => {
     });
 
     it("can nest services", async () => {
-        const nestedService: Service<HttpResponseLike> = {
+        const nestedService: HttpService<HttpResponseLike> = {
             invoke: async () => "nested response",
         };
 

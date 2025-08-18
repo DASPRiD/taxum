@@ -1,6 +1,6 @@
 # JWT Authentication
 
-Taxum comes with JWT authentication built-in, powered by [jose](https://github.com/panva/jose).
+Taxum provides JWT authentication via middleware, powered by [jose](https://github.com/panva/jose).
 
 ## Installation
 

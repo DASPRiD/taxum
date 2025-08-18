@@ -1,12 +1,12 @@
 import type { HttpRequest, HttpResponse } from "@taxum/core/http";
-import type { Service } from "@taxum/core/routing";
+import type { HttpService } from "@taxum/core/service";
 import mime from "mime";
 import { ServeDir } from "./serve-dir.js";
 
 /**
  * Service that serves a single file.
  */
-export class ServeFile implements Service {
+export class ServeFile implements HttpService {
     private readonly inner: ServeDir;
 
     /**

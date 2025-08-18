@@ -6,12 +6,12 @@ import {
     type HttpResponse,
     type HttpResponseLike,
 } from "../http/index.js";
+import { type HttpLayer, layerFn, layerTuple } from "../layer/index.js";
+import type { HttpService } from "../service/index.js";
 import { Endpoint } from "./endpoint.js";
 import type { Handler } from "./handler.js";
-import { type Layer, layerFn } from "./layer.js";
 import type { MethodRouter } from "./method-router.js";
 import { Route } from "./route.js";
-import type { Service } from "./service.js";
 import { StripPrefix } from "./strip-prefix.js";
 
 /**
@@ -32,7 +32,7 @@ export const NESTED_PATH = new ExtensionKey<string>("NestedPath");
 /**
  * @internal
  */
-export class PathRouter implements Service {
+export class PathRouter implements HttpService {
     private readonly routes: Map<number, Endpoint>;
     private readonly node: Node;
     private prevRouteId: number;
@@ -73,7 +73,7 @@ export class PathRouter implements Service {
         this.routes.set(id, Endpoint.methodRouter(methodRouter));
     }
 
-    public routeService(path: string, service: Service): void {
+    public routeService(path: string, service: HttpService): void {
         this.routeEndpoint(path, Endpoint.route(new Route(service)));
     }
 
@@ -93,12 +93,11 @@ export class PathRouter implements Service {
             assert(innerPath, "no path for route id. This is a bug in taxum. Please file an issue");
 
             const path = pathForNestedRoute(prefix, innerPath);
-            const layers: Layer[] = [StripPrefix.layer(prefix), NestedPath.layer(pathToNestAt)];
-            let layeredEndpoint = endpoint;
-
-            for (const layer of layers) {
-                layeredEndpoint = endpoint.layer(layer);
-            }
+            const layer = layerTuple(
+                StripPrefix.layer<HttpResponse>(prefix),
+                NestedPath.layer<HttpResponse>(pathToNestAt),
+            );
+            const layeredEndpoint = endpoint.layer(layer);
 
             if (layeredEndpoint.inner.type === "method_router") {
                 this.route(path, layeredEndpoint.inner.router);
@@ -108,21 +107,16 @@ export class PathRouter implements Service {
         }
     }
 
-    public nestService(pathToNestAt: string, service: Service<HttpResponseLike>): void {
+    public nestService(pathToNestAt: string, service: HttpService<HttpResponseLike>): void {
         const path = validateNestPath(pathToNestAt);
         const prefix = path;
 
         const wildcardPath = path.endsWith("/") ? `${path}*` : `${path}/*`;
-        const layers: Layer<HttpResponseLike, HttpResponseLike>[] = [
-            StripPrefix.layer(prefix),
-            NestedPath.layer(pathToNestAt),
-        ];
-
-        let layeredService = service;
-
-        for (const layer of layers) {
-            layeredService = layer.layer(service);
-        }
+        const layer = layerTuple(
+            StripPrefix.layer<HttpResponseLike>(prefix),
+            NestedPath.layer<HttpResponseLike>(pathToNestAt),
+        );
+        const layeredService = layer.layer(service);
 
         const endpoint = Endpoint.route(new Route(layeredService));
         this.routeEndpoint(wildcardPath, endpoint);
@@ -138,7 +132,7 @@ export class PathRouter implements Service {
         }
     }
 
-    public layer(layer: Layer<HttpResponseLike>): PathRouter {
+    public layer(layer: HttpLayer<HttpResponseLike>): PathRouter {
         const routes = new Map(
             this.routes.entries().map(([id, endpoint]) => [id, endpoint.layer(layer)]),
         );
@@ -146,7 +140,7 @@ export class PathRouter implements Service {
         return new PathRouter(routes, this.node, this.prevRouteId);
     }
 
-    public routeLayer(layer: Layer<HttpResponseLike>): PathRouter {
+    public routeLayer(layer: HttpLayer<HttpResponseLike>): PathRouter {
         assert(
             this.routes.size > 0,
             "Adding a routeLayer before any routes is a no-op. Add the routes you want the layer to apply to first.",
@@ -205,16 +199,16 @@ export class PathRouter implements Service {
 
 export const ROUTE_NOT_FOUND = Symbol("RouteNotFound");
 
-class NestedPath<T> implements Service<T> {
-    private readonly inner: Service<T>;
+class NestedPath<T> implements HttpService<T> {
+    private readonly inner: HttpService<T>;
     private readonly path: string;
 
-    public constructor(inner: Service<T>, path: string) {
+    public constructor(inner: HttpService<T>, path: string) {
         this.inner = inner;
         this.path = path;
     }
 
-    public static layer<T>(path: string): Layer<T, T> {
+    public static layer<T>(path: string): HttpLayer<T, T> {
         return layerFn((inner) => new NestedPath(inner, path));
     }
 
