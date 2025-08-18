@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/DASPRiD/taxum/compare/core-v0.5.0...core-v0.6.0) (2025-08-18)
+
+
+### Features
+
+* large rewrite of the middleware system ([1e1b4d7](https://github.com/DASPRiD/taxum/commit/1e1b4d73b8982ff6d0c55375662eac0fb94a1bfe))
+
 ## [0.5.0](https://github.com/DASPRiD/taxum/compare/core-v0.4.0...core-v0.5.0) (2025-08-14)
 
 

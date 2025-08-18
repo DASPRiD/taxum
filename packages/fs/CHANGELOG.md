@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/DASPRiD/taxum/compare/fs-v0.2.1...fs-v0.3.0) (2025-08-18)
+
+
+### Features
+
+* large rewrite of the middleware system ([1e1b4d7](https://github.com/DASPRiD/taxum/commit/1e1b4d73b8982ff6d0c55375662eac0fb94a1bfe))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 0.6.0
+
 ## [0.2.1](https://github.com/DASPRiD/taxum/compare/fs-v0.2.0...fs-v0.2.1) (2025-08-14)
 
 
