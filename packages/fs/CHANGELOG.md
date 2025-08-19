@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.4.0](https://github.com/DASPRiD/taxum/compare/fs-v0.3.0...fs-v0.4.0) (2025-08-19)
+
+
+### Features
+
+* **core:** rename globalLogger to loggerProxy ([8558aed](https://github.com/DASPRiD/taxum/commit/8558aedb2ab24d6f8eb21ab94320174e16b4986f))
+
+
+### Bug Fixes
+
+* **fs:** update logger usage ([7170079](https://github.com/DASPRiD/taxum/commit/717007968ad1a9f2cfeb5d5201f749ee6f029e0c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 0.7.0
+
 ## [0.3.0](https://github.com/DASPRiD/taxum/compare/fs-v0.2.1...fs-v0.3.0) (2025-08-18)
 
 

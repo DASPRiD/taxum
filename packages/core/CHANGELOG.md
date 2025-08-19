@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.7.0](https://github.com/DASPRiD/taxum/compare/core-v0.6.0...core-v0.7.0) (2025-08-19)
+
+
+### Features
+
+* **core:** add trace middleware ([e71b974](https://github.com/DASPRiD/taxum/commit/e71b974abd866c617c88885e972d9d98c785bc92))
+* **core:** rename globalLogger to loggerProxy ([8558aed](https://github.com/DASPRiD/taxum/commit/8558aedb2ab24d6f8eb21ab94320174e16b4986f))
+* expand logging proxy ([9b99e4d](https://github.com/DASPRiD/taxum/commit/9b99e4d5dcef0326ad29a79d326a8bce882d097a))
+* return every error as a ClientError ([2e946de](https://github.com/DASPRiD/taxum/commit/2e946de61c2be6cb8bd29e50615d3ca807cb2411))
+
+
+### Bug Fixes
+
+* **fs:** update logger usage ([7170079](https://github.com/DASPRiD/taxum/commit/717007968ad1a9f2cfeb5d5201f749ee6f029e0c))
+
 ## [0.6.0](https://github.com/DASPRiD/taxum/compare/core-v0.5.0...core-v0.6.0) (2025-08-18)
 
 
