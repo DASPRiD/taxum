@@ -2,12 +2,17 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
     getGlobalLogger,
-    type Logger,
+    type LogFnProxy,
+    type LoggerProxy,
     resetGlobalLogger,
     setGlobalLogger,
-} from "../../src/logger/index.js";
+} from "../../src/logging/index.js";
 
-describe("logger module", () => {
+const noopLog: LogFnProxy = () => {
+    // noop
+};
+
+describe("logging:index", () => {
     it("default logger calls console methods", async (t) => {
         const errorSpy = t.mock.method(console, "error", () => {
             // noop
@@ -18,68 +23,72 @@ describe("logger module", () => {
         const infoSpy = t.mock.method(console, "info", () => {
             // noop
         });
+        const debugSpy = t.mock.method(console, "debug", () => {
+            // noop
+        });
+        const traceSpy = t.mock.method(console, "trace", () => {
+            // noop
+        });
 
         const logger = getGlobalLogger();
-        const err = new Error("fail");
-        logger.error("error message", err);
+        const error = new Error("fail");
+        logger.fatal("fatal message");
+        logger.error("error message", { error });
         logger.warn("warn message");
         logger.info("info message");
+        logger.debug("debug message");
+        logger.trace("trace message");
 
-        assert.deepEqual(errorSpy.mock.calls[0].arguments, ["error message", err]);
-        assert.deepEqual(warnSpy.mock.calls[0].arguments, ["warn message"]);
-        assert.deepEqual(infoSpy.mock.calls[0].arguments, ["info message"]);
+        assert.deepEqual(errorSpy.mock.calls[0].arguments, ["fatal message", undefined]);
+        assert.deepEqual(errorSpy.mock.calls[1].arguments, ["error message", { error }]);
+        assert.deepEqual(warnSpy.mock.calls[0].arguments, ["warn message", undefined]);
+        assert.deepEqual(infoSpy.mock.calls[0].arguments, ["info message", undefined]);
+        assert.deepEqual(debugSpy.mock.calls[0].arguments, ["debug message", undefined]);
+        assert.deepEqual(traceSpy.mock.calls[0].arguments, ["trace message", undefined]);
     });
 
     it("setGlobalLogger replaces the global logger", () => {
         let called = false;
-        const customLogger: Logger = {
-            error: (msg, err) => {
+
+        const customLogger: LoggerProxy = {
+            fatal: noopLog,
+            error: (message, values) => {
                 called = true;
-                assert.equal(msg, "custom error");
-                assert(err instanceof Error);
+                assert.equal(message, "custom error");
+                assert(values && values.error instanceof Error);
             },
-            warn: (msg) => {
-                called = true;
-                assert.equal(msg, "custom warn");
-            },
-            info: (msg) => {
-                called = true;
-                assert.equal(msg, "custom info");
-            },
+            warn: noopLog,
+            info: noopLog,
+            debug: noopLog,
+            trace: noopLog,
         };
 
         setGlobalLogger(customLogger);
         const logger = getGlobalLogger();
 
-        logger.error("custom error", new Error("err"));
-        logger.warn("custom warn");
-        logger.info("custom info");
-        assert.ok(called);
+        logger.error("custom error", { error: new Error("err") });
+        assert(called);
     });
 
     it("resetGlobalLogger restores the default logger", async (t) => {
-        const errorSpy = t.mock.method(console, "error", () => {
+        const infoSpy = t.mock.method(console, "info", () => {
             // noop
         });
 
         setGlobalLogger({
-            error: () => {
-                throw new Error("should not be called");
-            },
-            warn: () => {
-                // noop
-            },
-            info: () => {
-                // noop
-            },
+            fatal: noopLog,
+            error: noopLog,
+            warn: noopLog,
+            info: noopLog,
+            debug: noopLog,
+            trace: noopLog,
         });
 
         resetGlobalLogger();
 
         const logger = getGlobalLogger();
-        const err = new Error("fail");
-        logger.error("error message after reset", err);
+        logger.info("error message after reset");
 
-        assert.deepEqual(errorSpy.mock.calls[0].arguments, ["error message after reset", err]);
+        assert.deepEqual(infoSpy.mock.calls[0].arguments, ["error message after reset", undefined]);
     });
 });

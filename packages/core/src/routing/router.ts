@@ -6,7 +6,7 @@ import {
     StatusCode,
 } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
-import type { setGlobalLogger } from "../logger/index.js";
+import type { setGlobalLogger } from "../logging/index.js";
 import type { HttpService } from "../service/index.js";
 import { type ErrorHandler, runWithErrorHandler } from "../util/index.js";
 import { Fallback } from "./fallback.js";

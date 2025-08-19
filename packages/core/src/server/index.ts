@@ -9,7 +9,7 @@ import assert from "node:assert";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { HttpRequest } from "../http/index.js";
-import { getGlobalLogger } from "../logger/index.js";
+import { getGlobalLogger } from "../logging/index.js";
 import type { HttpService } from "../service/index.js";
 
 /**
@@ -97,7 +97,7 @@ export const serve = async (service: HttpService, config?: ServeConfig): Promise
             const response = await service.invoke(httpRequests);
             await response.write(res);
         } catch (error) {
-            getGlobalLogger().error("Uncaught error in router", error);
+            getGlobalLogger().error("Uncaught error in router", { error });
 
             try {
                 res.statusCode = 500;

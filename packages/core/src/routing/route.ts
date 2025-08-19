@@ -8,7 +8,7 @@ import {
     type SizeHint,
 } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
-import { getGlobalLogger } from "../logger/index.js";
+import { getGlobalLogger } from "../logging/index.js";
 import type { HttpService } from "../service/index.js";
 import { CatchError, MapToHttpResponse } from "../util/index.js";
 
