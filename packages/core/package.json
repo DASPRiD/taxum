@@ -1,7 +1,7 @@
 {
     "name": "@taxum/core",
     "description": "Core of the Taxum HTTP framework",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "type": "module",
     "author": "Ben Scholzen 'DASPRiD'",
     "license": "BSD-3-Clause",

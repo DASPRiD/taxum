@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0](https://github.com/DASPRiD/taxum/compare/jwt-v0.3.0...jwt-v0.4.0) (2025-08-19)
+
+
+### Features
+
+* return every error as a ClientError ([2e946de](https://github.com/DASPRiD/taxum/commit/2e946de61c2be6cb8bd29e50615d3ca807cb2411))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 0.7.0
+
 ## [0.3.0](https://github.com/DASPRiD/taxum/compare/jwt-v0.2.1...jwt-v0.3.0) (2025-08-18)
 
 
