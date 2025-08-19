@@ -9,7 +9,7 @@ import {
     StatusCode,
     TO_HTTP_RESPONSE,
 } from "../../src/http/index.js";
-import { RequestBodyLimitLayer } from "../../src/middleware/limit.js";
+import { ContentTooLargeError, RequestBodyLimitLayer } from "../../src/middleware/limit.js";
 import type { HttpService } from "../../src/service/index.js";
 
 describe("middleware:limit", () => {
@@ -26,7 +26,7 @@ describe("middleware:limit", () => {
         assert.equal(await consumers.text(res.body.read()), "ok");
     });
 
-    it("returns 413 immediately if content-length exceeds limit", async () => {
+    it("throws 413 immediately if content-length exceeds limit", async () => {
         const inner: HttpService = {
             invoke: async () => {
                 throw new Error("should not be called");
@@ -39,9 +39,7 @@ describe("middleware:limit", () => {
             .header("content-length", "6")
             .body(Readable.from(["hello!"]));
 
-        const res = await service.invoke(req);
-
-        assert.equal(res.status.code, StatusCode.CONTENT_TOO_LARGE.code);
+        await assert.rejects(async () => service.invoke(req), new ContentTooLargeError(5));
     });
 
     it("passes through if content-length is equal or below limit", async () => {

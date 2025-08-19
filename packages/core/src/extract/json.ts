@@ -2,10 +2,11 @@ import consumers from "node:stream/consumers";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import MIMEType from "whatwg-mimetype";
 import { type HeaderMap, type HttpRequest, StatusCode } from "../http/index.js";
-import { ExtractError, ValidationError } from "./error.js";
+import { ClientError } from "../util/index.js";
+import { ValidationError } from "./error.js";
 import type { Extractor } from "./index.js";
 
-export class MissingJsonContentTypeError extends ExtractError {
+export class MissingJsonContentTypeError extends ClientError {
     public constructor() {
         super(
             StatusCode.UNSUPPORTED_MEDIA_TYPE,
@@ -14,7 +15,7 @@ export class MissingJsonContentTypeError extends ExtractError {
     }
 }
 
-export class MalformedJsonError extends ExtractError {
+export class MalformedJsonError extends ClientError {
     public constructor(reason: string) {
         super(StatusCode.BAD_REQUEST, reason);
     }

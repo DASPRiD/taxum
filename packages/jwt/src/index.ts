@@ -8,16 +8,10 @@
  * @packageDocumentation
  */
 
-import {
-    ExtensionKey,
-    type HttpRequest,
-    HttpResponse,
-    StatusCode,
-    TO_HTTP_RESPONSE,
-    type ToHttpResponse,
-} from "@taxum/core/http";
+import { ExtensionKey, type HttpRequest, type HttpResponse, StatusCode } from "@taxum/core/http";
 import type { HttpLayer } from "@taxum/core/layer";
 import type { HttpService } from "@taxum/core/service";
+import { ClientError } from "@taxum/core/util";
 import {
     type CryptoKey,
     type JWK,
@@ -136,7 +130,11 @@ class Jwt implements HttpService {
         const jwtOrError = await this.resolveJwt(req);
 
         if (jwtOrError instanceof UnauthorizedError) {
-            return this.allowUnauthorized ? this.inner.invoke(req) : jwtOrError[TO_HTTP_RESPONSE]();
+            if (this.allowUnauthorized) {
+                return this.inner.invoke(req);
+            }
+
+            throw jwtOrError;
         }
 
         req.extensions.insert(JWT, jwtOrError);
@@ -160,7 +158,7 @@ class Jwt implements HttpService {
             typeof this.verifyOptions === "function" ? this.verifyOptions() : this.verifyOptions;
 
         try {
-            return jwtVerify(parts[1], this.key, verifyOptions);
+            return await jwtVerify(parts[1], this.key, verifyOptions);
         } catch (error) {
             return new UnauthorizedError(
                 /* node:coverage ignore next */
@@ -174,18 +172,15 @@ class Jwt implements HttpService {
 /**
  * Error thrown when the JWT is missing or invalid.
  */
-export class UnauthorizedError implements ToHttpResponse {
-    public readonly reason: string;
-    public readonly expose: boolean;
+export class UnauthorizedError extends ClientError {
+    public readonly debugReason: string;
 
     public constructor(reason: string, expose: boolean) {
-        this.reason = reason;
-        this.expose = expose;
-    }
+        super(
+            StatusCode.UNAUTHORIZED,
+            expose ? `Authentication required: ${reason}` : "Authentication required",
+        );
 
-    public [TO_HTTP_RESPONSE](): HttpResponse {
-        return HttpResponse.builder()
-            .status(StatusCode.UNAUTHORIZED)
-            .body(this.expose ? this.reason : null);
+        this.debugReason = reason;
     }
 }

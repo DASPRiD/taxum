@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { Readable } from "node:stream";
-import consumers from "node:stream/consumers";
 import { before, beforeEach, describe, it, mock } from "node:test";
 import {
     Body,
@@ -28,6 +27,7 @@ describe("JwtLayer", () => {
         mock.fn<(token: unknown, key: unknown, options: unknown) => Promise<unknown>>();
     let JWT: typeof import("../src/index.js").JWT;
     let JwtLayer: typeof import("../src/index.js").JwtLayer;
+    let UnauthorizedError: typeof import("../src/index.js").UnauthorizedError;
 
     before(async () => {
         mock.module("jose", {
@@ -36,7 +36,7 @@ describe("JwtLayer", () => {
             },
         });
 
-        ({ JWT, JwtLayer } = await import("../src/index.js"));
+        ({ JWT, JwtLayer, UnauthorizedError } = await import("../src/index.js"));
     });
 
     beforeEach(() => {
@@ -53,10 +53,10 @@ describe("JwtLayer", () => {
             },
         });
 
-        const res = await service.invoke(req);
-        assert(res instanceof HttpResponse);
-        assert.equal(res.status.code, StatusCode.UNAUTHORIZED.code);
-        assert.equal(await consumers.text(res.body.read()), "");
+        await assert.rejects(
+            async () => service.invoke(req),
+            new UnauthorizedError("Missing authorization header", false),
+        );
     });
 
     it("rejects malformed authorization header", async () => {
@@ -69,8 +69,10 @@ describe("JwtLayer", () => {
             },
         });
 
-        const res = await service.invoke(req);
-        assert.equal(res.status.code, StatusCode.UNAUTHORIZED.code);
+        await assert.rejects(
+            async () => service.invoke(req),
+            new UnauthorizedError("Malformed authorization header", false),
+        );
     });
 
     it("returns error message when debug is enabled", async () => {
@@ -87,12 +89,13 @@ describe("JwtLayer", () => {
             },
         });
 
-        const res = await service.invoke(req);
-        assert.equal(res.status.code, StatusCode.UNAUTHORIZED.code);
-        assert.equal(await consumers.text(res.body.read()), "bad signature");
+        await assert.rejects(
+            async () => service.invoke(req),
+            new UnauthorizedError("bad signature", true),
+        );
     });
 
-    it("returns 401 on invalid JWT and debug is disabled", async () => {
+    it("throws 401 on invalid JWT and debug is disabled", async () => {
         const layer = new JwtLayer(new Uint8Array());
         const req = createRequest("Bearer whatever");
 
@@ -106,9 +109,10 @@ describe("JwtLayer", () => {
             },
         });
 
-        const res = await service.invoke(req);
-        assert.equal(res.status.code, StatusCode.UNAUTHORIZED.code);
-        assert.equal(await consumers.text(res.body.read()), "");
+        await assert.rejects(
+            async () => service.invoke(req),
+            new UnauthorizedError("invalid", false),
+        );
     });
 
     it("allows request through if allowUnauthorized is true", async () => {

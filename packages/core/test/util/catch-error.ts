@@ -14,7 +14,11 @@ describe("util:map-to-http-response", () => {
         assert(wrapped instanceof CatchError);
     });
 
-    it("catches inner errors", async () => {
+    it("catches inner errors", async (t) => {
+        const spy = t.mock.method(console, "error", () => {
+            // Suppress console.error
+        });
+
         const inner: HttpService = {
             invoke: () => {
                 throw new Error("inner error");
@@ -24,5 +28,6 @@ describe("util:map-to-http-response", () => {
 
         const res = await wrapper.invoke(HttpRequest.builder().body(null));
         assert.equal(res.status, StatusCode.INTERNAL_SERVER_ERROR);
+        assert.match(spy.mock.calls[0].arguments[0], /failed to serve request/);
     });
 });

@@ -2,10 +2,11 @@ import consumers from "node:stream/consumers";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { parseSearchParams } from "nested-search-params";
 import { type HttpRequest, Method, StatusCode } from "../http/index.js";
-import { ExtractError, ValidationError } from "./error.js";
+import { ClientError } from "../util/index.js";
+import { ValidationError } from "./error.js";
 import type { Extractor } from "./index.js";
 
-export class MissingFormDataContentTypeError extends ExtractError {
+export class MissingFormDataContentTypeError extends ClientError {
     public constructor() {
         super(
             StatusCode.UNSUPPORTED_MEDIA_TYPE,

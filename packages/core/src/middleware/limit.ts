@@ -1,14 +1,8 @@
 import { Transform } from "node:stream";
-import {
-    HttpRequest,
-    type HttpResponse,
-    LazyWrappedReadable,
-    StatusCode,
-    TO_HTTP_RESPONSE,
-    type ToHttpResponse,
-} from "../http/index.js";
+import { HttpRequest, type HttpResponse, LazyWrappedReadable, StatusCode } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
 import type { HttpService } from "../service/index.js";
+import { ClientError } from "../util/index.js";
 
 /**
  * A middleware that intercepts requests with body lengths greater than the
@@ -60,7 +54,7 @@ class RequestBodyLimit implements HttpService {
         const contentLength = Number.parseInt(rawContentLength, 10);
 
         if (!Number.isNaN(contentLength) && contentLength > this.limit) {
-            return Promise.resolve(StatusCode.CONTENT_TOO_LARGE[TO_HTTP_RESPONSE]());
+            throw new ContentTooLargeError(this.limit);
         }
 
         const limit = this.limit;
@@ -73,7 +67,7 @@ class RequestBodyLimit implements HttpService {
                     bytesRead += chunk.length;
 
                     if (bytesRead > limit) {
-                        callback(new ContentTooLargeError());
+                        callback(new ContentTooLargeError(limit));
                         return;
                     }
 
@@ -86,8 +80,8 @@ class RequestBodyLimit implements HttpService {
     }
 }
 
-class ContentTooLargeError extends Error implements ToHttpResponse {
-    public [TO_HTTP_RESPONSE](): HttpResponse {
-        return StatusCode.CONTENT_TOO_LARGE[TO_HTTP_RESPONSE]();
+export class ContentTooLargeError extends ClientError {
+    public constructor(limit: number) {
+        super(StatusCode.CONTENT_TOO_LARGE, `Request body is larger than ${limit} bytes`);
     }
 }
