@@ -125,6 +125,10 @@ export default withMermaid(
                                 text: "Request ID",
                                 link: "/guide/middleware/request-id",
                             },
+                            {
+                                text: "Tracing",
+                                link: "/guide/middleware/trace",
+                            },
                         ],
                     },
                     {

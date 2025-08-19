@@ -12,6 +12,7 @@ import { RequestDecompressionLayer } from "../../src/middleware/decompression.js
 import { FromFnLayer } from "../../src/middleware/from-fn.js";
 import { RequestBodyLimitLayer } from "../../src/middleware/limit.js";
 import { PropagateRequestIdLayer, SetRequestIdLayer } from "../../src/middleware/request-id.js";
+import { TraceLayer } from "../../src/middleware/trace.js";
 import { type AnyService, serviceFn } from "../../src/service/index.js";
 import { CatchErrorLayer, MapToHttpResponseLayer } from "../../src/util/index.js";
 
@@ -116,6 +117,14 @@ describe("ServiceBuilder (white-box)", () => {
 
         assertInner(builder.requestBodyLimit(1024), (inner) => {
             assert(inner instanceof RequestBodyLimitLayer);
+        });
+    });
+
+    it("traceHttp adds TraceLayer", () => {
+        const builder = ServiceBuilder.create();
+
+        assertInner(builder.traceHttp(), (inner) => {
+            assert(inner instanceof TraceLayer);
         });
     });
 

@@ -14,6 +14,7 @@ import { RequestDecompressionLayer } from "./decompression.js";
 import { type FromFnClosure, FromFnLayer } from "./from-fn.js";
 import { RequestBodyLimitLayer } from "./limit.js";
 import { type MakeRequestId, PropagateRequestIdLayer, SetRequestIdLayer } from "./request-id.js";
+import { TraceLayer } from "./trace.js";
 
 /**
  * Declaratively construct a {@link Service} values.
@@ -132,6 +133,15 @@ export class ServiceBuilder<Out extends AnyService, In extends AnyService>
         headerName?: string,
     ): ServiceBuilder<Out, HttpService> {
         return this.withLayer(new PropagateRequestIdLayer(headerName));
+    }
+
+    /**
+     * Trace HTTP requests and responses.
+     *
+     * @see {@link TraceLayer}
+     */
+    public traceHttp(this: ServiceBuilder<Out, HttpService>): ServiceBuilder<Out, HttpService> {
+        return this.withLayer(new TraceLayer());
     }
 
     /**

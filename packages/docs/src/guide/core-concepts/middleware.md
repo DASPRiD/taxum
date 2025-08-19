@@ -32,6 +32,8 @@ const router = new Router()
     .layer(
         ServiceBuilder.create()
             .compression()
+            .traceHttp()
+            .catchError()
             .requestBodyLimit(1024 * 1024)
     );
 ```

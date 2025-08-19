@@ -11,7 +11,7 @@ describe("middleware/client-ip", () => {
         const connectInfo = new SocketAddress({ address: "192.168.1.100" });
         const innerService = {
             invoke: async (req: HttpRequest) => {
-                assert.strictEqual(req.extensions.get(CLIENT_IP), connectInfo.address);
+                assert.equal(req.extensions.get(CLIENT_IP), connectInfo.address);
                 return dummyResponse;
             },
         };
@@ -29,7 +29,7 @@ describe("middleware/client-ip", () => {
         const forwardedFor = "203.0.113.1, 198.51.100.101";
         const innerService = {
             invoke: async (req: HttpRequest) => {
-                assert.strictEqual(req.extensions.get(CLIENT_IP), "203.0.113.1");
+                assert.equal(req.extensions.get(CLIENT_IP), "203.0.113.1");
                 return dummyResponse;
             },
         };
@@ -49,7 +49,7 @@ describe("middleware/client-ip", () => {
         const connectInfo = new SocketAddress({ address: "192.168.1.100" });
         const innerService = {
             invoke: async (req: HttpRequest) => {
-                assert.strictEqual(req.extensions.get(CLIENT_IP), connectInfo.address);
+                assert.equal(req.extensions.get(CLIENT_IP), connectInfo.address);
                 return dummyResponse;
             },
         };
@@ -67,7 +67,7 @@ describe("middleware/client-ip", () => {
         const forwardedFor = "invalid, 203.0.113.1, 198.51.100.101";
         const innerService = {
             invoke: async (req: HttpRequest) => {
-                assert.strictEqual(req.extensions.get(CLIENT_IP), "203.0.113.1");
+                assert.equal(req.extensions.get(CLIENT_IP), "203.0.113.1");
                 return dummyResponse;
             },
         };
@@ -88,7 +88,7 @@ describe("middleware/client-ip", () => {
         const forwardedFor = "invalid, also-invalid";
         const innerService = {
             invoke: async (req: HttpRequest) => {
-                assert.strictEqual(req.extensions.get(CLIENT_IP), connectInfo.address);
+                assert.equal(req.extensions.get(CLIENT_IP), connectInfo.address);
                 return dummyResponse;
             },
         };

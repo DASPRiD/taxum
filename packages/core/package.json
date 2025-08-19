@@ -126,6 +126,14 @@
             "taxum": "./src/middleware/set-status.ts",
             "default": "./dist/middleware/set-status.js"
         },
+        "./middleware/trace": {
+            "types": [
+                "./dist/middleware/trace.d.ts",
+                "./src/middleware/trace.ts"
+            ],
+            "taxum": "./src/middleware/trace.ts",
+            "default": "./dist/middleware/trace.js"
+        },
         "./routing": {
             "types": [
                 "./dist/routing/index.d.ts",

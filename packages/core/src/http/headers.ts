@@ -134,7 +134,7 @@ export class HeaderMap implements ToHttpResponseParts {
         }
     }
 
-    public [Symbol.iterator]() {
+    public [Symbol.iterator](): IterableIterator<[string, string]> {
         return this.entries();
     }
 
