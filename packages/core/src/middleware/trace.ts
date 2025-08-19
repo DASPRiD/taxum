@@ -1,6 +1,6 @@
 import type { HttpRequest, HttpResponse } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
-import { getGlobalLogger, type LogLevel } from "../logging/index.js";
+import { getLoggerProxy, type LogLevel } from "../logging/index.js";
 import type { HttpService } from "../service/index.js";
 
 const DEFAULT_MESSAGE_LEVEL: LogLevel = "debug";
@@ -74,7 +74,7 @@ export class DefaultOnRequest implements OnRequest {
     }
 
     public onRequest(_req: HttpRequest): void {
-        getGlobalLogger()[this.level]("started processing request");
+        getLoggerProxy()[this.level]("started processing request");
     }
 }
 
@@ -88,7 +88,7 @@ export class DefaultOnResponse implements OnResponse {
     }
 
     public onResponse(res: HttpResponse, latency: number): void {
-        getGlobalLogger()[this.level]("finished processing request", {
+        getLoggerProxy()[this.level]("finished processing request", {
             status: res.status,
             latency,
             headers: this.includeHeaders ? [...res.headers.entries()] : undefined,
@@ -104,7 +104,7 @@ export class DefaultOnFailure implements OnFailure {
     }
 
     public onFailure(classification: string, latency: number): void {
-        getGlobalLogger()[this.level]("response failed", {
+        getLoggerProxy()[this.level]("response failed", {
             classification,
             latency,
         });

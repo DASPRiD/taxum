@@ -6,7 +6,7 @@ import {
     StatusCode,
 } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
-import type { setGlobalLogger } from "../logging/index.js";
+import type { setLoggerProxy } from "../logging/index.js";
 import type { HttpService } from "../service/index.js";
 import { type ErrorHandler, runWithErrorHandler } from "../util/index.js";
 import { Fallback } from "./fallback.js";
@@ -49,7 +49,7 @@ export const ORIGINAL_URI = new ExtensionKey("OriginalUri");
  *
  * If an error results in a `5xx` response, Taxum will log the error. Unless
  * changes, this will use the `console`. You can change the error logger by
- * calling {@link setGlobalLogger}.
+ * calling {@link setLoggerProxy}.
  *
  * You can also change the error handler to customize the way errors are
  * converted to responses. See {@link Router.errorHandler} for more details.

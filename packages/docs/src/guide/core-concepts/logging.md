@@ -11,12 +11,12 @@ logging frameworks with Taxum.
 ### [logforth](https://github.com/dasprid/logforth) 
 
 ```ts
-import { setGlobalLogger } from "@taxum/core/logging";
+import { setLoggerProxy } from "@taxum/core/logging";
 import { Logger } from "logforth";
 
 const logger = new Logger();
 
-setGlobalLogger({
+setLoggerProxy({
     fatal: (message, values) => logger.fatal(message, values),
     error: (message, values) => logger.error(message, values),
     warn: (message, values) => logger.warn(message, values),
@@ -29,7 +29,7 @@ setGlobalLogger({
 ### [pino](https://github.com/pinojs/pino)
 
 ```ts
-import { setGlobalLogger } from "@taxum/core/logging";
+import { setLoggerProxy } from "@taxum/core/logging";
 import logger from "pino";
 
 const transformArgs = (
@@ -44,7 +44,7 @@ const transformArgs = (
     return [{ ...rest, err: error }, message];
 };
 
-setGlobalLogger({
+setLoggerProxy({
     fatal: (message, values) => logger.fatal(...transformArgs(message, values)),
     error: (message, values) => logger.error(...transformArgs(message, values)),
     warn: (message, values) => logger.warn(...transformArgs(message, values)),
@@ -57,12 +57,12 @@ setGlobalLogger({
 ### [winston](https://github.com/winstonjs/winston)
 
 ```ts
-import { setGlobalLogger } from "@taxum/core/logging";
+import { setLoggerProxy } from "@taxum/core/logging";
 import winston from "winston";
 
 const logger = winston.createLogger();
 
-setGlobalLogger({
+setLoggerProxy({
     fatal: (message, values) => logger.fatal(message, values),
     error: (message, values) => logger.error(message, values),
     warn: (message, values) => logger.warn(message, values),

@@ -10,7 +10,7 @@ import {
     type SupportedEncodings,
     TO_HTTP_RESPONSE,
 } from "@taxum/core/http";
-import { getGlobalLogger } from "@taxum/core/logging";
+import { getLoggerProxy } from "@taxum/core/logging";
 import { SetStatusLayer } from "@taxum/core/middleware/set-status";
 import type { HttpService } from "@taxum/core/service";
 import { type OpenFileOutput, openFile } from "./open-file.js";
@@ -226,7 +226,7 @@ export class ServeDir implements HttpService {
         try {
             return await this.tryInvoke(req);
         } catch (error) {
-            getGlobalLogger().error("Failed to read file", { error });
+            getLoggerProxy().error("Failed to read file", { error });
             return StatusCode.INTERNAL_SERVER_ERROR[TO_HTTP_RESPONSE]();
         }
     }

@@ -8,7 +8,7 @@ import {
     type SizeHint,
 } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
-import { getGlobalLogger } from "../logging/index.js";
+import { getLoggerProxy } from "../logging/index.js";
 import type { HttpService } from "../service/index.js";
 import { CatchError, MapToHttpResponse } from "../util/index.js";
 
@@ -48,7 +48,7 @@ export class Route implements HttpService {
                 res.headers.containsKey("transfer-encoding") ||
                 res.body.sizeHint.lower !== 0
             ) {
-                getGlobalLogger().error("response to CONNECT with nonempty body");
+                getLoggerProxy().error("response to CONNECT with nonempty body");
                 res.body = Body.from(null);
             }
         } else if (topLevel) {

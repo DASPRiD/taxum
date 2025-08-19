@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
-    getGlobalLogger,
+    getLoggerProxy,
     type LogFnProxy,
     type LoggerProxy,
-    resetGlobalLogger,
-    setGlobalLogger,
+    resetLoggerProxy,
+    setLoggerProxy,
 } from "../../src/logging/index.js";
 
 const noopLog: LogFnProxy = () => {
@@ -30,7 +30,7 @@ describe("logging:index", () => {
             // noop
         });
 
-        const logger = getGlobalLogger();
+        const logger = getLoggerProxy();
         const error = new Error("fail");
         logger.fatal("fatal message");
         logger.error("error message", { error });
@@ -63,8 +63,8 @@ describe("logging:index", () => {
             trace: noopLog,
         };
 
-        setGlobalLogger(customLogger);
-        const logger = getGlobalLogger();
+        setLoggerProxy(customLogger);
+        const logger = getLoggerProxy();
 
         logger.error("custom error", { error: new Error("err") });
         assert(called);
@@ -75,7 +75,7 @@ describe("logging:index", () => {
             // noop
         });
 
-        setGlobalLogger({
+        setLoggerProxy({
             fatal: noopLog,
             error: noopLog,
             warn: noopLog,
@@ -84,9 +84,9 @@ describe("logging:index", () => {
             trace: noopLog,
         });
 
-        resetGlobalLogger();
+        resetLoggerProxy();
 
-        const logger = getGlobalLogger();
+        const logger = getLoggerProxy();
         logger.info("error message after reset");
 
         assert.deepEqual(infoSpy.mock.calls[0].arguments, ["error message after reset", undefined]);

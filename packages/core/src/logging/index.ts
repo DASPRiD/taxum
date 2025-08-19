@@ -44,16 +44,16 @@ let globalLogger: LoggerProxy = defaultLogger;
 /**
  * Sets the global logger instance to be used throughout the router.
  */
-export const setGlobalLogger = (logger: LoggerProxy) => {
+export const setLoggerProxy = (logger: LoggerProxy) => {
     globalLogger = logger;
 };
 
 /**
  * Retrieves the global logger instance.
  */
-export const getGlobalLogger = () => globalLogger;
+export const getLoggerProxy = () => globalLogger;
 
 /**
  * Resets the global logger to the default logger instance.
  */
-export const resetGlobalLogger = () => setGlobalLogger(defaultLogger);
+export const resetLoggerProxy = () => setLoggerProxy(defaultLogger);

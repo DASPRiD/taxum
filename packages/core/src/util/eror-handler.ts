@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { HttpResponse, isToHttpResponse, StatusCode, TO_HTTP_RESPONSE } from "../http/index.js";
-import { getGlobalLogger } from "../logging/index.js";
+import { getLoggerProxy } from "../logging/index.js";
 
 /**
  * Represents an error handler which converts any error into a response.
@@ -18,13 +18,13 @@ export const defaultErrorHandler = (error: unknown) => {
         const res = error[TO_HTTP_RESPONSE]();
 
         if (res.status.isServerError()) {
-            getGlobalLogger().error("failed to serve request", { error });
+            getLoggerProxy().error("failed to serve request", { error });
         }
 
         return res;
     }
 
-    getGlobalLogger().error("failed to serve request", { error });
+    getLoggerProxy().error("failed to serve request", { error });
 
     return HttpResponse.builder().status(StatusCode.INTERNAL_SERVER_ERROR).body(null);
 };
