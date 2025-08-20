@@ -34,7 +34,7 @@ describe("ServiceBuilder (white-box)", () => {
         assert(inner instanceof Identity);
     });
 
-    it("withLayer adds layer in existing layers", () => {
+    it("withLayer adds layer", () => {
         const builder = ServiceBuilder.create();
         const layer: HttpLayer = {
             layer: () => ({
@@ -44,6 +44,35 @@ describe("ServiceBuilder (white-box)", () => {
 
         assertInner(builder.withLayer(layer), (inner) => {
             assert.equal(inner, layer);
+        });
+    });
+
+    it("withOptionLayer adds layer when set", () => {
+        const builder = ServiceBuilder.create();
+        const layer: HttpLayer = {
+            layer: () => ({
+                invoke: () => HttpResponse.builder().body(null),
+            }),
+        };
+
+        assertInner(builder.withOptionLayer(layer), (inner) => {
+            assert.equal(inner, layer);
+        });
+    });
+
+    it("withOptionLayer adds identity when null", () => {
+        const builder = ServiceBuilder.create();
+
+        assertInner(builder.withOptionLayer(null), (inner) => {
+            assert(inner instanceof Identity);
+        });
+    });
+
+    it("withOptionLayer adds identity when undefined", () => {
+        const builder = ServiceBuilder.create();
+
+        assertInner(builder.withOptionLayer(undefined), (inner) => {
+            assert(inner instanceof Identity);
         });
     });
 

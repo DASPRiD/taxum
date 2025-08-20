@@ -48,6 +48,18 @@ export class ServiceBuilder<Out extends AnyService, In extends AnyService>
     }
 
     /**
+     * Applies an optional {@link Layer} to the next service.
+     *
+     * An optional layer is only possible when the consumed service equals the
+     * produced service.
+     */
+    public withOptionLayer<TOut extends In, TIn extends In>(
+        layer: Layer<TOut, TIn> | null | undefined,
+    ): ServiceBuilder<Out, TIn> {
+        return new ServiceBuilder(new Stack(layer ?? new Identity(), this.inner));
+    }
+
+    /**
      * Applies a middleware function to the next service.
      *
      * @see {@link FromFnLayer}
