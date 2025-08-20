@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/DASPRiD/taxum/compare/core-v0.7.0...core-v0.8.0) (2025-08-20)
+
+
+### Features
+
+* **core:** add withOptionLayer to ServiceBuilder ([34ca1cb](https://github.com/DASPRiD/taxum/commit/34ca1cb421f00425cb67918664edcf769bcfb392))
+
 ## [0.7.0](https://github.com/DASPRiD/taxum/compare/core-v0.6.0...core-v0.7.0) (2025-08-19)
 
 
