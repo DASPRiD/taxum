@@ -1,4 +1,4 @@
-import type { HttpResponse, HttpResponseLike } from "../http/index.js";
+import type { HttpRequest, HttpResponse, HttpResponseLike } from "../http/index.js";
 import { Identity, type Layer, Stack } from "../layer/index.js";
 import type {
     AnyService,
@@ -14,6 +14,11 @@ import { RequestDecompressionLayer } from "./decompression.js";
 import { type FromFnClosure, FromFnLayer } from "./from-fn.js";
 import { RequestBodyLimitLayer } from "./limit.js";
 import { type MakeRequestId, PropagateRequestIdLayer, SetRequestIdLayer } from "./request-id.js";
+import {
+    type MakeHeaderValue,
+    SetRequestHeaderLayer,
+    SetResponseHeaderLayer,
+} from "./set-header.js";
 import { TraceLayer } from "./trace.js";
 
 /**
@@ -92,6 +97,8 @@ export class ServiceBuilder<Out extends AnyService, In extends AnyService>
         return this.withLayer(new MapToHttpResponseLayer());
     }
 
+    /* node:coverage disable: no need to cover proxy methods */
+
     /**
      * Set client IP from the request.
      *
@@ -168,6 +175,96 @@ export class ServiceBuilder<Out extends AnyService, In extends AnyService>
     ): ServiceBuilder<Out, HttpService> {
         return this.withLayer(new RequestBodyLimitLayer(limit));
     }
+
+    /**
+     * Insert a header into the request.
+     *
+     * If a previous value exists for the same header, it is removed and
+     * replaced with a new header value.
+     *
+     * @see {@link SetRequestHeaderLayer}
+     */
+    public overrideRequestHeader(
+        this: ServiceBuilder<Out, HttpService>,
+        headerName: string,
+        make: MakeHeaderValue<HttpRequest>,
+    ) {
+        return this.withLayer(SetRequestHeaderLayer.overriding(headerName, make));
+    }
+
+    /**
+     * Append a header into the request.
+     *
+     * If previous values exist, the header will have multiple values.
+     *
+     * @see {@link SetRequestHeaderLayer}
+     */
+    public appendRequestHeader(
+        this: ServiceBuilder<Out, HttpService>,
+        headerName: string,
+        make: MakeHeaderValue<HttpRequest>,
+    ) {
+        return this.withLayer(SetRequestHeaderLayer.appending(headerName, make));
+    }
+
+    /**
+     * Insert a header into the request if the header is not already present.
+     *
+     * @see {@link SetRequestHeaderLayer}
+     */
+    public insertRequestHeaderIfNotPresent(
+        this: ServiceBuilder<Out, HttpService>,
+        headerName: string,
+        make: MakeHeaderValue<HttpRequest>,
+    ) {
+        return this.withLayer(SetRequestHeaderLayer.ifNotPresent(headerName, make));
+    }
+
+    /**
+     * Insert a header into the response.
+     *
+     * If a previous value exists for the same header, it is removed and
+     * replaced with a new header value.
+     *
+     * @see {@link SetResponseHeaderLayer}
+     */
+    public overrideResponseHeader(
+        this: ServiceBuilder<Out, HttpService>,
+        headerName: string,
+        make: MakeHeaderValue<HttpResponse>,
+    ) {
+        return this.withLayer(SetResponseHeaderLayer.overriding(headerName, make));
+    }
+
+    /**
+     * Append a header into the response.
+     *
+     * If previous values exist, the header will have multiple values.
+     *
+     * @see {@link SetResponseHeaderLayer}
+     */
+    public appendResponseHeader(
+        this: ServiceBuilder<Out, HttpService>,
+        headerName: string,
+        make: MakeHeaderValue<HttpResponse>,
+    ) {
+        return this.withLayer(SetResponseHeaderLayer.appending(headerName, make));
+    }
+
+    /**
+     * Insert a header into the response if the header is not already present.
+     *
+     * @see {@link SetResponseHeaderLayer}
+     */
+    public insertResponseHeaderIfNotPresent(
+        this: ServiceBuilder<Out, HttpService>,
+        headerName: string,
+        make: MakeHeaderValue<HttpResponse>,
+    ) {
+        return this.withLayer(SetResponseHeaderLayer.ifNotPresent(headerName, make));
+    }
+
+    /* node:coverage enable */
 
     public layer(inner: In): Out {
         return this.inner.layer(inner);

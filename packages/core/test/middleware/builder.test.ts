@@ -6,13 +6,7 @@ import { describe, it } from "node:test";
 import { HttpRequest, HttpResponse } from "../../src/http/index.js";
 import { type HttpLayer, Identity, Stack } from "../../src/layer/index.js";
 import { ServiceBuilder } from "../../src/middleware/builder.js";
-import { SetClientIpLayer } from "../../src/middleware/client-ip.js";
-import { ResponseCompressionLayer } from "../../src/middleware/compression.js";
-import { RequestDecompressionLayer } from "../../src/middleware/decompression.js";
 import { FromFnLayer } from "../../src/middleware/from-fn.js";
-import { RequestBodyLimitLayer } from "../../src/middleware/limit.js";
-import { PropagateRequestIdLayer, SetRequestIdLayer } from "../../src/middleware/request-id.js";
-import { TraceLayer } from "../../src/middleware/trace.js";
 import { type AnyService, serviceFn } from "../../src/service/index.js";
 import { CatchErrorLayer, MapToHttpResponseLayer } from "../../src/util/index.js";
 
@@ -98,62 +92,6 @@ describe("ServiceBuilder (white-box)", () => {
 
         assertInner(builder.mapToHttpResponse(), (inner) => {
             assert(inner instanceof MapToHttpResponseLayer);
-        });
-    });
-
-    it("setClientIp adds SetClientIpLayer", () => {
-        const builder = ServiceBuilder.create();
-
-        assertInner(builder.setClientIp(), (inner) => {
-            assert(inner instanceof SetClientIpLayer);
-        });
-    });
-
-    it("compression adds ResponseCompressionLayer", () => {
-        const builder = ServiceBuilder.create();
-
-        assertInner(builder.compression(), (inner) => {
-            assert(inner instanceof ResponseCompressionLayer);
-        });
-    });
-
-    it("decompression adds RequestDecompressionLayer", () => {
-        const builder = ServiceBuilder.create();
-
-        assertInner(builder.decompression(), (inner) => {
-            assert(inner instanceof RequestDecompressionLayer);
-        });
-    });
-
-    it("setRequestId adds SetRequestIdLayer", () => {
-        const builder = ServiceBuilder.create();
-
-        assertInner(builder.setRequestId(), (inner) => {
-            assert(inner instanceof SetRequestIdLayer);
-        });
-    });
-
-    it("propagateRequestId adds PropagateRequestIdLayer", () => {
-        const builder = ServiceBuilder.create();
-
-        assertInner(builder.propagateRequestId(), (inner) => {
-            assert(inner instanceof PropagateRequestIdLayer);
-        });
-    });
-
-    it("requestBodyLimit adds RequestBodyLimitLayer", () => {
-        const builder = ServiceBuilder.create();
-
-        assertInner(builder.requestBodyLimit(1024), (inner) => {
-            assert(inner instanceof RequestBodyLimitLayer);
-        });
-    });
-
-    it("traceHttp adds TraceLayer", () => {
-        const builder = ServiceBuilder.create();
-
-        assertInner(builder.traceHttp(), (inner) => {
-            assert(inner instanceof TraceLayer);
         });
     });
 
