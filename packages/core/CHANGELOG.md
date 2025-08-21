@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/DASPRiD/taxum/compare/core-v0.8.0...core-v0.9.0) (2025-08-21)
+
+
+### Features
+
+* add set-header middleware ([9019a90](https://github.com/DASPRiD/taxum/commit/9019a902457c139319a98aaf4c3eb1f4ed628c29))
+
 ## [0.8.0](https://github.com/DASPRiD/taxum/compare/core-v0.7.0...core-v0.8.0) (2025-08-20)
 
 
