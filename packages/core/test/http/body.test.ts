@@ -3,7 +3,6 @@ import { Buffer } from "node:buffer";
 import { Readable } from "node:stream";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
-import { ReadableStream } from "stream/web";
 import { Body, isBodyLike, SizeHint, StatusCode, TO_HTTP_RESPONSE } from "../../src/http/index.js";
 
 describe("http:body", () => {

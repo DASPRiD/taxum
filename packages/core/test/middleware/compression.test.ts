@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import zlib from "node:zlib";
-import { ReadableStream } from "stream/web";
 import { Body, HeaderMap, HttpRequest, HttpResponse, SizeHint } from "../../src/http/index.js";
 import {
     andPredicate,
