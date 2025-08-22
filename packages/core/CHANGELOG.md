@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/DASPRiD/taxum/compare/core-v0.11.0...core-v0.12.0) (2025-08-22)
+
+
+### Features
+
+* **core:** use Transform.toWeb() to apply Node.js transforms ([0c17867](https://github.com/DASPRiD/taxum/commit/0c1786702e8fb6faac6e6007287d5c8904b2526f))
+
 ## [0.11.0](https://github.com/DASPRiD/taxum/compare/core-v0.10.0...core-v0.11.0) (2025-08-22)
 
 

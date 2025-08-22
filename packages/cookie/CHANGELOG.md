@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.7](https://github.com/DASPRiD/taxum/compare/cookie-v0.1.6...cookie-v0.1.7) (2025-08-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 0.12.0
+
 ## [0.1.6](https://github.com/DASPRiD/taxum/compare/cookie-v0.1.5...cookie-v0.1.6) (2025-08-22)
 
 
