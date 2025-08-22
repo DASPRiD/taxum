@@ -40,6 +40,16 @@ describe("http:response", () => {
                 assert.deepEqual(result.headers.getAll("x-test"), []);
             });
 
+            it("accepts an undici Response", () => {
+                const res = Response.json(
+                    { foo: "bar" },
+                    { status: 201, headers: [["x-test", "foo"]] },
+                );
+                const result = HttpResponse.from(res);
+                assert.equal(result.status, StatusCode.CREATED);
+                assert.deepEqual(result.headers.getAll("x-test"), ["foo"]);
+            });
+
             it("accepts a tuple with a single HttpResponseLikePart", () => {
                 const res = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
                 const result = HttpResponse.from([res]);

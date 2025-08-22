@@ -176,7 +176,7 @@ export class HttpResponseBuilder {
  * It is used to provide flexibility in handling various forms of HTTP response
  * data.
  */
-export type HttpResponseLikePart = HttpResponse | ToHttpResponse | BodyLike;
+export type HttpResponseLikePart = HttpResponse | ToHttpResponse | BodyLike | Response;
 
 /**
  * Represents a type that can be used as a response part.
@@ -222,7 +222,15 @@ export type HttpResponseLike =
 
 const responseLikePartToResponse = (part: HttpResponseLikePart): HttpResponse => {
     if (part instanceof HttpResponse) {
-        return new HttpResponse(part.status, part.headers, part.body, part.extensions);
+        return part;
+    }
+
+    if (part instanceof Response) {
+        return new HttpResponse(
+            StatusCode.fromCode(part.status),
+            HeaderMap.fromArray([...part.headers.entries()]),
+            Body.from(part.body),
+        );
     }
 
     if (isToHttpResponse(part)) {
@@ -233,5 +241,10 @@ const responseLikePartToResponse = (part: HttpResponseLikePart): HttpResponse =>
 };
 
 const isHttpResponseLikePart = (value: unknown): value is HttpResponseLikePart => {
-    return value instanceof HttpResponse || isToHttpResponse(value) || isBodyLike(value);
+    return (
+        value instanceof HttpResponse ||
+        isToHttpResponse(value) ||
+        isBodyLike(value) ||
+        value instanceof Response
+    );
 };
