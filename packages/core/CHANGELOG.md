@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.0](https://github.com/DASPRiD/taxum/compare/core-v0.9.0...core-v0.10.0) (2025-08-22)
+
+
+### Features
+
+* exchange legacy Node.js stream with WHATWG streams ([52652eb](https://github.com/DASPRiD/taxum/commit/52652ebe8daab599085c347385978cf2a55c3966))
+* exchange legacy Node.js stream with WHATWG streams ([5f7f5dd](https://github.com/DASPRiD/taxum/commit/5f7f5ddb43e408a8d887da904072c43b9cbfd526))
+
 ## [0.9.0](https://github.com/DASPRiD/taxum/compare/core-v0.8.0...core-v0.9.0) (2025-08-21)
 
 

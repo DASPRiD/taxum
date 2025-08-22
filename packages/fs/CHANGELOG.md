@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0](https://github.com/DASPRiD/taxum/compare/fs-v0.4.2...fs-v0.5.0) (2025-08-22)
+
+
+### Features
+
+* exchange legacy Node.js stream with WHATWG streams ([5f7f5dd](https://github.com/DASPRiD/taxum/commit/5f7f5ddb43e408a8d887da904072c43b9cbfd526))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 0.10.0
+
 ## [0.4.2](https://github.com/DASPRiD/taxum/compare/fs-v0.4.1...fs-v0.4.2) (2025-08-21)
 
 
