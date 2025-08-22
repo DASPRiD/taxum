@@ -126,6 +126,10 @@ export default withMermaid(
                                 link: "/guide/middleware/request-id",
                             },
                             {
+                                text: "Set Header",
+                                link: "/guide/middleware/set-header",
+                            },
+                            {
                                 text: "Tracing",
                                 link: "/guide/middleware/trace",
                             },
