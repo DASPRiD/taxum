@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/DASPRiD/taxum/compare/core-v0.10.0...core-v0.11.0) (2025-08-22)
+
+
+### Features
+
+* **core:** allow creating HttpResponse from undici Response ([59f9b7e](https://github.com/DASPRiD/taxum/commit/59f9b7e297f71e3836d80b52ddd42f1bfefa587f))
+
 ## [0.10.0](https://github.com/DASPRiD/taxum/compare/core-v0.9.0...core-v0.10.0) (2025-08-22)
 
 
