@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.2](https://github.com/DASPRiD/taxum/compare/fs-v0.5.1...fs-v0.5.2) (2025-08-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 0.12.0
+
 ## [0.5.1](https://github.com/DASPRiD/taxum/compare/fs-v0.5.0...fs-v0.5.1) (2025-08-22)
 
 
