@@ -1,5 +1,4 @@
-import { Transform } from "node:stream";
-import { HttpRequest, type HttpResponse, LazyWrappedReadable, StatusCode } from "../http/index.js";
+import { Body, HttpRequest, type HttpResponse, StatusCode } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
 import type { HttpService } from "../service/index.js";
 import { ClientError } from "../util/index.js";
@@ -60,23 +59,21 @@ class RequestBodyLimit implements HttpService {
         const limit = this.limit;
         let bytesRead = 0;
 
-        const limitedBody = new LazyWrappedReadable(
-            req.body,
-            new Transform({
-                transform(chunk: Buffer, _encoding, callback) {
-                    bytesRead += chunk.length;
+        const limitedBody = new TransformStream<Uint8Array, Uint8Array>({
+            transform: (chunk, controller) => {
+                bytesRead += chunk.byteLength;
 
-                    if (bytesRead > limit) {
-                        callback(new ContentTooLargeError(limit));
-                        return;
-                    }
+                if (bytesRead >= this.limit) {
+                    controller.error(new ContentTooLargeError(limit));
+                    return;
+                }
 
-                    callback(null, chunk);
-                },
-            }),
-        );
+                controller.enqueue(chunk);
+            },
+        });
+        const readable = new Body(req.body.readable.pipeThrough(limitedBody));
 
-        return this.inner.invoke(new HttpRequest(req.head, limitedBody, req.connectInfo));
+        return this.inner.invoke(new HttpRequest(req.head, readable, req.connectInfo));
     }
 }
 

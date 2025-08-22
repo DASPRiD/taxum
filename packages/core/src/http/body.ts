@@ -1,4 +1,3 @@
-import assert from "node:assert";
 import { Buffer } from "node:buffer";
 import { Readable } from "node:stream";
 import { HeaderMap } from "./headers.js";
@@ -17,20 +16,19 @@ import { TO_HTTP_RESPONSE, type ToHttpResponse } from "./to-response.js";
 export class Body implements ToHttpResponse {
     public readonly sizeHint: SizeHint;
     public readonly contentTypeHint: string | null;
-    private inner: Readable | null;
+    public readonly readable: ReadableStream<Uint8Array>;
 
     /**
      * Creates a new {@link Body}.
      *
      * @throws {@link !Error} if the provided stream is not readable.
      */
-    public constructor(stream: Readable, sizeHint?: SizeHint, contentTypeHint?: string) {
-        /* node:coverage ignore next 3 */
-        if (!stream.readable) {
-            throw new Error("Body must be readable");
-        }
-
-        this.inner = stream;
+    public constructor(
+        stream: ReadableStream<Uint8Array>,
+        sizeHint?: SizeHint,
+        contentTypeHint?: string,
+    ) {
+        this.readable = stream;
         this.sizeHint = sizeHint ?? SizeHint.unbounded();
         this.contentTypeHint = contentTypeHint ?? null;
     }
@@ -40,7 +38,14 @@ export class Body implements ToHttpResponse {
      */
     public static from(body: BodyLike): Body {
         if (body === null) {
-            return new Body(Readable.from([]), SizeHint.exact(0));
+            return new Body(
+                new ReadableStream({
+                    start: (controller) => {
+                        controller.close();
+                    },
+                }),
+                SizeHint.exact(0),
+            );
         }
 
         if (body instanceof Body) {
@@ -48,12 +53,20 @@ export class Body implements ToHttpResponse {
         }
 
         if (body instanceof Readable) {
-            return new Body(body, SizeHint.unbounded(), "application/octet-stream");
+            return new Body(Readable.toWeb(body), SizeHint.unbounded(), "application/octet-stream");
         }
 
         if (typeof body === "string") {
+            const encoder = new TextEncoder();
+            const bytes = encoder.encode(body);
+
             return new Body(
-                Readable.from(body),
+                new ReadableStream({
+                    start: (controller) => {
+                        controller.enqueue(bytes);
+                        controller.close();
+                    },
+                }),
                 SizeHint.exact(Buffer.byteLength(body)),
                 "text/plain; charset=utf-8",
             );
@@ -61,28 +74,18 @@ export class Body implements ToHttpResponse {
 
         if (Buffer.isBuffer(body) || body instanceof Uint8Array) {
             return new Body(
-                Readable.from([body]),
+                new ReadableStream({
+                    start: (controller) => {
+                        controller.enqueue(body);
+                        controller.close();
+                    },
+                }),
                 SizeHint.exact(body.length),
                 "application/octet-stream",
             );
         }
 
-        return new Body(Readable.fromWeb(body), SizeHint.unbounded(), "application/octet-stream");
-    }
-
-    /**
-     * Retrieves the readable stream from the inner body if it has not been
-     * consumed.
-     *
-     * Ensures that the body is readable before accessing it.
-     *
-     * @throws {assert.AssertionError} if the body has already been consumed.
-     */
-    public read(): Readable {
-        const inner = this.inner;
-        assert(inner, "Body has already been consumed");
-        this.inner = null;
-        return inner;
+        return new Body(body, SizeHint.unbounded(), "application/octet-stream");
     }
 
     public [TO_HTTP_RESPONSE](): HttpResponse {
@@ -107,7 +110,7 @@ export class Body implements ToHttpResponse {
  * - `string`: A text-based representation of the body content.
  * - `Buffer`: A binary buffer containing the body data.
  * - `Uint8Array`: A byte array containing the body data in binary form.
- * - `Readable`: A Node.js Readable stream.
+ * - `Readable`: A Node.js Readable stream yielding Uint8Array chunks.
  * - `ReadableStream`: A web-standard ReadableStream.
  * - `null`: Represents an absent or empty body.
  *
@@ -115,7 +118,14 @@ export class Body implements ToHttpResponse {
  * byte-input like `Buffer` or `Readable` will default to
  * `application/octet-stream`.
  */
-export type BodyLike = Body | string | Buffer | Uint8Array | Readable | ReadableStream | null;
+export type BodyLike =
+    | Body
+    | string
+    | Buffer
+    | Uint8Array
+    | Readable
+    | ReadableStream<Uint8Array>
+    | null;
 
 export const isBodyLike = (value: unknown): value is BodyLike => {
     return (

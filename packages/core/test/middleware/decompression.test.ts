@@ -10,7 +10,7 @@ import type { HttpService } from "../../src/service/index.js";
 describe("RequestDecompressionLayer", () => {
     const echoService: HttpService = {
         invoke: async (req: HttpRequest) => {
-            return HttpResponse.builder().status(StatusCode.OK).body(req.body);
+            return HttpResponse.builder().status(StatusCode.OK).body(req.body.readable);
         },
     };
 
@@ -21,8 +21,8 @@ describe("RequestDecompressionLayer", () => {
         const req = HttpRequest.builder().body("hello");
 
         const res = await service.invoke(req);
-        assert.equal(res.status.code, StatusCode.OK.code);
-        assert.equal(await consumers.text(res.body.read()), "hello");
+        assert.equal(res.status, StatusCode.OK);
+        assert.equal(await consumers.text(res.body.readable), "hello");
     });
 
     it("decompresses gzip encoded request", async () => {
@@ -38,8 +38,8 @@ describe("RequestDecompressionLayer", () => {
         const req = HttpRequest.builder().header("content-encoding", "gzip").body(gzipStream);
         const res = await service.invoke(req);
 
-        assert.equal(res.status.code, StatusCode.OK.code);
-        assert.equal(await consumers.text(res.body.read()), originalData);
+        assert.equal(res.status, StatusCode.OK);
+        assert.equal(await consumers.text(res.body.readable), originalData);
     });
 
     it("decompresses deflate encoded request", async () => {
@@ -55,8 +55,8 @@ describe("RequestDecompressionLayer", () => {
         const req = HttpRequest.builder().header("content-encoding", "deflate").body(deflateStream);
         const res = await service.invoke(req);
 
-        assert.equal(res.status.code, StatusCode.OK.code);
-        assert.equal(await consumers.text(res.body.read()), originalData);
+        assert.equal(res.status, StatusCode.OK);
+        assert.equal(await consumers.text(res.body.readable), originalData);
     });
 
     it("decompresses br encoded request", async () => {
@@ -72,8 +72,8 @@ describe("RequestDecompressionLayer", () => {
         const req = HttpRequest.builder().header("content-encoding", "br").body(brStream);
         const res = await service.invoke(req);
 
-        assert.equal(res.status.code, StatusCode.OK.code);
-        assert.equal(await consumers.text(res.body.read()), originalData);
+        assert.equal(res.status, StatusCode.OK);
+        assert.equal(await consumers.text(res.body.readable), originalData);
     });
 
     it("decompresses zstd encoded request", async () => {
@@ -89,8 +89,8 @@ describe("RequestDecompressionLayer", () => {
         const req = HttpRequest.builder().header("content-encoding", "zstd").body(zstdStream);
         const res = await service.invoke(req);
 
-        assert.equal(res.status.code, StatusCode.OK.code);
-        assert.equal(await consumers.text(res.body.read()), originalData);
+        assert.equal(res.status, StatusCode.OK);
+        assert.equal(await consumers.text(res.body.readable), originalData);
     });
 
     it("returns 415 unsupported media type for unsupported encoding", async () => {
@@ -100,7 +100,7 @@ describe("RequestDecompressionLayer", () => {
         const req = HttpRequest.builder().header("content-encoding", "gzip").body("foo");
         const res = await service.invoke(req);
 
-        assert.equal(res.status.code, StatusCode.UNSUPPORTED_MEDIA_TYPE.code);
+        assert.equal(res.status, StatusCode.UNSUPPORTED_MEDIA_TYPE);
         assert.equal(res.headers.get("accept-encoding"), "identity");
     });
 
@@ -113,8 +113,8 @@ describe("RequestDecompressionLayer", () => {
             .body("hello identity");
         const res = await service.invoke(req);
 
-        assert.equal(res.status.code, StatusCode.OK.code);
-        assert.equal(await consumers.text(res.body.read()), "hello identity");
+        assert.equal(res.status, StatusCode.OK);
+        assert.equal(await consumers.text(res.body.readable), "hello identity");
     });
 
     it("passes through unsupported encoding when passThroughUnaccepted enabled", async () => {
@@ -126,7 +126,7 @@ describe("RequestDecompressionLayer", () => {
             .body("hello pass-through");
         const res = await service.invoke(req);
 
-        assert.equal(res.status.code, StatusCode.OK.code);
-        assert.equal(await consumers.text(res.body.read()), "hello pass-through");
+        assert.equal(res.status, StatusCode.OK);
+        assert.equal(await consumers.text(res.body.readable), "hello pass-through");
     });
 });

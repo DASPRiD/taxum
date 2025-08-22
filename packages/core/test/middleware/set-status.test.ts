@@ -16,8 +16,8 @@ describe("middleware:set-status", () => {
         const req = HttpRequest.builder().body(null);
         const res = await wrappedService.invoke(req);
 
-        assert.equal(res.status.code, StatusCode.CREATED.code);
-        assert.equal(await consumers.text(res.body.read()), "unchanged");
+        assert.equal(res.status, StatusCode.CREATED);
+        assert.equal(await consumers.text(res.body.readable), "unchanged");
     });
 
     it("applies the status code even if the original status was an error", async () => {
@@ -31,8 +31,8 @@ describe("middleware:set-status", () => {
         const req = HttpRequest.builder().body(null);
         const res = await wrappedService.invoke(req);
 
-        assert.equal(res.status.code, StatusCode.NO_CONTENT.code);
-        assert.equal(await consumers.text(res.body.read()), "oops");
+        assert.equal(res.status, StatusCode.NO_CONTENT);
+        assert.equal(await consumers.text(res.body.readable), "oops");
     });
 
     it("works with empty bodies", async () => {
@@ -46,7 +46,7 @@ describe("middleware:set-status", () => {
         const req = HttpRequest.builder().body(null);
         const res = await wrappedService.invoke(req);
 
-        assert.equal(res.status.code, StatusCode.RESET_CONTENT.code);
-        assert.equal(await consumers.text(res.body.read()), "");
+        assert.equal(res.status, StatusCode.RESET_CONTENT);
+        assert.equal(await consumers.text(res.body.readable), "");
     });
 });

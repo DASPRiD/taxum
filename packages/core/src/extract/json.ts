@@ -75,7 +75,7 @@ export const json =
         let json: unknown;
 
         try {
-            json = await consumers.json(req.body);
+            json = await consumers.json(req.body.readable);
         } catch (error) {
             if (error instanceof SyntaxError) {
                 throw new MalformedJsonError(error.message);

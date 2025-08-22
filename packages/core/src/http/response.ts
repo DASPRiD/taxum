@@ -1,4 +1,5 @@
 import type { ServerResponse } from "node:http";
+import { Readable } from "node:stream";
 import { Body, type BodyLike, isBodyLike } from "./body.js";
 import { type ExtensionKey, Extensions } from "./extensions.js";
 import { HeaderMap, type HeadersArray } from "./headers.js";
@@ -105,14 +106,14 @@ export class HttpResponse {
             Object.fromEntries(this.headers.entries()),
         );
 
-        const readable = this.body.read();
+        const stream = Readable.fromWeb(this.body.readable);
 
         return new Promise<void>((resolve, reject) => {
-            readable.pipe(res);
+            stream.pipe(res);
 
             res.on("finish", resolve);
             res.on("error", reject);
-            readable.on("error", reject);
+            stream.on("error", reject);
         });
     }
 }

@@ -19,7 +19,7 @@ describe("routing:route", () => {
         const res = await route.invoke(req);
 
         assert.equal(res.status.code, 200);
-        assert.equal(await consumers.text(res.body.read()), "hello");
+        assert.equal(await consumers.text(res.body.readable), "hello");
     });
 
     it("sets Content-Length if body size is exact and header not set", async () => {
@@ -48,7 +48,7 @@ describe("routing:route", () => {
         const req = HttpRequest.builder().method("HEAD").body(null);
         const res = await route.invokeInner(req);
 
-        assert.equal(await consumers.text(res.body.read()), "");
+        assert.equal(await consumers.text(res.body.readable), "");
     });
 
     it("clears body for successful CONNECT with non-empty body", async (t) => {
@@ -60,7 +60,7 @@ describe("routing:route", () => {
         const req = HttpRequest.builder().method("CONNECT").body(null);
         const res = await route.invoke(req);
 
-        assert.equal(await consumers.text(res.body.read()), "");
+        assert.equal(await consumers.text(res.body.readable), "");
         assert.match(spy.mock.calls[0].arguments[0], /response to CONNECT with nonempty body/i);
     });
 
@@ -71,7 +71,7 @@ describe("routing:route", () => {
         const res = await route.invoke(req);
 
         assert(res.status.isClientError());
-        assert.equal(await consumers.text(res.body.read()), "Forbidden");
+        assert.equal(await consumers.text(res.body.readable), "Forbidden");
     });
 
     it("does not clear body for successful CONNECT with empty body", async () => {
@@ -80,6 +80,6 @@ describe("routing:route", () => {
         const req = HttpRequest.builder().method("CONNECT").body(null);
         const res = await route.invoke(req);
 
-        assert.equal(await consumers.text(res.body.read()), "");
+        assert.equal(await consumers.text(res.body.readable), "");
     });
 });

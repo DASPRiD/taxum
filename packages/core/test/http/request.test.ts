@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { SocketAddress } from "node:net";
-import { Readable } from "node:stream";
 import { describe, it } from "node:test";
 import type { TLSSocket } from "node:tls";
 import { IncomingMessage } from "node-mock-http";
 import {
+    Body,
     ExtensionKey,
     Extensions,
     HeaderMap,
@@ -93,7 +93,7 @@ describe("http:request", () => {
     describe("HttpRequest", () => {
         it("constructs with parts and body", () => {
             const parts = new Parts(Method.GET, new URL("http://a"), "1.1", new HeaderMap());
-            const body = Readable.from(["test"]);
+            const body = Body.from("test");
             const req = new HttpRequest(parts, body);
 
             assert.equal(req.head, parts);
@@ -104,7 +104,7 @@ describe("http:request", () => {
 
         it("constructs with connectInfo", () => {
             const parts = new Parts(Method.GET, new URL("http://a"), "1.1", new HeaderMap());
-            const body = Readable.from(["test"]);
+            const body = Body.from("test");
             const req = new HttpRequest(parts, body, SocketAddress.parse("127.0.0.1:8080"));
 
             assert.equal(req.head, parts);
@@ -131,7 +131,7 @@ describe("http:request", () => {
                 new HeaderMap(),
                 new Extensions(),
             );
-            const req = new HttpRequest(parts, Readable.from([]));
+            const req = new HttpRequest(parts, Body.from(null));
 
             assert.equal(req.method, parts.method);
             assert.equal(req.uri, parts.uri);
@@ -142,10 +142,10 @@ describe("http:request", () => {
 
         it("creates a through request through withBody()", () => {
             const parts = new Parts(Method.GET, new URL("http://a"), "1.1", new HeaderMap());
-            const body = Readable.from(["test"]);
+            const body = Body.from("test");
             const req = new HttpRequest(parts, body);
 
-            const newBody = Readable.from(["new test"]);
+            const newBody = Body.from("new test");
             const newReq = req.withBody(newBody);
 
             assert.equal(newReq.head, parts);

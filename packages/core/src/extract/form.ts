@@ -79,7 +79,7 @@ export const form =
                 throw new MissingFormDataContentTypeError();
             }
 
-            const body = await consumers.text(req.body);
+            const body = await consumers.text(req.body.readable);
             source = new URLSearchParams(body);
         }
 

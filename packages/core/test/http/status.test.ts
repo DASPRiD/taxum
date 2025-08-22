@@ -43,7 +43,7 @@ describe("http:status", () => {
         it("toHttpResponse returns HttpResponse with status and no body", async () => {
             const res = StatusCode.OK[TO_HTTP_RESPONSE]();
             assert.equal(res.status, StatusCode.OK);
-            assert.equal(await consumers.text(res.body.read()), "");
+            assert.equal(await consumers.text(res.body.readable), "");
         });
     });
 });

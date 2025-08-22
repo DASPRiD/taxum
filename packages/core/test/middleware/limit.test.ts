@@ -3,6 +3,7 @@ import { Readable } from "node:stream";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import {
+    Body,
     HttpRequest,
     HttpResponse,
     isToHttpResponse,
@@ -23,7 +24,7 @@ describe("middleware:limit", () => {
         const req = HttpRequest.builder().body(Readable.from(["hello"]));
         const res = await service.invoke(req);
 
-        assert.equal(await consumers.text(res.body.read()), "ok");
+        assert.equal(await consumers.text(res.body.readable), "ok");
     });
 
     it("throws 413 immediately if content-length exceeds limit", async () => {
@@ -45,7 +46,7 @@ describe("middleware:limit", () => {
     it("passes through if content-length is equal or below limit", async () => {
         const inner: HttpService = {
             invoke: async (req) => {
-                const bodyText = await consumers.text(req.body);
+                const bodyText = await consumers.text(req.body.readable);
                 return HttpResponse.builder().body(bodyText);
             },
         };
@@ -58,14 +59,14 @@ describe("middleware:limit", () => {
 
         const res = await service.invoke(req);
 
-        assert.equal(await consumers.text(res.body.read()), "hello");
+        assert.equal(await consumers.text(res.body.readable), "hello");
     });
 
     it("returns 413 if stream emits more data than the limit", async () => {
         const inner: HttpService = {
             invoke: async (req) => {
                 try {
-                    await consumers.text(req.body);
+                    await consumers.text(req.body.readable);
                     return HttpResponse.builder().body("should not reach here");
                 } catch (err) {
                     if (isToHttpResponse(err)) {
@@ -79,9 +80,7 @@ describe("middleware:limit", () => {
         const layer = new RequestBodyLimitLayer(4);
         const service = layer.layer(inner);
 
-        const req = HttpRequest.builder()
-            .header("content-length", "4")
-            .body(Readable.from(["hello"]));
+        const req = HttpRequest.builder().header("content-length", "4").body(Body.from("hello"));
 
         const res = await service.invoke(req);
 

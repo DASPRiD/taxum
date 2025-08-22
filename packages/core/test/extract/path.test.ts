@@ -128,6 +128,6 @@ describe("extract:path", () => {
         const res = err[TO_HTTP_RESPONSE]();
 
         assert.equal(res.status, StatusCode.BAD_REQUEST);
-        assert.deepEqual(await consumers.text(res.body.read()), "Invalid path params");
+        assert.deepEqual(await consumers.text(res.body.readable), "Invalid path params");
     });
 });

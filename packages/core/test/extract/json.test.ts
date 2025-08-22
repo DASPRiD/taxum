@@ -107,7 +107,7 @@ describe("extract:json", () => {
 
         assert.equal(res.status, StatusCode.UNSUPPORTED_MEDIA_TYPE);
         assert.equal(
-            await consumers.text(res.body.read()),
+            await consumers.text(res.body.readable),
             "Expected request with `Content-Type: application/json`",
         );
     });
@@ -117,7 +117,7 @@ describe("extract:json", () => {
         const res = err[TO_HTTP_RESPONSE]();
 
         assert.equal(res.status, StatusCode.BAD_REQUEST);
-        assert.equal(await consumers.text(res.body.read()), "Unexpected end of JSON input");
+        assert.equal(await consumers.text(res.body.readable), "Unexpected end of JSON input");
     });
 
     it("InvalidJsonError produces 422 response", async () => {
@@ -133,6 +133,6 @@ describe("extract:json", () => {
         const res = err[TO_HTTP_RESPONSE]();
 
         assert.equal(res.status, StatusCode.UNPROCESSABLE_CONTENT);
-        assert.deepEqual(await consumers.text(res.body.read()), "Invalid JSON");
+        assert.deepEqual(await consumers.text(res.body.readable), "Invalid JSON");
     });
 });

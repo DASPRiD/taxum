@@ -23,7 +23,7 @@ describe("routing:Router", () => {
         const res = await router.invoke(req);
 
         assert.equal(res.status.code, 200);
-        assert.equal(await consumers.text(res.body.read()), "hello");
+        assert.equal(await consumers.text(res.body.readable), "hello");
     });
 
     it("returns 404 for unmatched routes", async () => {
@@ -43,7 +43,7 @@ describe("routing:Router", () => {
         const res = await router.invoke(req);
 
         assert.equal(res.status.code, 418);
-        assert.equal(await consumers.text(res.body.read()), "oops");
+        assert.equal(await consumers.text(res.body.readable), "oops");
     });
 
     it("can reset fallback to default", async () => {
@@ -84,8 +84,8 @@ describe("routing:Router", () => {
             HttpRequest.builder().method("GET").path("/not-found").body(null),
         );
 
-        assert.equal(await consumers.text(res1.body.read()), "works");
-        assert.equal(await consumers.text(res2.body.read()), "fallback");
+        assert.equal(await consumers.text(res1.body.readable), "works");
+        assert.equal(await consumers.text(res2.body.readable), "fallback");
         assert.deepEqual(logs, ["/test", "/not-found"]);
     });
 
@@ -116,8 +116,8 @@ describe("routing:Router", () => {
             HttpRequest.builder().method("GET").path("/not-found").body(null),
         );
 
-        assert.equal(await consumers.text(res1.body.read()), "works");
-        assert.equal(await consumers.text(res2.body.read()), "fallback");
+        assert.equal(await consumers.text(res1.body.readable), "works");
+        assert.equal(await consumers.text(res2.body.readable), "fallback");
         assert.deepEqual(logs, ["/test"]);
     });
 
@@ -134,7 +134,7 @@ describe("routing:Router", () => {
         const req = HttpRequest.builder().method("GET").path("/api/inner").body(null);
         const res = await main.invoke(req);
 
-        assert.equal(await consumers.text(res.body.read()), "inside");
+        assert.equal(await consumers.text(res.body.readable), "inside");
     });
 
     it("can nest services", async () => {
@@ -149,7 +149,7 @@ describe("routing:Router", () => {
         const res = await router.invoke(req);
 
         assert.equal(res.status.code, 200);
-        assert.equal(await consumers.text(res.body.read()), "nested response");
+        assert.equal(await consumers.text(res.body.readable), "nested response");
     });
 
     it("calls methodNotAllowedFallback when method is unsupported but path exists", async () => {

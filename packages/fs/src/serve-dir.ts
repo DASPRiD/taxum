@@ -15,7 +15,6 @@ import { SetStatusLayer } from "@taxum/core/middleware/set-status";
 import type { HttpService } from "@taxum/core/service";
 import { type OpenFileOutput, openFile } from "./open-file.js";
 import { isErrnoException } from "./util.js";
-
 /* node:coverage enable */
 
 /**

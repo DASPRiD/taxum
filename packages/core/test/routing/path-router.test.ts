@@ -60,7 +60,7 @@ describe("routing:PathRouter", () => {
 
         const res = await router.invoke(makeRequest("/user/123"));
         assert(res);
-        const json = await consumers.json(res.body.read());
+        const json = await consumers.json(res.body.readable);
 
         assert.deepEqual(json, { id: "123" });
     });
@@ -130,7 +130,7 @@ describe("routing:PathRouter", () => {
 
         const res = await root.invoke(makeRequest("/api/sub"));
         assert(res);
-        assert.equal(await consumers.text(res.body.read()), "nested");
+        assert.equal(await consumers.text(res.body.readable), "nested");
     });
 
     it("nests routes with non-method-router endpoints", async () => {
@@ -148,7 +148,7 @@ describe("routing:PathRouter", () => {
         const req = HttpRequest.builder().path("/api/service").body(null);
         const res = await root.invoke(req);
         assert(res);
-        assert.equal(await consumers.text(res.body.read()), "leaf service");
+        assert.equal(await consumers.text(res.body.readable), "leaf service");
     });
 
     it("merges routes from another PathRouter", async () => {
@@ -168,7 +168,7 @@ describe("routing:PathRouter", () => {
 
         const res = await a.invoke(makeRequest("/bar"));
         assert(res);
-        assert.equal(await consumers.text(res.body.read()), "bar");
+        assert.equal(await consumers.text(res.body.readable), "bar");
     });
 
     it("merges routes with non-method-router endpoints using routeService", async () => {
@@ -185,7 +185,7 @@ describe("routing:PathRouter", () => {
         const req = makeRequest("/service");
         const res = await b.invoke(req);
         assert(res);
-        assert.equal(await consumers.text(res.body.read()), "service response");
+        assert.equal(await consumers.text(res.body.readable), "service response");
     });
 
     it("uses methodNotAllowedFallback on all routes", async () => {
@@ -215,12 +215,12 @@ describe("routing:PathRouter", () => {
         const getReq = HttpRequest.builder().method("GET").path("/merge").body(null);
         const getRes = await router.invoke(getReq);
         assert(getRes);
-        assert.equal(await consumers.text(getRes.body.read()), "GET OK");
+        assert.equal(await consumers.text(getRes.body.readable), "GET OK");
 
         const postReq = HttpRequest.builder().method("POST").path("/merge").body(null);
         const postRes = await router.invoke(postReq);
         assert(postRes);
-        assert.equal(await consumers.text(postRes.body.read()), "POST OK");
+        assert.equal(await consumers.text(postRes.body.readable), "POST OK");
     });
 
     it("throws if nesting path contains only a wildcard segment", () => {
@@ -288,19 +288,19 @@ describe("routing:PathRouter", () => {
         // request matching the nested path prefix exactly
         let res = await router.invoke(makeRequest("/api"));
         assert(res);
-        let json = await consumers.json(res.body.read());
+        let json = await consumers.json(res.body.readable);
         assert.deepEqual(json, { nestedPath: "/api" });
 
         // request matching a subpath of the nested path with wildcard
         res = await router.invoke(makeRequest("/api/users/123"));
         assert(res);
-        json = await consumers.json(res.body.read());
+        json = await consumers.json(res.body.readable);
         assert.deepEqual(json, { nestedPath: "/api" });
 
         // request matching nested path with trailing slash
         res = await router.invoke(makeRequest("/api/"));
         assert(res);
-        json = await consumers.json(res.body.read());
+        json = await consumers.json(res.body.readable);
         assert.deepEqual(json, { nestedPath: "/api" });
     });
 
@@ -327,13 +327,13 @@ describe("routing:PathRouter", () => {
         // match path with trailing slash
         let res = await router.invoke(makeRequest("/foo/"));
         assert(res);
-        let json = await consumers.json(res.body.read());
+        let json = await consumers.json(res.body.readable);
         assert.equal(json, "/foo/");
 
         // match wildcard path under the nested prefix
         res = await router.invoke(makeRequest("/foo/bar"));
         assert(res);
-        json = await consumers.json(res.body.read());
+        json = await consumers.json(res.body.readable);
         assert.equal(json, "/foo/");
     });
 
@@ -349,19 +349,19 @@ describe("routing:PathRouter", () => {
         // match prefix without slash
         let res = await router.invoke(makeRequest("/foo"));
         assert(res);
-        let json = await consumers.json(res.body.read());
+        let json = await consumers.json(res.body.readable);
         assert.equal(json, "/foo");
 
         // match prefix with trailing slash
         res = await router.invoke(makeRequest("/foo/"));
         assert(res);
-        json = await consumers.json(res.body.read());
+        json = await consumers.json(res.body.readable);
         assert.equal(json, "/foo");
 
         // match nested wildcard route
         res = await router.invoke(makeRequest("/foo/bar"));
         assert(res);
-        json = await consumers.json(res.body.read());
+        json = await consumers.json(res.body.readable);
         assert.equal(json, "/foo");
     });
 
@@ -383,7 +383,7 @@ describe("routing:PathRouter", () => {
         const req = HttpRequest.builder().path("/level1/level2/deep").body(null);
         const res = await root.invoke(req);
         assert(res);
-        const json = await consumers.json(res.body.read());
+        const json = await consumers.json(res.body.readable);
         assert.equal(json, "/level1/level2");
     });
 

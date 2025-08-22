@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { Readable } from "node:stream";
 import { before, beforeEach, describe, it, mock } from "node:test";
 import {
     Body,
@@ -19,7 +18,7 @@ const createRequest = (authorization?: string): HttpRequest => {
     }
 
     const parts = new Parts(Method.GET, new URL("http://localhost"), "1.1", headers);
-    return new HttpRequest(parts, Readable.from([]));
+    return new HttpRequest(parts, Body.from(null));
 };
 
 describe("JwtLayer", () => {

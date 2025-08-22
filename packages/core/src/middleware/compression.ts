@@ -1,9 +1,9 @@
-import type { Readable } from "node:stream";
 import zlib, { type BrotliOptions, type ZlibOptions, type ZstdOptions } from "node:zlib";
 import { Body } from "../http/body.js";
 import { Encoding, type HttpRequest, HttpResponse } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
 import type { HttpService } from "../service/index.js";
+import { applyNodeJsTransform } from "../util/index.js";
 import { AcceptEncoding } from "./compression-utils.js";
 
 /**
@@ -171,10 +171,10 @@ class ResponseCompression implements HttpService {
 
     public async invoke(req: HttpRequest): Promise<HttpResponse> {
         const encoding = Encoding.fromHeaders(req.headers, this.accept);
-        const response = await this.inner.invoke(req);
+        const res = await this.inner.invoke(req);
 
-        if (!this.shouldCompress(encoding, response)) {
-            return response;
+        if (!this.shouldCompress(encoding, res)) {
+            return res;
         }
 
         const compressorBuilder = compressors.get(encoding);
@@ -182,10 +182,10 @@ class ResponseCompression implements HttpService {
         /* node:coverage ignore next 4 */
         if (!compressorBuilder) {
             // Should normally never happen, but just in case.
-            return response;
+            return res;
         }
 
-        const headers = response.headers;
+        const headers = res.headers;
 
         if (!headers.get("vary")?.toLowerCase().includes("accept-encoding")) {
             headers.append("vary", "accept-encoding");
@@ -196,9 +196,9 @@ class ResponseCompression implements HttpService {
         headers.insert("content-encoding", encoding.value);
 
         const compressor = compressorBuilder(this.compressionLevel);
-        const compressedStream = compressor(response.body.read());
+        const compressedStream = compressor(res.body.readable);
 
-        return new HttpResponse(response.status, headers, new Body(compressedStream));
+        return new HttpResponse(res.status, headers, new Body(compressedStream));
     }
 
     private shouldCompress(encoding: Encoding, res: HttpResponse): boolean {
@@ -219,7 +219,7 @@ class ResponseCompression implements HttpService {
     }
 }
 
-type Compressor = (level: CompressionLevel) => (stream: Readable) => Readable;
+type Compressor = (level: CompressionLevel) => (stream: ReadableStream) => ReadableStream;
 
 const compressors = new Map<Encoding, Compressor>([
     [
@@ -227,11 +227,8 @@ const compressors = new Map<Encoding, Compressor>([
         (level) => {
             const options: ZlibOptions = { level: zlibQuality(level) };
 
-            return (value: Readable) => {
-                const stream = zlib.createDeflate(options);
-                value.pipe(stream);
-                return stream;
-            };
+            return (value: ReadableStream) =>
+                applyNodeJsTransform(value, zlib.createDeflate(options));
         },
     ],
     [
@@ -239,11 +236,7 @@ const compressors = new Map<Encoding, Compressor>([
         (level) => {
             const options: ZlibOptions = { level: zlibQuality(level) };
 
-            return (value: Readable) => {
-                const stream = zlib.createGzip(options);
-                value.pipe(stream);
-                return stream;
-            };
+            return (value: ReadableStream) => applyNodeJsTransform(value, zlib.createGzip(options));
         },
     ],
     [
@@ -255,11 +248,8 @@ const compressors = new Map<Encoding, Compressor>([
                 },
             };
 
-            return (value: Readable) => {
-                const stream = zlib.createBrotliCompress(options);
-                value.pipe(stream);
-                return stream;
-            };
+            return (value: ReadableStream) =>
+                applyNodeJsTransform(value, zlib.createBrotliCompress(options));
         },
     ],
     [
@@ -271,11 +261,8 @@ const compressors = new Map<Encoding, Compressor>([
                 },
             };
 
-            return (value: Readable) => {
-                const stream = zlib.createZstdCompress(options);
-                value.pipe(stream);
-                return stream;
-            };
+            return (value: ReadableStream) =>
+                applyNodeJsTransform(value, zlib.createZstdCompress(options));
         },
     ],
 ]);

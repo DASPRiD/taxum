@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { Buffer } from "node:buffer";
 import type { ServerResponse } from "node:http";
+import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import { callNodeRequestHandler } from "node-mock-http";
 import { Body } from "../../src/http/body.js";
@@ -150,7 +152,7 @@ describe("http:response", () => {
 
                 assert.equal(response.headers["content-type"], "text/plain");
                 assert.equal(response.status, 200);
-                assert.equal(response.body, "hello");
+                assert.deepEqual(response.body, Buffer.from([104, 101, 108, 108, 111]));
             });
         });
     });
@@ -213,10 +215,10 @@ describe("http:response", () => {
             assert.equal(res.extensions.get(key), "value");
         });
 
-        it("body() creates HttpResponse with given body", () => {
+        it("body() creates HttpResponse with given body", async () => {
             const builder = new HttpResponseBuilder();
             const res = builder.body("hello");
-            assert(res.body);
+            assert(await consumers.text(res.body.readable), "hello");
         });
     });
 });

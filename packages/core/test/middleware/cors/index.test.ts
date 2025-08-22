@@ -137,7 +137,7 @@ describe("middleware:cors:index", () => {
             const res = await cors.invoke(req);
 
             assert.equal(res.status, StatusCode.OK);
-            assert.equal(await consumers.text(res.body.read()), "body");
+            assert.equal(await consumers.text(res.body.readable), "body");
 
             const varyHeaders = res.headers.getAll("vary");
 

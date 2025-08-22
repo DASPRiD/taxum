@@ -3,12 +3,13 @@ import { Buffer } from "node:buffer";
 import { Readable } from "node:stream";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
+import { ReadableStream } from "stream/web";
 import { Body, isBodyLike, SizeHint, StatusCode, TO_HTTP_RESPONSE } from "../../src/http/index.js";
 
 describe("http:body", () => {
     describe("Body", () => {
         it("defaults to unbounded size", () => {
-            const body = new Body(Readable.from([]));
+            const body = new Body(new ReadableStream());
             assert.deepEqual(body.sizeHint, SizeHint.unbounded());
         });
 
@@ -38,7 +39,7 @@ describe("http:body", () => {
                 assert.equal(body.contentTypeHint, "text/plain; charset=utf-8");
                 assert.deepEqual(body.sizeHint, SizeHint.exact(Buffer.byteLength(str)));
 
-                const content = await consumers.text(body.read());
+                const content = await consumers.text(body.readable);
                 assert.equal(content.toString(), str);
             });
 
@@ -48,7 +49,7 @@ describe("http:body", () => {
                 assert.deepEqual(body.sizeHint, SizeHint.exact(buf.length));
                 assert.equal(body.contentTypeHint, "application/octet-stream");
 
-                const content = await consumers.text(body.read());
+                const content = await consumers.text(body.readable);
                 assert.equal(content.toString(), "abc");
             });
 
@@ -58,7 +59,7 @@ describe("http:body", () => {
                 assert.deepEqual(body.sizeHint, SizeHint.exact(arr.length));
                 assert.equal(body.contentTypeHint, "application/octet-stream");
 
-                const content = await consumers.buffer(body.read());
+                const content = await consumers.buffer(body.readable);
                 assert.equal(content.toString(), "ABC");
             });
 
@@ -76,22 +77,6 @@ describe("http:body", () => {
             });
         });
 
-        describe("read()", () => {
-            it("returns inner readable stream", () => {
-                const body = Body.from("test");
-                body.read();
-            });
-
-            it("throws if body has been consumed", async () => {
-                const body = Body.from("once");
-                body.read();
-
-                assert.throws(() => {
-                    body.read();
-                }, /Body has already been consumed/);
-            });
-        });
-
         describe("toHttpResponse()", () => {
             it("creates HttpResponse with 200 OK and content-type", () => {
                 const body = Body.from("content");
@@ -102,8 +87,7 @@ describe("http:body", () => {
             });
 
             it("omits content-type header if not hinted", () => {
-                const stream = Readable.from(["x"]);
-                const body = new Body(stream, SizeHint.unbounded());
+                const body = new Body(new ReadableStream(), SizeHint.unbounded());
                 const res = body[TO_HTTP_RESPONSE]();
 
                 assert(!res.headers.containsKey("content-type"));

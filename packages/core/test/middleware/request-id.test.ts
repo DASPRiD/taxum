@@ -26,7 +26,7 @@ describe("middleware:request-id", () => {
             const res = await wrapped.invoke(req);
 
             assert.match(
-                await consumers.text(res.body.read()),
+                await consumers.text(res.body.readable),
                 /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/,
             );
         });
@@ -45,7 +45,7 @@ describe("middleware:request-id", () => {
             const req = HttpRequest.builder().header("x-request-id", "abc-123").body(null);
             const res = await wrapped.invoke(req);
 
-            assert.equal(await consumers.text(res.body.read()), "abc-123");
+            assert.equal(await consumers.text(res.body.readable), "abc-123");
         });
 
         it("generates request ID when none is present", async () => {
@@ -63,7 +63,7 @@ describe("middleware:request-id", () => {
             const req = HttpRequest.builder().body(null);
             const res = await wrapped.invoke(req);
 
-            assert.equal(await consumers.text(res.body.read()), "generated-id generated-id");
+            assert.equal(await consumers.text(res.body.readable), "generated-id generated-id");
         });
 
         it("does nothing if ID generation returns null", async () => {
@@ -80,7 +80,7 @@ describe("middleware:request-id", () => {
             const req = HttpRequest.builder().body(null);
             const res = await wrapped.invoke(req);
 
-            assert.equal(await consumers.text(res.body.read()), "missing");
+            assert.equal(await consumers.text(res.body.readable), "missing");
         });
     });
 

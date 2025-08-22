@@ -47,13 +47,17 @@ describe("middleware:trace", () => {
         const res = await service.invoke(req);
 
         assert.equal(res.status.code, StatusCode.OK.code);
-        assert.equal(await consumers.text(res.body.read()), "response");
+        assert.equal(await consumers.text(res.body.readable), "response");
 
         assert.ok(onRequestCalled, "onRequest was not called");
         assert.ok(onResponseCalled, "onResponse was not called");
     });
 
-    it("calls onFailure when classifier matches a server error", async () => {
+    it("calls onFailure when classifier matches a server error", async (t) => {
+        t.mock.method(console, "debug", () => {
+            // noop
+        });
+
         let failureCalled = false;
 
         const layer = new TraceLayer().onFailure({
@@ -73,7 +77,11 @@ describe("middleware:trace", () => {
         assert.ok(failureCalled, "onFailure was not called");
     });
 
-    it("does not call onFailure for non-error responses", async () => {
+    it("does not call onFailure for non-error responses", async (t) => {
+        t.mock.method(console, "debug", () => {
+            // noop
+        });
+
         let failureCalled = false;
 
         const layer = new TraceLayer().onFailure({
@@ -88,11 +96,15 @@ describe("middleware:trace", () => {
         const res = await service.invoke(req);
 
         assert.equal(res.status.code, StatusCode.OK.code);
-        assert.equal(await consumers.text(res.body.read()), "ok");
+        assert.equal(await consumers.text(res.body.readable), "ok");
         assert.equal(failureCalled, false, "onFailure should not have been called");
     });
 
     it("allows custom classifier", async (t) => {
+        t.mock.method(console, "debug", () => {
+            // noop
+        });
+
         const errorSpy = t.mock.method(console, "error", () => {
             // noop
         });

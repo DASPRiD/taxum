@@ -21,7 +21,7 @@ describe("middleware/from-fn", () => {
         const res = await service.invoke(req);
 
         assert(called);
-        assert.equal(await consumers.text(res.body.read()), "ok");
+        assert.equal(await consumers.text(res.body.readable), "ok");
     });
 
     it("forwards to inner service if function calls next.invoke", async () => {
@@ -33,7 +33,7 @@ describe("middleware/from-fn", () => {
         const req = HttpRequest.builder().body(null);
         const res = await service.invoke(req);
 
-        assert.equal(await consumers.text(res.body.read()), "inner");
+        assert.equal(await consumers.text(res.body.readable), "inner");
     });
 
     it("allows modifying the request before passing to next", async () => {
@@ -53,7 +53,7 @@ describe("middleware/from-fn", () => {
         const req = HttpRequest.builder().body(null);
         const res = await service.invoke(req);
 
-        assert.equal(await consumers.text(res.body.read()), "ok");
+        assert.equal(await consumers.text(res.body.readable), "ok");
     });
 
     it("allows modifying the response before returning", async () => {
@@ -70,7 +70,7 @@ describe("middleware/from-fn", () => {
         const res = await service.invoke(req);
 
         assert.equal(res.status.code, 201);
-        assert.equal(await consumers.text(res.body.read()), "modified");
+        assert.equal(await consumers.text(res.body.readable), "modified");
     });
 
     it("supports synchronous functions", async () => {
@@ -82,7 +82,7 @@ describe("middleware/from-fn", () => {
         const req = HttpRequest.builder().body(null);
         const res = await service.invoke(req);
 
-        assert.equal(await consumers.text(res.body.read()), "sync");
+        assert.equal(await consumers.text(res.body.readable), "sync");
     });
 
     it("throws if the function throws", async () => {

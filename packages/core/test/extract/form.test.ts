@@ -56,7 +56,7 @@ describe("extract:form", () => {
 
         assert.equal(res.status, StatusCode.UNSUPPORTED_MEDIA_TYPE);
         assert.equal(
-            await consumers.text(res.body.read()),
+            await consumers.text(res.body.readable),
             "Expected request with `Content-Type: application/x-www-form-urlencoded`",
         );
     });
@@ -74,6 +74,6 @@ describe("extract:form", () => {
         const res = err[TO_HTTP_RESPONSE]();
 
         assert.equal(res.status, StatusCode.UNPROCESSABLE_CONTENT);
-        assert.deepEqual(await consumers.text(res.body.read()), "Invalid form data");
+        assert.deepEqual(await consumers.text(res.body.readable), "Invalid form data");
     });
 });

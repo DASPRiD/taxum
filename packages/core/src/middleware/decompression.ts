@@ -1,9 +1,9 @@
-import type { Transform } from "node:stream";
 import zlib from "node:zlib";
-import { HttpResponse, StatusCode } from "../http/index.js";
+import { Body, HttpResponse, StatusCode } from "../http/index.js";
 import { HttpRequest } from "../http/request.js";
 import type { HttpLayer } from "../layer/index.js";
 import type { HttpService } from "../service/index.js";
+import { applyNodeJsTransform } from "../util/index.js";
 import { AcceptEncoding } from "./compression-utils.js";
 
 /**
@@ -127,19 +127,35 @@ class RequestDecompression implements HttpService {
         }
 
         if (contentEncoding === "deflate" && this.accept.deflate()) {
-            return invokeWithTransform(this.inner, req, zlib.createInflate());
+            return invokeWithStream(
+                this.inner,
+                req,
+                req.body.readable.pipeThrough(new DecompressionStream("deflate")),
+            );
         }
 
         if (contentEncoding === "gzip" && this.accept.gzip()) {
-            return invokeWithTransform(this.inner, req, zlib.createGunzip());
+            return invokeWithStream(
+                this.inner,
+                req,
+                req.body.readable.pipeThrough(new DecompressionStream("gzip")),
+            );
         }
 
         if (contentEncoding === "br" && this.accept.br()) {
-            return invokeWithTransform(this.inner, req, zlib.createBrotliDecompress());
+            return invokeWithStream(
+                this.inner,
+                req,
+                applyNodeJsTransform(req.body.readable, zlib.createBrotliDecompress()),
+            );
         }
 
         if (contentEncoding === "zstd" && this.accept.zstd()) {
-            return invokeWithTransform(this.inner, req, zlib.createZstdDecompress());
+            return invokeWithStream(
+                this.inner,
+                req,
+                applyNodeJsTransform(req.body.readable, zlib.createZstdDecompress()),
+            );
         }
 
         if (contentEncoding === "identity" || this.passThroughUnaccepted) {
@@ -153,14 +169,13 @@ class RequestDecompression implements HttpService {
     }
 }
 
-const invokeWithTransform = async (
+const invokeWithStream = async (
     inner: HttpService,
     req: HttpRequest,
-    transform: Transform,
+    stream: ReadableStream,
 ): Promise<HttpResponse> => {
     req.headers.remove("content-encoding");
     req.headers.remove("content-length");
-    req.body.pipe(transform);
 
-    return inner.invoke(new HttpRequest(req.head, transform));
+    return inner.invoke(new HttpRequest(req.head, new Body(stream)));
 };

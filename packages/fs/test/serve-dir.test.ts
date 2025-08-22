@@ -92,7 +92,7 @@ describe("serve-dir", () => {
         const res = await service.invoke(req);
 
         assert.equal(res.status, StatusCode.OK);
-        assert.equal(await consumers.text(res.body.read()), "fallback");
+        assert.equal(await consumers.text(res.body.readable), "fallback");
     });
 
     it("overrides status code on not found service fallback", async () => {
@@ -108,7 +108,7 @@ describe("serve-dir", () => {
         const res = await service.invoke(req);
 
         assert.equal(res.status, StatusCode.NOT_FOUND);
-        assert.equal(await consumers.text(res.body.read()), "fallback");
+        assert.equal(await consumers.text(res.body.readable), "fallback");
     });
 
     it("returns redirect if openFile returns redirect", async () => {
@@ -163,7 +163,7 @@ describe("serve-dir", () => {
 
         const res = await service.invoke(req);
         assert.equal(res.status, StatusCode.OK);
-        assert.equal(await consumers.text(res.body.read()), "fallback");
+        assert.equal(await consumers.text(res.body.readable), "fallback");
     });
 
     it("passed single file path as is", async () => {
@@ -332,7 +332,7 @@ describe("serve-dir", () => {
         const res = await service.invoke(req);
         assert.equal(res.status, StatusCode.RANGE_NOT_SATISFIABLE);
         assert.equal(
-            await consumers.text(res.body.read()),
+            await consumers.text(res.body.readable),
             "No range found after parsing range header, please file an issue",
         );
     });
@@ -356,7 +356,7 @@ describe("serve-dir", () => {
         const res = await service.invoke(req);
         assert.equal(res.status, StatusCode.RANGE_NOT_SATISFIABLE);
         assert.equal(
-            await consumers.text(res.body.read()),
+            await consumers.text(res.body.readable),
             "Cannot serve multipart range requests",
         );
     });

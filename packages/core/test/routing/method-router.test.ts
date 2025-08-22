@@ -85,11 +85,11 @@ describe("routing:method-router", () => {
 
             let res = await a.invoke(makeRequest("GET"));
             assert(res);
-            assert.equal(await consumers.text(res.body.read()), "GET from A");
+            assert.equal(await consumers.text(res.body.readable), "GET from A");
 
             res = await a.invoke(makeRequest("POST"));
             assert(res);
-            assert.equal(await consumers.text(res.body.read()), "POST from B");
+            assert.equal(await consumers.text(res.body.readable), "POST from B");
         });
 
         it("throws when merging routers with conflicting handlers", () => {

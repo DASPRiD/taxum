@@ -26,6 +26,6 @@ describe("util:map-to-http-response", () => {
         const res = await wrapper.invoke(req);
 
         assert.equal(res.status.code, 202);
-        assert.equal(await consumers.text(res.body.read()), "hello");
+        assert.equal(await consumers.text(res.body.readable), "hello");
     });
 });

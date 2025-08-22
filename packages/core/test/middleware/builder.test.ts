@@ -103,7 +103,7 @@ describe("ServiceBuilder (white-box)", () => {
                 invoke: async (req) => {
                     const res = await inner.invoke(req);
                     return HttpResponse.builder().body(
-                        `1: ${await consumers.text(res.body.read())}`,
+                        `1: ${await consumers.text(res.body.readable)}`,
                     );
                 },
             }),
@@ -114,7 +114,7 @@ describe("ServiceBuilder (white-box)", () => {
                 invoke: async (req) => {
                     const res = await inner.invoke(req);
                     return HttpResponse.builder().body(
-                        `2: ${await consumers.text(res.body.read())}`,
+                        `2: ${await consumers.text(res.body.readable)}`,
                     );
                 },
             }),
@@ -131,7 +131,7 @@ describe("ServiceBuilder (white-box)", () => {
                 .layer(service)
                 .invoke(HttpRequest.builder().body(null)),
         );
-        const body = await consumers.text(res.body.read());
+        const body = await consumers.text(res.body.readable);
 
         assert.equal(body, "1: 2: 0");
     });

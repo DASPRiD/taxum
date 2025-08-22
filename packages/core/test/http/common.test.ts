@@ -16,7 +16,7 @@ describe("http:common", () => {
             const res = noContentResponse[TO_HTTP_RESPONSE]();
             assert.equal(res.status.code, 204);
 
-            const body = await consumers.text(res.body.read());
+            const body = await consumers.text(res.body.readable);
             assert.equal(body, "");
         });
     });
@@ -27,7 +27,7 @@ describe("http:common", () => {
             assert.equal(res.status.code, 200);
             assert.equal(res.headers.get("content-type"), "application/json");
 
-            const body = await consumers.text(res.body.read());
+            const body = await consumers.text(res.body.readable);
             assert.equal(body, JSON.stringify({ ok: true }));
         });
     });
@@ -39,7 +39,7 @@ describe("http:common", () => {
             assert.equal(res.status.code, 200);
             assert.equal(res.headers.get("content-type"), "text/html");
 
-            const body = await consumers.text(res.body.read());
+            const body = await consumers.text(res.body.readable);
             assert.equal(body, JSON.stringify(html));
         });
     });
@@ -72,7 +72,7 @@ describe("http:common", () => {
                 assert.equal(res.status.code, expectedStatus.code);
                 assert.equal(res.headers.get("location"), expectedLocation);
 
-                const body = await consumers.text(res.body.read());
+                const body = await consumers.text(res.body.readable);
                 assert.equal(body, "");
             });
         }

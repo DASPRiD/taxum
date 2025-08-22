@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
-import { Readable } from "node:stream";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import zlib from "node:zlib";
+import { ReadableStream } from "stream/web";
 import { Body, HeaderMap, HttpRequest, HttpResponse, SizeHint } from "../../src/http/index.js";
 import {
     andPredicate,
@@ -27,19 +27,19 @@ describe("middleware/compression", () => {
 
     const decompressors: Record<string, (res: HttpResponse) => Promise<string>> = {
         gzip: async (res) => {
-            const buffer = await consumers.buffer(res.body.read());
+            const buffer = await consumers.buffer(res.body.readable);
             return zlib.gunzipSync(buffer).toString("utf-8");
         },
         deflate: async (res) => {
-            const buffer = await consumers.buffer(res.body.read());
+            const buffer = await consumers.buffer(res.body.readable);
             return zlib.inflateSync(buffer).toString("utf-8");
         },
         br: async (res) => {
-            const buffer = await consumers.buffer(res.body.read());
+            const buffer = await consumers.buffer(res.body.readable);
             return zlib.brotliDecompressSync(buffer).toString("utf-8");
         },
         zstd: async (res) => {
-            const buffer = await consumers.buffer(res.body.read());
+            const buffer = await consumers.buffer(res.body.readable);
             return zlib.zstdDecompressSync(buffer).toString("utf-8");
         },
     };
@@ -89,7 +89,7 @@ describe("middleware/compression", () => {
         const res = await service.invoke(req);
 
         assert.equal(res.headers.get("content-encoding"), null);
-        assert.equal(await consumers.text(res.body.read()), text);
+        assert.equal(await consumers.text(res.body.readable), text);
     });
 
     it("adds Vary header with accept-encoding if missing", async () => {
@@ -137,7 +137,7 @@ describe("middleware/compression", () => {
 
         const res = await service.invoke(req);
         assert.equal(res.headers.get("content-encoding"), "gzip");
-        assert.equal(await consumers.text(res.body.read()), text);
+        assert.equal(await consumers.text(res.body.readable), text);
     });
 
     it("does not compress if response does not match predicate", async () => {
@@ -152,7 +152,7 @@ describe("middleware/compression", () => {
 
         const res = await service.invoke(req);
         assert.equal(res.headers.get("content-encoding"), null);
-        assert.equal(await consumers.text(res.body.read()), text);
+        assert.equal(await consumers.text(res.body.readable), text);
     });
 
     it("does not compress if response body is empty", async () => {
@@ -167,7 +167,7 @@ describe("middleware/compression", () => {
 
         const res = await service.invoke(req);
         assert.equal(res.headers.get("content-encoding"), null);
-        assert.equal(await consumers.text(res.body.read()), "");
+        assert.equal(await consumers.text(res.body.readable), "");
     });
 
     it("does not compress if response has content-range header", async () => {
@@ -182,7 +182,7 @@ describe("middleware/compression", () => {
 
         const res = await service.invoke(req);
         assert.equal(res.headers.get("content-encoding"), null);
-        assert.equal(await consumers.text(res.body.read()), text);
+        assert.equal(await consumers.text(res.body.readable), text);
     });
 
     it("adds vary header if missing but does not duplicate if present", async () => {
@@ -207,7 +207,7 @@ describe("middleware/compression", () => {
 
         const res = await service.invoke(req);
         assert.equal(res.headers.get("content-encoding"), null);
-        assert.equal(await consumers.text(res.body.read()), text);
+        assert.equal(await consumers.text(res.body.readable), text);
     });
 
     it("does not compress if no encodings are supported", async () => {
@@ -220,7 +220,7 @@ describe("middleware/compression", () => {
 
         const res = await service.invoke(req);
         assert.equal(res.headers.get("content-encoding"), null);
-        assert.equal(await consumers.text(res.body.read()), text);
+        assert.equal(await consumers.text(res.body.readable), text);
     });
 
     it("compresses if predicate returns true", async () => {
@@ -257,7 +257,7 @@ describe("middleware/compression", () => {
     describe("andPredicate", () => {
         const makeResponse = () => {
             const headers = new HeaderMap();
-            const body = new Body(Readable.from("test"), SizeHint.exact(4));
+            const body = Body.from("test");
             return HttpResponse.builder().headers(headers).body(body);
         };
 
@@ -296,7 +296,13 @@ describe("middleware/compression", () => {
     describe("sizeAbovePredicate", () => {
         const makeResponse = (sizeHintUpper: number | null, headers = new HeaderMap()) => {
             const body = new Body(
-                Readable.from(text),
+                new ReadableStream({
+                    start: (controller) => {
+                        const encoder = new TextEncoder();
+                        const bytes = encoder.encode(text);
+                        controller.enqueue(bytes);
+                    },
+                }),
                 sizeHintUpper === null ? SizeHint.unbounded() : SizeHint.exact(sizeHintUpper),
             );
             return HttpResponse.builder().headers(headers).body(body);
@@ -345,7 +351,7 @@ describe("middleware/compression", () => {
                 headers.insert("content-type", contentType);
             }
 
-            const body = new Body(Readable.from("test"), SizeHint.exact(4));
+            const body = Body.from("test");
             return HttpResponse.builder().headers(headers).body(body);
         };
 
@@ -382,7 +388,7 @@ describe("middleware/compression", () => {
                 headers.insert("content-type", contentType);
             }
 
-            const body = new Body(Readable.from("x".repeat(size)), SizeHint.exact(size));
+            const body = Body.from("x".repeat(size));
             return HttpResponse.builder().headers(headers).body(body);
         };
 

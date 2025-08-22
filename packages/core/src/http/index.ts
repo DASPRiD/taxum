@@ -31,6 +31,5 @@ export * from "./request.js";
 export * from "./response.js";
 export * from "./size-hint.js";
 export * from "./status.js";
-export * from "./stream.js";
 export * from "./to-response.js";
 export * from "./to-response-parts.js";

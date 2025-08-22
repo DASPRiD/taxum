@@ -1,6 +1,5 @@
 import type { IncomingMessage } from "node:http";
 import { SocketAddress } from "node:net";
-import type { Readable } from "node:stream";
 import { Body, type BodyLike } from "./body.js";
 import { type ExtensionKey, Extensions } from "./extensions.js";
 import { HeaderMap } from "./headers.js";
@@ -89,13 +88,13 @@ export class Parts {
  */
 export class HttpRequest {
     public readonly head: Parts;
-    public readonly body: Readable;
+    public readonly body: Body;
     public readonly connectInfo: SocketAddress;
 
     /**
      * Creates a new {@link HttpRequest}.
      */
-    public constructor(head: Parts, body: Readable, connectInfo?: SocketAddress) {
+    public constructor(head: Parts, body: Body, connectInfo?: SocketAddress) {
         this.head = head;
         this.body = body;
         this.connectInfo =
@@ -122,7 +121,7 @@ export class HttpRequest {
     public static fromIncomingMessage(message: IncomingMessage, trustProxy: boolean): HttpRequest {
         return new HttpRequest(
             Parts.fromIncomingMessage(message, trustProxy),
-            message,
+            Body.from(message),
             new SocketAddress({
                 address:
                     message.socket.remoteAddress === "" ? "0.0.0.0" : message.socket.remoteAddress,
@@ -135,7 +134,7 @@ export class HttpRequest {
     /**
      * Creates a new {@link HttpRequest} with the provided body.
      */
-    public withBody(body: Readable): HttpRequest {
+    public withBody(body: Body): HttpRequest {
         return new HttpRequest(this.head, body, this.connectInfo);
     }
 
@@ -226,7 +225,7 @@ export class HttpRequestBuilder {
     public body(body: BodyLike) {
         return new HttpRequest(
             new Parts(this.method_, this.uri_, this.version_, this.headers_, this.extensions_),
-            Body.from(body).read(),
+            Body.from(body),
             this.connectInfo_,
         );
     }

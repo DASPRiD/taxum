@@ -19,7 +19,7 @@ describe("routing:handler", () => {
                 const req = HttpRequest.builder().body(null);
                 const res = HttpResponse.from(await h(req));
 
-                assert.equal(await consumers.text(res.body.read()), "ok");
+                assert.equal(await consumers.text(res.body.readable), "ok");
             });
 
             it("calls handler with one extractor", async () => {
@@ -30,7 +30,7 @@ describe("routing:handler", () => {
                 const req = HttpRequest.builder().body(null);
                 const res = HttpResponse.from(await h(req));
 
-                assert.equal(await consumers.text(res.body.read()), "FOO");
+                assert.equal(await consumers.text(res.body.readable), "FOO");
             });
 
             it("calls handler with multiple extractors", async () => {
@@ -42,7 +42,7 @@ describe("routing:handler", () => {
                 const req = HttpRequest.builder().body(null);
                 const res = HttpResponse.from(await h(req));
 
-                assert.equal(await consumers.text(res.body.read()), "foo-bar");
+                assert.equal(await consumers.text(res.body.readable), "foo-bar");
             });
         });
 
@@ -53,7 +53,7 @@ describe("routing:handler", () => {
                 const req = HttpRequest.builder().body(null);
                 const res = HttpResponse.from(await h(req));
 
-                assert.equal(await consumers.text(res.body.read()), "ok");
+                assert.equal(await consumers.text(res.body.readable), "ok");
             });
 
             it("calls handler with one extractor", async () => {
@@ -64,7 +64,7 @@ describe("routing:handler", () => {
                 const req = HttpRequest.builder().body(null);
                 const res = HttpResponse.from(await h(req));
 
-                assert.equal(await consumers.text(res.body.read()), "FOO");
+                assert.equal(await consumers.text(res.body.readable), "FOO");
             });
 
             it("calls handler with multiple extractors", async () => {
@@ -77,7 +77,7 @@ describe("routing:handler", () => {
                 const req = HttpRequest.builder().body(null);
                 const res = HttpResponse.from(await h(req));
 
-                assert.equal(await consumers.text(res.body.read()), "foo-bar");
+                assert.equal(await consumers.text(res.body.readable), "foo-bar");
             });
         });
 
@@ -90,7 +90,7 @@ describe("routing:handler", () => {
             const req = HttpRequest.builder().body(null);
             const res = HttpResponse.from(await h(req));
 
-            assert.equal(await consumers.text(res.body.read()), "42");
+            assert.equal(await consumers.text(res.body.readable), "42");
         });
 
         it("supports async handler function", async () => {
@@ -101,7 +101,7 @@ describe("routing:handler", () => {
             const req = HttpRequest.builder().body(null);
             const res = HttpResponse.from(await h(req));
 
-            assert.equal(await consumers.text(res.body.read()), "aa");
+            assert.equal(await consumers.text(res.body.readable), "aa");
         });
 
         it("throws if an extractor throws", async () => {
@@ -140,7 +140,7 @@ describe("routing:handler", () => {
             const req = HttpRequest.builder().body(null);
             const res = HttpResponse.from(await service.invoke(req));
 
-            assert.equal(await consumers.text(res.body.read()), "hello");
+            assert.equal(await consumers.text(res.body.readable), "hello");
         });
     });
 });
