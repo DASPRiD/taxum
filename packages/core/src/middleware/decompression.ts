@@ -1,9 +1,9 @@
+import { Transform } from "node:stream";
 import zlib from "node:zlib";
 import { Body, HttpResponse, StatusCode } from "../http/index.js";
 import { HttpRequest } from "../http/request.js";
 import type { HttpLayer } from "../layer/index.js";
 import type { HttpService } from "../service/index.js";
-import { applyNodeJsTransform } from "../util/index.js";
 import { AcceptEncoding } from "./compression-utils.js";
 
 /**
@@ -146,7 +146,7 @@ class RequestDecompression implements HttpService {
             return invokeWithStream(
                 this.inner,
                 req,
-                applyNodeJsTransform(req.body.readable, zlib.createBrotliDecompress()),
+                req.body.readable.pipeThrough(Transform.toWeb(zlib.createBrotliDecompress())),
             );
         }
 
@@ -154,7 +154,7 @@ class RequestDecompression implements HttpService {
             return invokeWithStream(
                 this.inner,
                 req,
-                applyNodeJsTransform(req.body.readable, zlib.createZstdDecompress()),
+                req.body.readable.pipeThrough(Transform.toWeb(zlib.createZstdDecompress())),
             );
         }
 

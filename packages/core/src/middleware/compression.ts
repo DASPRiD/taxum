@@ -1,9 +1,9 @@
+import { Transform } from "node:stream";
 import zlib, { type BrotliOptions, type ZlibOptions, type ZstdOptions } from "node:zlib";
 import { Body } from "../http/body.js";
 import { Encoding, type HttpRequest, HttpResponse } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
 import type { HttpService } from "../service/index.js";
-import { applyNodeJsTransform } from "../util/index.js";
 import { AcceptEncoding } from "./compression-utils.js";
 
 /**
@@ -228,7 +228,7 @@ const compressors = new Map<Encoding, Compressor>([
             const options: ZlibOptions = { level: zlibQuality(level) };
 
             return (value: ReadableStream) =>
-                applyNodeJsTransform(value, zlib.createDeflate(options));
+                value.pipeThrough(Transform.toWeb(zlib.createDeflate(options)));
         },
     ],
     [
@@ -236,7 +236,8 @@ const compressors = new Map<Encoding, Compressor>([
         (level) => {
             const options: ZlibOptions = { level: zlibQuality(level) };
 
-            return (value: ReadableStream) => applyNodeJsTransform(value, zlib.createGzip(options));
+            return (value: ReadableStream) =>
+                value.pipeThrough(Transform.toWeb(zlib.createGzip(options)));
         },
     ],
     [
@@ -249,7 +250,7 @@ const compressors = new Map<Encoding, Compressor>([
             };
 
             return (value: ReadableStream) =>
-                applyNodeJsTransform(value, zlib.createBrotliCompress(options));
+                value.pipeThrough(Transform.toWeb(zlib.createBrotliCompress(options)));
         },
     ],
     [
@@ -262,7 +263,7 @@ const compressors = new Map<Encoding, Compressor>([
             };
 
             return (value: ReadableStream) =>
-                applyNodeJsTransform(value, zlib.createZstdCompress(options));
+                value.pipeThrough(Transform.toWeb(zlib.createZstdCompress(options)));
         },
     ],
 ]);
