@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.13.0](https://github.com/DASPRiD/taxum/compare/core-v0.12.0...core-v0.13.0) (2025-08-23)
+
+
+### Features
+
+* **core:** add sensitive-headers middleware ([803f72f](https://github.com/DASPRiD/taxum/commit/803f72fa2ac019a78c43403836437f1cce7a1528))
+* **core:** turn header values into a class with sensitive flag ([5e525ee](https://github.com/DASPRiD/taxum/commit/5e525eeb58d75d3e6a7b9995d60a1e1ed4eba7a4))
+
 ## [0.12.0](https://github.com/DASPRiD/taxum/compare/core-v0.11.0...core-v0.12.0) (2025-08-22)
 
 
