@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
+import util from "node:util";
 import { StatusCode, TO_HTTP_RESPONSE } from "../../src/http/index.js";
 
 describe("http:status", () => {
@@ -35,15 +36,18 @@ describe("http:status", () => {
             assert.equal(StatusCode.INTERNAL_SERVER_ERROR.isServerError(), true);
         });
 
-        it("toString returns correct string", () => {
-            assert.equal(StatusCode.OK.toString(), "StatusCode(200 OK)");
-            assert.equal(StatusCode.NOT_FOUND.toString(), "StatusCode(404 Not Found)");
-        });
-
         it("toHttpResponse returns HttpResponse with status and no body", async () => {
             const res = StatusCode.OK[TO_HTTP_RESPONSE]();
             assert.equal(res.status, StatusCode.OK);
             assert.equal(await consumers.text(res.body.readable), "");
+        });
+
+        it("toJSON returns numeric value", () => {
+            assert.equal(StatusCode.OK.toJSON(), 200);
+        });
+
+        it("custom inspect returns numeric value", () => {
+            assert.equal(util.inspect(StatusCode.OK), "200");
         });
     });
 });

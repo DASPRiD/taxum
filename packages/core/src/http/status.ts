@@ -1,3 +1,4 @@
+import type util from "node:util";
 import { HttpResponse } from "./response.js";
 import { TO_HTTP_RESPONSE, type ToHttpResponse } from "./to-response.js";
 
@@ -474,11 +475,19 @@ export class StatusCode implements ToHttpResponse {
         return this.code >= 500 && this.code < 600;
     }
 
-    public toString(): string {
-        return `StatusCode(${this.code} ${this.phrase})`;
-    }
-
     public [TO_HTTP_RESPONSE](): HttpResponse {
         return HttpResponse.builder().status(this).body(null);
+    }
+
+    public toJSON(): number {
+        return this.code;
+    }
+
+    [Symbol.for("nodejs.util.inspect.custom")](
+        _depth: number,
+        options: util.InspectOptionsStylized,
+        inspect: typeof util.inspect,
+    ): string {
+        return inspect(this.code, options);
     }
 }

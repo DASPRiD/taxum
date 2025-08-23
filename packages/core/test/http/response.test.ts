@@ -3,6 +3,7 @@ import { Buffer } from "node:buffer";
 import type { ServerResponse } from "node:http";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
+import util from "node:util";
 import { callNodeRequestHandler } from "node-mock-http";
 import { Body } from "../../src/http/body.js";
 import {
@@ -165,6 +166,22 @@ describe("http:response", () => {
                 assert.equal(response.status, 200);
                 assert.deepEqual(response.body, Buffer.from([104, 101, 108, 108, 111]));
             });
+        });
+
+        it("toJSON returns object", () => {
+            const res = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
+
+            assert.deepEqual(res.toJSON(), {
+                status: 200,
+                headers: {},
+                extensions: {},
+            });
+        });
+
+        it("custom inspect returns object value", () => {
+            const res = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
+
+            assert.equal(util.inspect(res), "{ status: 200, headers: {}, extensions: {} }");
         });
     });
 

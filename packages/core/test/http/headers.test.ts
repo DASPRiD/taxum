@@ -131,16 +131,17 @@ describe("http:headers", () => {
             const map = HeaderMap.from([
                 ["x-a", "1"],
                 ["x-b", "2"],
+                ["x-b", "3"],
             ]);
             const json = JSON.stringify(map);
-            assert.deepEqual(json, '[["x-a","1"],["x-b","2"]]');
+            assert.deepEqual(json, '{"x-a":"1","x-b":["2","3"]}');
         });
 
         it("toJSON omits sensitive values", () => {
             const map = new HeaderMap();
             map.insert("authorization", new HeaderValue("super-secret", true));
             const json = JSON.stringify(map);
-            assert.deepEqual(json, "[]");
+            assert.deepEqual(json, "{}");
         });
 
         it("inspect shows keys and values", () => {

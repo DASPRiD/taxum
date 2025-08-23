@@ -1,5 +1,6 @@
 import type { IncomingMessage } from "node:http";
 import { SocketAddress } from "node:net";
+import type util from "node:util";
 import { Body, type BodyLike } from "./body.js";
 import { type ExtensionKey, Extensions } from "./extensions.js";
 import { HeaderMap, type HeaderValueLike } from "./headers.js";
@@ -163,6 +164,33 @@ export class HttpRequest {
 
     public get extensions(): Extensions {
         return this.head.extensions;
+    }
+
+    public toJSON(): Record<string, unknown> {
+        return {
+            method: this.method.toJSON(),
+            uri: this.uri.toJSON(),
+            version: this.version,
+            headers: this.headers.toJSON(),
+            extensions: this.extensions.toJSON(),
+        };
+    }
+
+    [Symbol.for("nodejs.util.inspect.custom")](
+        _depth: number,
+        options: util.InspectOptionsStylized,
+        inspect: typeof util.inspect,
+    ): string {
+        return inspect(
+            {
+                method: this.method,
+                uri: this.uri.toString(),
+                version: this.version,
+                headers: this.headers,
+                extensions: this.extensions,
+            },
+            options,
+        );
     }
 }
 

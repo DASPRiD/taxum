@@ -1,5 +1,6 @@
 import type { ServerResponse } from "node:http";
 import { Readable } from "node:stream";
+import type util from "node:util";
 import { Body, type BodyLike, isBodyLike } from "./body.js";
 import { type ExtensionKey, Extensions } from "./extensions.js";
 import { type HeaderEntryLike, HeaderMap } from "./headers.js";
@@ -116,6 +117,29 @@ export class HttpResponse {
             res.on("error", reject);
             stream.on("error", reject);
         });
+    }
+
+    public toJSON(): Record<string, unknown> {
+        return {
+            status: this.status.toJSON(),
+            headers: this.headers.toJSON(),
+            extensions: this.extensions.toJSON(),
+        };
+    }
+
+    [Symbol.for("nodejs.util.inspect.custom")](
+        _depth: number,
+        options: util.InspectOptionsStylized,
+        inspect: typeof util.inspect,
+    ): string {
+        return inspect(
+            {
+                status: this.status,
+                headers: this.headers,
+                extensions: this.extensions,
+            },
+            options,
+        );
     }
 }
 

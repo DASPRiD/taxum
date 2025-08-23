@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { SocketAddress } from "node:net";
 import { describe, it } from "node:test";
 import type { TLSSocket } from "node:tls";
+import util from "node:util";
 import { IncomingMessage } from "node-mock-http";
 import {
     Body,
@@ -45,7 +46,7 @@ describe("http:request", () => {
             message.headers.host = "example.com";
 
             const parts = Parts.fromIncomingMessage(message, false);
-            assert.equal(parts.method.toValue(), "GET");
+            assert.equal(parts.method.value, "GET");
             assert.equal(parts.uri.toString(), "http://example.com/path?query=1");
             assert.equal(parts.version, "1.1");
             assert.equal(parts.headers.get("host")?.value, "example.com");
@@ -60,7 +61,7 @@ describe("http:request", () => {
             const parts = Parts.fromIncomingMessage(message, true);
             assert.equal(parts.uri.protocol, "https:");
             assert.equal(parts.uri.host, "proxy.com");
-            assert.equal(parts.method.toValue(), "POST");
+            assert.equal(parts.method.value, "POST");
             assert.equal(parts.version, "1.1");
         });
 
@@ -97,7 +98,7 @@ describe("http:request", () => {
             (message.method as string | undefined) = undefined;
 
             const parts = Parts.fromIncomingMessage(message, false);
-            assert.equal(parts.method.toValue(), "");
+            assert.equal(parts.method.value, "");
         });
     });
 
@@ -129,7 +130,7 @@ describe("http:request", () => {
             message.headers.host = "example.com";
 
             const req = HttpRequest.fromIncomingMessage(message, false);
-            assert.equal(req.method.toValue(), "GET");
+            assert.equal(req.method.value, "GET");
             assert.equal(req.uri.host, "example.com");
             assert.equal(req.version, "1.1");
         });
@@ -164,6 +165,31 @@ describe("http:request", () => {
             assert.equal(newReq.connectInfo.address, "0.0.0.0");
             assert.equal(newReq.connectInfo.port, 0);
         });
+
+        it("toJSON returns object", () => {
+            const parts = new Parts(Method.GET, new URL("http://a"), "1.1", new HeaderMap());
+            const body = Body.from("test");
+            const req = new HttpRequest(parts, body);
+
+            assert.deepEqual(req.toJSON(), {
+                method: "GET",
+                uri: "http://a/",
+                version: "1.1",
+                headers: {},
+                extensions: {},
+            });
+        });
+
+        it("custom inspect returns object value", () => {
+            const parts = new Parts(Method.GET, new URL("http://a"), "1.1", new HeaderMap());
+            const body = Body.from("test");
+            const req = new HttpRequest(parts, body);
+
+            assert.equal(
+                util.inspect(req, { compact: true }),
+                "{ method: 'GET', uri: 'http://a/', version: '1.1', headers: {}, extensions: {} }",
+            );
+        });
     });
 
     describe("HttpRequestBuilder", () => {
@@ -171,7 +197,7 @@ describe("http:request", () => {
             const builder = new HttpRequestBuilder();
             const req = builder.body(null);
 
-            assert.equal(req.method.toValue(), "GET");
+            assert.equal(req.method.value, "GET");
             assert.equal(req.uri.toString(), "http://localhost/");
             assert.equal(req.version, "1.1");
             assert(req.headers.isEmpty());
@@ -181,14 +207,14 @@ describe("http:request", () => {
             const builder = new HttpRequestBuilder();
             builder.method("POST");
             const req = builder.body(null);
-            assert.equal(req.method.toValue(), "POST");
+            assert.equal(req.method.value, "POST");
         });
 
         it("method() sets the method from instance", () => {
             const builder = new HttpRequestBuilder();
             builder.method(Method.POST);
             const req = builder.body(null);
-            assert.equal(req.method.toValue(), "POST");
+            assert.equal(req.method.value, "POST");
         });
 
         it("uri() sets the uri", () => {
@@ -264,7 +290,7 @@ describe("http:request", () => {
                 .uri(new URL("http://x"))
                 .header("content-type", "text/plain")
                 .body("hello");
-            assert.equal(req.method.toValue(), "POST");
+            assert.equal(req.method.value, "POST");
             assert.equal(req.uri.toString(), "http://x/");
             assert.equal(req.headers.get("content-type")?.value, "text/plain");
         });

@@ -1,3 +1,4 @@
+import type util from "node:util";
 import {
     type HttpResponseParts,
     TO_HTTP_RESPONSE_PARTS,
@@ -20,16 +21,23 @@ import {
  * ```
  */
 export class ExtensionKey<T> {
-    public readonly id: symbol;
     // biome-ignore lint/correctness/noUnusedPrivateClassMembers: type marker
     private readonly _type: T = null as T;
+    private readonly description: string;
 
-    public constructor(description?: string) {
-        this.id = Symbol(description);
+    public constructor(description: string) {
+        this.description = description;
     }
 
-    public toString(): string {
-        return `ExtensionKey(${this.id.description ?? "unknown"})`;
+    public toJSON(): string {
+        return this.description;
+    }
+
+    [Symbol.for("nodejs.util.inspect.custom")](
+        _depth: number,
+        options: util.InspectOptionsStylized,
+    ): string {
+        return options.stylize(this.description, "special");
     }
 }
 
@@ -40,34 +48,34 @@ export class ExtensionKey<T> {
  * associated values.
  */
 export class Extensions implements ToHttpResponseParts {
-    private readonly map = new Map<symbol, unknown>();
+    private readonly map = new Map<ExtensionKey<unknown>, unknown>();
 
     /**
      * Inserts a value into the map associated with a specific key.
      */
     public insert<T>(key: ExtensionKey<T>, value: T): void {
-        this.map.set(key.id, value);
+        this.map.set(key, value);
     }
 
     /**
      * Retrieves the value associated with the specified key from the map.
      */
     public get<T>(key: ExtensionKey<T>): T | undefined {
-        return this.map.get(key.id) as T | undefined;
+        return this.map.get(key) as T | undefined;
     }
 
     /**
      * Removes a value associated with the specified key from the map.
      */
     public remove<T>(key: ExtensionKey<T>): void {
-        this.map.delete(key.id);
+        this.map.delete(key);
     }
 
     /**
      * Determines whether the specified key exists in the map.
      */
     public has<T>(key: ExtensionKey<T>): boolean {
-        return this.map.has(key.id);
+        return this.map.has(key);
     }
 
     /**
@@ -104,5 +112,17 @@ export class Extensions implements ToHttpResponseParts {
 
     public [TO_HTTP_RESPONSE_PARTS](res: HttpResponseParts): void {
         res.extensions.extend(this);
+    }
+
+    public toJSON(): Record<string, unknown> {
+        return Object.fromEntries(this.map.entries().map(([id, value]) => [id.toJSON(), value]));
+    }
+
+    [Symbol.for("nodejs.util.inspect.custom")](
+        _depth: number,
+        options: util.InspectOptionsStylized,
+        inspect: typeof util.inspect,
+    ): string {
+        return inspect(this.map, options).replace(/^Map\(\d+\)\s+\{/, "{");
     }
 }

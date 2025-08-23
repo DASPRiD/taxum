@@ -225,15 +225,18 @@ export class HeaderMap implements ToHttpResponseParts {
         }
     }
 
-    public toJSON(): [string, string][] {
-        const result: [string, string][] = [];
+    public toJSON(): Record<string, string | string[]> {
+        const result: Record<string, string | string[]> = {};
 
         for (const [name, values] of this.map) {
-            for (const value of values) {
-                if (!value.isSensitive()) {
-                    result.push([name, value.toJSON()]);
-                }
+            const exposed = values.filter((value) => !value.isSensitive());
+
+            if (exposed.length === 0) {
+                continue;
             }
+
+            result[name] =
+                exposed.length === 1 ? exposed[0].toJSON() : exposed.map((value) => value.toJSON());
         }
 
         return result;

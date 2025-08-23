@@ -61,16 +61,14 @@ export class AllowMethods {
      * Sets a single allowed method.
      */
     public static exact(method: string | Method): AllowMethods {
-        return new AllowMethods(method instanceof Method ? method.toValue() : method);
+        return new AllowMethods(method instanceof Method ? method.value : method);
     }
 
     /**
      * Sets multiple allowed methods.
      */
     public static list(methods: (string | Method)[]): AllowMethods {
-        return new AllowMethods(
-            methods.map((m) => (m instanceof Method ? m.toValue() : m)).join(","),
-        );
+        return new AllowMethods(methods.map((m) => (m instanceof Method ? m.value : m)).join(","));
     }
 
     /**

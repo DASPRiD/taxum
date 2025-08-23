@@ -166,7 +166,7 @@ describe("routing:method-router", () => {
             let calledWithMethod: string | null = null;
 
             const router = any((req) => {
-                calledWithMethod = req.method.toValue();
+                calledWithMethod = req.method.value;
                 return StatusCode.ACCEPTED;
             });
 

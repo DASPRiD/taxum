@@ -1,3 +1,5 @@
+import type util from "node:util";
+
 /**
  * Represents an HTTP method.
  *
@@ -15,7 +17,7 @@ export class Method {
     public static readonly PUT = new Method("PUT");
     public static readonly TRACE = new Method("TRACE");
 
-    private readonly value: string;
+    public readonly value: string;
 
     private constructor(value: string) {
         this.value = value;
@@ -59,11 +61,15 @@ export class Method {
         return new Method(method);
     }
 
-    public toString(): string {
-        return `Method(${this.value})`;
+    public toJSON(): string {
+        return this.value;
     }
 
-    public toValue(): string {
-        return this.value;
+    [Symbol.for("nodejs.util.inspect.custom")](
+        _depth: number,
+        options: util.InspectOptionsStylized,
+        inspect: typeof util.inspect,
+    ): string {
+        return inspect(this.value, options);
     }
 }
