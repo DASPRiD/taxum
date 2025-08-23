@@ -198,9 +198,9 @@ class SetRequestHeader implements HttpService {
 type InsertHeaderModeType = "override" | "append" | "if_not_present";
 
 class InsertHeaderMode {
-    public static OVERRIDE = new InsertHeaderMode("override");
-    public static APPEND = new InsertHeaderMode("append");
-    public static IF_NOT_PRESENT = new InsertHeaderMode("if_not_present");
+    public static readonly OVERRIDE = new InsertHeaderMode("override");
+    public static readonly APPEND = new InsertHeaderMode("append");
+    public static readonly IF_NOT_PRESENT = new InsertHeaderMode("if_not_present");
 
     private readonly type: InsertHeaderModeType;
 
