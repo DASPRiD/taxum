@@ -1,3 +1,4 @@
+import { type HeaderEntry, HeaderValue } from "../../http/index.js";
 import type { Parts } from "../../http/request.js";
 
 export type AllowPrivateNetworkPredicate = (origin: string, parts: Parts) => boolean;
@@ -55,7 +56,7 @@ export class AllowPrivateNetwork {
     /**
      * @internal
      */
-    public toHeader(origin: string | null, parts: Parts): [string, string] | null {
+    public toHeader(origin: HeaderValue | null, parts: Parts): HeaderEntry | null {
         const REQUEST_PRIVATE_NETWORK = "access-control-request-private-network";
         const ALLOW_PRIVATE_NETWORK = "access-control-allow-private-network";
 
@@ -63,15 +64,15 @@ export class AllowPrivateNetwork {
             return null;
         }
 
-        if (parts.headers.get(REQUEST_PRIVATE_NETWORK) !== "true") {
+        if (parts.headers.get(REQUEST_PRIVATE_NETWORK)?.value !== "true") {
             return null;
         }
 
-        if (typeof this.inner === "function" && !(origin && this.inner(origin, parts))) {
+        if (typeof this.inner === "function" && !(origin && this.inner(origin.value, parts))) {
             return null;
         }
 
-        return [ALLOW_PRIVATE_NETWORK, "true"];
+        return [ALLOW_PRIVATE_NETWORK, new HeaderValue("true")];
     }
 }
 

@@ -51,7 +51,7 @@ export class CookieJar implements ToHttpResponseParts {
     public static fromHeaders(headers: HeaderMap): CookieJar {
         const cookies = headers
             .getAll("cookie")
-            .flatMap((value) => value.split(";"))
+            .flatMap((value) => value.value.split(";"))
             .map((value) => Cookie.parse(value))
             .filter((cookie): cookie is Cookie => cookie !== null);
 

@@ -148,7 +148,7 @@ class Jwt implements HttpService {
             return new UnauthorizedError("Missing authorization header", this.debug);
         }
 
-        const parts = authorization.split(" ");
+        const parts = authorization.value.split(" ");
 
         if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") {
             return new UnauthorizedError("Malformed authorization header", this.debug);

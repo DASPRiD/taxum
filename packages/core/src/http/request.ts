@@ -2,7 +2,7 @@ import type { IncomingMessage } from "node:http";
 import { SocketAddress } from "node:net";
 import { Body, type BodyLike } from "./body.js";
 import { type ExtensionKey, Extensions } from "./extensions.js";
-import { HeaderMap } from "./headers.js";
+import { HeaderMap, type HeaderValueLike } from "./headers.js";
 import { Method } from "./method.js";
 
 /**
@@ -58,17 +58,17 @@ export class Parts {
         let host: string;
 
         if (trustProxy) {
-            const forwardedProto = headers.get("x-forwarded-proto");
-            const forwardedHost = headers.get("x-forwarded-host");
+            const forwardedProto = headers.get("x-forwarded-proto")?.value;
+            const forwardedHost = headers.get("x-forwarded-host")?.value;
 
             protocol =
                 forwardedProto === "https" || forwardedProto === "http"
                     ? forwardedProto
                     : localProtocol;
-            host = forwardedHost ?? headers.get("host") ?? "localhost";
+            host = forwardedHost ?? headers.get("host")?.value ?? "localhost";
         } else {
             protocol = localProtocol;
-            host = headers.get("host") ?? "localhost";
+            host = headers.get("host")?.value ?? "localhost";
         }
 
         const uri = new URL(`${protocol}://${host}${message.url}`);
@@ -202,7 +202,7 @@ export class HttpRequestBuilder {
         return this;
     }
 
-    public header(key: string, value: string): this {
+    public header(key: string, value: HeaderValueLike): this {
         this.headers_.append(key, value);
         return this;
     }

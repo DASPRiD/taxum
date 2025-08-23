@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { HeaderMap, Method, Parts } from "../../../src/http/index.js";
+import { HeaderMap, HeaderValue, Method, Parts } from "../../../src/http/index.js";
 import { AllowHeaders, ANY, MIRROR_REQUEST } from "../../../src/middleware/cors/index.js";
 
 describe("middleware:cors:allow-headers", () => {
@@ -8,9 +8,7 @@ describe("middleware:cors:allow-headers", () => {
         Method.GET,
         new URL("http://localhost"),
         "1.1",
-        new HeaderMap(
-            new Map([["access-control-request-headers", ["X-Custom-Header, X-Another-Header"]]]),
-        ),
+        HeaderMap.from([["access-control-request-headers", "X-Custom-Header, X-Another-Header"]]),
     );
 
     const partsWithoutRequestHeaders = new Parts(
@@ -38,7 +36,7 @@ describe("middleware:cors:allow-headers", () => {
         assert(ah.isWildcard());
         assert.deepEqual(ah.toHeader(partsWithRequestHeaders), [
             "access-control-allow-headers",
-            "*",
+            new HeaderValue("*"),
         ]);
 
         const fromAh = AllowHeaders.from(ANY);
@@ -50,7 +48,7 @@ describe("middleware:cors:allow-headers", () => {
         assert(!ah.isWildcard());
         assert.deepEqual(ah.toHeader(partsWithRequestHeaders), [
             "access-control-allow-headers",
-            "X-Foo,X-Bar",
+            new HeaderValue("X-Foo,X-Bar"),
         ]);
 
         const fromAh = AllowHeaders.from(["X-Foo", "X-Bar"]);
@@ -61,7 +59,7 @@ describe("middleware:cors:allow-headers", () => {
         const ah = AllowHeaders.mirrorRequest();
         assert.deepEqual(ah.toHeader(partsWithRequestHeaders), [
             "access-control-allow-headers",
-            "X-Custom-Header, X-Another-Header",
+            new HeaderValue("X-Custom-Header, X-Another-Header"),
         ]);
 
         const fromAh = AllowHeaders.from(MIRROR_REQUEST);

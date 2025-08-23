@@ -26,7 +26,7 @@ describe("jar", () => {
 
     describe("fromHeaders()", () => {
         it("parses cookies from headers", () => {
-            const headers = HeaderMap.fromArray([
+            const headers = HeaderMap.from([
                 ["cookie", "a=1; b=2"],
                 ["cookie", "c=3"],
             ]);
@@ -38,7 +38,7 @@ describe("jar", () => {
         });
 
         it("skips invalid cookies", () => {
-            const headers = HeaderMap.fromArray([["cookie", "valid=ok; invalidcookie"]]);
+            const headers = HeaderMap.from([["cookie", "valid=ok; invalidcookie"]]);
             const jar = CookieJar.fromHeaders(headers);
 
             assert.equal(jar.get("valid")?.value, "ok");
@@ -77,7 +77,7 @@ describe("jar", () => {
             jar[TO_HTTP_RESPONSE_PARTS](parts);
 
             assert.equal(
-                res.headers.get("set-cookie"),
+                res.headers.get("set-cookie")?.value,
                 "toremove=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
             );
         });
@@ -118,7 +118,7 @@ describe("jar", () => {
             const parts = new HttpResponseParts(res);
             jar[TO_HTTP_RESPONSE_PARTS](parts);
 
-            assert.equal(res.headers.get("set-cookie"), "sc=val");
+            assert.equal(res.headers.get("set-cookie")?.value, "sc=val");
         });
     });
 });

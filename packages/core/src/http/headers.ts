@@ -1,4 +1,5 @@
 import type { IncomingMessage } from "node:http";
+import type util from "node:util";
 import {
     type HttpResponseParts,
     TO_HTTP_RESPONSE_PARTS,
@@ -12,39 +13,56 @@ import {
  * pairs.
  */
 export class HeaderMap implements ToHttpResponseParts {
-    protected readonly map: Map<string, string[]>;
+    protected readonly map: Map<string, HeaderValue[]>;
 
     /**
      * Creates a new {@link HeaderMap}.
      *
-     * An optional map can be provided to initialize the map with existing
+     * You can optionally provide entries to initialize the map with existing
      * key-value pairs.
      **/
-    public constructor(map?: Map<string, string[]> | HeaderMap) {
-        if (!map) {
+    public constructor(entries?: Iterable<HeaderEntry> | HeaderMap) {
+        if (!entries) {
             this.map = new Map();
             return;
         }
 
-        if (map instanceof HeaderMap) {
-            this.map = new Map(map.map.entries());
+        if (entries instanceof HeaderMap) {
+            this.map = new Map(entries.map.entries().map(([name, values]) => [name, [...values]]));
             return;
         }
 
-        this.map = new Map(map.entries().map(([key, values]) => [key.toLowerCase(), values]));
+        this.map = new Map();
+
+        for (const [name, value] of entries) {
+            const normalizedName = name.toLowerCase();
+            let values = this.map.get(normalizedName);
+
+            if (!values) {
+                values = [];
+                this.map.set(normalizedName, values);
+            }
+
+            values.push(value);
+        }
     }
 
     /**
-     * Creates a new {@link HeaderMap} from an array of key-value pairs.
+     * Create a new {@link HeaderMap} from an `Iterable` of key-value pairs.
+     *
+     * This allows you to create the map from string values instead of
+     * `HeaderValue`s.
      */
-    public static fromArray(array: HeadersArray): HeaderMap {
-        const map = new HeaderMap();
+    public static from(entries: Iterable<HeaderEntryLike>): HeaderMap {
+        const headerEntries: Iterable<HeaderEntry> = {
+            [Symbol.iterator]: function* () {
+                for (const [name, value] of entries) {
+                    yield [name, value instanceof HeaderValue ? value : new HeaderValue(value)];
+                }
+            },
+        };
 
-        for (const [key, value] of array) {
-            map.append(key, value);
-        }
-
-        return map;
+        return new HeaderMap(headerEntries);
     }
 
     /**
@@ -54,9 +72,20 @@ export class HeaderMap implements ToHttpResponseParts {
      * be used by the HeaderMap.
      */
     public static fromIncomingMessage(message: IncomingMessage): HeaderMap {
-        return new HeaderMap(
-            new Map(Object.entries(message.headersDistinct as { [key: string]: string[] })),
-        );
+        const entries: HeaderEntry[] = [];
+
+        for (const [name, values] of Object.entries(message.headersDistinct)) {
+            /* node:coverage ignore next 3 */
+            if (!values) {
+                continue;
+            }
+
+            for (const value of values) {
+                entries.push([name, new HeaderValue(value)]);
+            }
+        }
+
+        return new HeaderMap(entries);
     }
 
     /**
@@ -83,20 +112,20 @@ export class HeaderMap implements ToHttpResponseParts {
     /**
      * Retrieves the first value associated with the specified key.
      */
-    public get(key: string): string | null {
+    public get(key: string): HeaderValue | null {
         const headers = this.map.get(key.toLowerCase());
 
         if (!headers) {
             return null;
         }
 
-        return headers[0] ?? null;
+        return headers[0];
     }
 
     /**
      * Retrieves all values associated with the provided key.
      */
-    public getAll(key: string): readonly string[] {
+    public getAll(key: string): readonly HeaderValue[] {
         return this.map.get(key.toLowerCase()) ?? [];
     }
 
@@ -112,7 +141,7 @@ export class HeaderMap implements ToHttpResponseParts {
      *
      * The values are yielded sequentially from the inner collections.
      */
-    public *values(): IterableIterator<string> {
+    public *values(): IterableIterator<HeaderValue> {
         for (const values of this.map.values()) {
             for (const value of values) {
                 yield value;
@@ -126,7 +155,7 @@ export class HeaderMap implements ToHttpResponseParts {
      * Each key may correspond to multiple values, and the iterator yields each
      * key-value pair individually.
      */
-    public *entries(): IterableIterator<[string, string]> {
+    public *entries(): IterableIterator<HeaderEntry> {
         for (const [key, values] of this.map.entries()) {
             for (const value of values) {
                 yield [key, value];
@@ -134,7 +163,7 @@ export class HeaderMap implements ToHttpResponseParts {
         }
     }
 
-    public [Symbol.iterator](): IterableIterator<[string, string]> {
+    public [Symbol.iterator](): IterableIterator<HeaderEntry> {
         return this.entries();
     }
 
@@ -144,8 +173,10 @@ export class HeaderMap implements ToHttpResponseParts {
      * If one or more values already exist for the key, they are replaced with
      * the new value.
      */
-    public insert(key: string, value: string): void {
-        this.map.set(key.toLowerCase(), [value]);
+    public insert(key: string, value: HeaderValueLike): void {
+        this.map.set(key.toLowerCase(), [
+            value instanceof HeaderValue ? value : new HeaderValue(value),
+        ]);
     }
 
     /**
@@ -154,7 +185,7 @@ export class HeaderMap implements ToHttpResponseParts {
      * If the key does not exist, it initializes a new list and adds the value
      * to it.
      */
-    public append(key: string, value: string): void {
+    public append(key: string, value: HeaderValueLike): void {
         const lowercaseKey = key.toLowerCase();
         let values = this.map.get(lowercaseKey);
 
@@ -163,13 +194,13 @@ export class HeaderMap implements ToHttpResponseParts {
             this.map.set(lowercaseKey, values);
         }
 
-        values.push(value);
+        values.push(value instanceof HeaderValue ? value : new HeaderValue(value));
     }
 
     /**
      * Removes the entry associated with the specified key from the map.
      */
-    public remove(key: string): string | null {
+    public remove(key: string): HeaderValue | null {
         const lowercaseKey = key.toLowerCase();
         const value = this.map.get(lowercaseKey);
         this.map.delete(lowercaseKey);
@@ -188,10 +219,38 @@ export class HeaderMap implements ToHttpResponseParts {
      *
      * Values in the iterable will overwrite existing values for the same key.
      */
-    public extend(items: Iterable<[string, string]>): void {
+    public extend(items: Iterable<HeaderEntry>): void {
         for (const item of items) {
             this.insert(item[0], item[1]);
         }
+    }
+
+    public toJSON(): [string, string][] {
+        const result: [string, string][] = [];
+
+        for (const [name, values] of this.map) {
+            for (const value of values) {
+                if (!value.isSensitive()) {
+                    result.push([name, value.toJSON()]);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    [Symbol.for("nodejs.util.inspect.custom")](
+        _depth: number,
+        options: util.InspectOptionsStylized,
+        inspect: typeof util.inspect,
+    ): string {
+        const result: Record<string, HeaderValue | HeaderValue[]> = {};
+
+        for (const [key, values] of this.map) {
+            result[key] = values.length === 1 ? values[0] : values;
+        }
+
+        return inspect(result, options);
     }
 
     public [TO_HTTP_RESPONSE_PARTS](res: HttpResponseParts): void {
@@ -200,6 +259,56 @@ export class HeaderMap implements ToHttpResponseParts {
 }
 
 /**
- * Array representation of HTTP headers.
+ * Represents a single value in an HTTP header.
+ *
+ * Some header values may be sensitive and should not be logged or displayed.
+ * You can mark headers as sensitive by calling `setSensitive(true)`. This will
+ * prevent the value from being exposed to loggers.
  */
-export type HeadersArray = [string, string][];
+export class HeaderValue {
+    public readonly value: string;
+    private sensitive: boolean;
+
+    /**
+     * Creates a new {@link HeaderValue}.
+     */
+    public constructor(value: string, sensitive = false) {
+        this.value = value;
+        this.sensitive = sensitive;
+    }
+
+    /**
+     * Marks the header value as sensitive.
+     */
+    public setSensitive(sensitive: boolean): this {
+        this.sensitive = sensitive;
+        return this;
+    }
+
+    /**
+     * Checks if the header value is sensitive.
+     */
+    public isSensitive(): boolean {
+        return this.sensitive;
+    }
+
+    public toJSON(): string {
+        return this.sensitive ? "Sensitive" : this.value;
+    }
+
+    [Symbol.for("nodejs.util.inspect.custom")](
+        _depth: number,
+        options: util.InspectOptionsStylized,
+        inspect: typeof util.inspect,
+    ): string {
+        if (this.sensitive) {
+            return options.stylize("Sensitive", "special");
+        }
+
+        return inspect(this.value, options);
+    }
+}
+
+export type HeaderValueLike = HeaderValue | string;
+export type HeaderEntryLike = [name: string, value: HeaderValueLike];
+export type HeaderEntry = [name: string, value: HeaderValue];

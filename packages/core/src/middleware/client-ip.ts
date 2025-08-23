@@ -65,7 +65,7 @@ class SetClientIp implements HttpService {
             return this.inner.invoke(req);
         }
 
-        const ips = forwardedFor
+        const ips = forwardedFor.value
             .split(",")
             .map((ip) => ip.trim())
             .filter((ip) => isIP(ip) !== 0);

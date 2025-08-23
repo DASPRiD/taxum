@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { describe, it } from "node:test";
-import { Encoding, HeaderMap, HttpRequest } from "@taxum/core/http";
+import { Encoding, HeaderMap, HeaderValue, HttpRequest } from "@taxum/core/http";
 import { openFile } from "../src/open-file.js";
 import { ServeVariant } from "../src/serve-dir.js";
 import { isErrnoException } from "../src/util.js";
@@ -17,9 +17,7 @@ const dummyUrl = new URL("http://localhost/file.txt");
 function createReq(method: string, headers: Record<string, string> = {}, uri = dummyUrl) {
     return HttpRequest.builder()
         .method(method)
-        .headers(
-            new HeaderMap(new Map(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), [v]]))),
-        )
+        .headers(HeaderMap.from(Object.entries(headers).map(([k, v]) => [k, v])))
         .uri(uri)
         .body(null);
 }
@@ -102,7 +100,13 @@ describe("open-file", () => {
 
     it("parses valid byte range header", async () => {
         const req = createReq("GET", { range: "bytes=0-4" });
-        const output = await openFile(fileVariant, COMPRESSED_FILE, req, [], "bytes=0-4");
+        const output = await openFile(
+            fileVariant,
+            COMPRESSED_FILE,
+            req,
+            [],
+            new HeaderValue("bytes=0-4"),
+        );
         assert.equal(output.type, "file_opened");
         assert(output.range !== null && !(output.range instanceof Error));
         assert(output.extent.type === "full");
@@ -111,7 +115,13 @@ describe("open-file", () => {
 
     it("returns error on invalid byte range header", async () => {
         const req = createReq("GET", { range: "bytes=500-1000" });
-        const output = await openFile(fileVariant, COMPRESSED_FILE, req, [], "bytes=500-1000");
+        const output = await openFile(
+            fileVariant,
+            COMPRESSED_FILE,
+            req,
+            [],
+            new HeaderValue("bytes=500-1000"),
+        );
         assert.equal(output.type, "file_opened");
         assert(output.range instanceof Error);
         assert.equal(output.range.message, "Unsatisfiable range");
@@ -121,7 +131,13 @@ describe("open-file", () => {
 
     it("returns error on invalid byte range header", async () => {
         const req = createReq("GET", { range: "bytes" });
-        const output = await openFile(fileVariant, COMPRESSED_FILE, req, [], "bytes");
+        const output = await openFile(
+            fileVariant,
+            COMPRESSED_FILE,
+            req,
+            [],
+            new HeaderValue("bytes"),
+        );
         assert.equal(output.type, "file_opened");
         assert(output.range instanceof Error);
         assert.equal(output.range.message, "Invalid range");
@@ -131,7 +147,13 @@ describe("open-file", () => {
 
     it("returns error on invalid range header unit", async () => {
         const req = createReq("GET", { range: "cookies=500-1000" });
-        const output = await openFile(fileVariant, COMPRESSED_FILE, req, [], "cookies=500-1000");
+        const output = await openFile(
+            fileVariant,
+            COMPRESSED_FILE,
+            req,
+            [],
+            new HeaderValue("cookies=500-1000"),
+        );
         assert.equal(output.type, "file_opened");
         assert(output.range instanceof Error);
         assert.equal(output.range.message, "Unsatisfiable range");

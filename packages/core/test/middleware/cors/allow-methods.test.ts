@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { HeaderMap, Method, Parts } from "../../../src/http/index.js";
+import { HeaderMap, HeaderValue, Method, Parts } from "../../../src/http/index.js";
 import { AllowMethods, ANY, MIRROR_REQUEST } from "../../../src/middleware/cors/index.js";
 
 describe("middleware:cors:allow-methods", () => {
@@ -8,7 +8,7 @@ describe("middleware:cors:allow-methods", () => {
         Method.GET,
         new URL("http://localhost"),
         "1.1",
-        new HeaderMap(new Map([["access-control-request-method", ["POST"]]])),
+        HeaderMap.from([["access-control-request-method", "POST"]]),
     );
 
     const partsWithoutRequestMethod = new Parts(
@@ -36,7 +36,7 @@ describe("middleware:cors:allow-methods", () => {
         assert(am.isWildcard());
         assert.deepEqual(am.toHeader(partsWithRequestMethod), [
             "access-control-allow-methods",
-            "*",
+            new HeaderValue("*"),
         ]);
 
         const fromAm = AllowMethods.from(ANY);
@@ -48,7 +48,7 @@ describe("middleware:cors:allow-methods", () => {
         assert(!am.isWildcard());
         assert.deepEqual(am.toHeader(partsWithRequestMethod), [
             "access-control-allow-methods",
-            "PATCH",
+            new HeaderValue("PATCH"),
         ]);
 
         const fromAm = AllowMethods.from("PATCH");
@@ -60,7 +60,7 @@ describe("middleware:cors:allow-methods", () => {
         assert(!am.isWildcard());
         assert.deepEqual(am.toHeader(partsWithRequestMethod), [
             "access-control-allow-methods",
-            "PATCH",
+            new HeaderValue("PATCH"),
         ]);
 
         const fromAm = AllowMethods.from(Method.PATCH);
@@ -72,7 +72,7 @@ describe("middleware:cors:allow-methods", () => {
         assert(!am.isWildcard());
         assert.deepEqual(am.toHeader(partsWithRequestMethod), [
             "access-control-allow-methods",
-            "PUT,DELETE",
+            new HeaderValue("PUT,DELETE"),
         ]);
 
         const fromAm = AllowMethods.from(["PUT", "DELETE"]);
@@ -84,7 +84,7 @@ describe("middleware:cors:allow-methods", () => {
         assert(!am.isWildcard());
         assert.deepEqual(am.toHeader(partsWithRequestMethod), [
             "access-control-allow-methods",
-            "PUT,DELETE",
+            new HeaderValue("PUT,DELETE"),
         ]);
 
         const fromAm = AllowMethods.from([Method.PUT, Method.DELETE]);
@@ -95,7 +95,7 @@ describe("middleware:cors:allow-methods", () => {
         const am = AllowMethods.mirrorRequest();
         assert.deepEqual(am.toHeader(partsWithRequestMethod), [
             "access-control-allow-methods",
-            "POST",
+            new HeaderValue("POST"),
         ]);
 
         const fromAm = AllowMethods.from(MIRROR_REQUEST);

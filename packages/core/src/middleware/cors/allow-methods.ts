@@ -1,4 +1,4 @@
-import { Method } from "../../http/index.js";
+import { type HeaderEntry, HeaderValue, Method } from "../../http/index.js";
 import type { Parts } from "../../http/request.js";
 import { ANY, MIRROR_REQUEST } from "./support.js";
 
@@ -90,13 +90,13 @@ export class AllowMethods {
     /**
      * @internal
      */
-    public toHeader(parts: Parts): [string, string] | null {
-        let allowMethods: string | null;
+    public toHeader(parts: Parts): HeaderEntry | null {
+        let allowMethods: HeaderValue | null = null;
 
         if (this.inner === MIRROR_REQUEST) {
             allowMethods = parts.headers.get("access-control-request-method");
-        } else {
-            allowMethods = this.inner;
+        } else if (this.inner !== null) {
+            allowMethods = new HeaderValue(this.inner);
         }
 
         return allowMethods ? ["access-control-allow-methods", allowMethods] : null;

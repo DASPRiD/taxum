@@ -8,6 +8,7 @@ import {
     ExtensionKey,
     Extensions,
     HeaderMap,
+    HeaderValue,
     HttpRequest,
     HttpRequestBuilder,
     Method,
@@ -47,7 +48,7 @@ describe("http:request", () => {
             assert.equal(parts.method.toValue(), "GET");
             assert.equal(parts.uri.toString(), "http://example.com/path?query=1");
             assert.equal(parts.version, "1.1");
-            assert.equal(parts.headers.get("host"), "example.com");
+            assert.equal(parts.headers.get("host")?.value, "example.com");
         });
 
         it("fromIncomingMessage respects x-forwarded headers if trustProxy is true", () => {
@@ -70,6 +71,16 @@ describe("http:request", () => {
             const parts = Parts.fromIncomingMessage(message, true);
             assert.equal(parts.uri.protocol, "https:");
             assert.equal(parts.uri.host, "localhost");
+        });
+
+        it("fromIncomingMessage falls back to host header with missing proxy headers", () => {
+            const message = new IncomingMessage();
+            (message.socket as unknown as TLSSocket).encrypted = true;
+            message.headers.host = "real.com";
+
+            const parts = Parts.fromIncomingMessage(message, true);
+            assert.equal(parts.uri.protocol, "https:");
+            assert.equal(parts.uri.host, "real.com");
         });
 
         it("fromIncomingMessage falls back to local protocol and host with trustProxy false", () => {
@@ -208,7 +219,7 @@ describe("http:request", () => {
             const builder = new HttpRequestBuilder();
             builder.headers(headers);
             const req = builder.body(null);
-            assert.equal(req.headers.get("x"), "y");
+            assert.equal(req.headers.get("x")?.value, "y");
         });
 
         it("header() appends a header value", () => {
@@ -217,7 +228,7 @@ describe("http:request", () => {
             builder.header("x", "z");
             const req = builder.body(null);
             const values = req.headers.getAll("x");
-            assert.deepEqual(values, ["y", "z"]);
+            assert.deepEqual(values, [new HeaderValue("y"), new HeaderValue("z")]);
         });
 
         it("extensions() sets extensions", () => {
@@ -255,7 +266,7 @@ describe("http:request", () => {
                 .body("hello");
             assert.equal(req.method.toValue(), "POST");
             assert.equal(req.uri.toString(), "http://x/");
-            assert.equal(req.headers.get("content-type"), "text/plain");
+            assert.equal(req.headers.get("content-type")?.value, "text/plain");
         });
     });
 });

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { HeaderValue } from "../../../src/http/index.js";
 import { ANY, ExposeHeaders } from "../../../src/middleware/cors/index.js";
 
 describe("middleware:cors:expose-headers", () => {
@@ -21,7 +22,7 @@ describe("middleware:cors:expose-headers", () => {
     it("any returns wildcard header", () => {
         const eh = ExposeHeaders.any();
         assert(eh.isWildcard());
-        assert.deepEqual(eh.toHeader(), ["access-control-expose-headers", "*"]);
+        assert.deepEqual(eh.toHeader(), ["access-control-expose-headers", new HeaderValue("*")]);
 
         const fromEh = ExposeHeaders.from(ANY);
         assert.deepEqual(fromEh, eh);
@@ -30,7 +31,10 @@ describe("middleware:cors:expose-headers", () => {
     it("list returns joined headers string", () => {
         const eh = ExposeHeaders.list(["X-Custom-1", "X-Custom-2"]);
         assert(!eh.isWildcard());
-        assert.deepEqual(eh.toHeader(), ["access-control-expose-headers", "X-Custom-1,X-Custom-2"]);
+        assert.deepEqual(eh.toHeader(), [
+            "access-control-expose-headers",
+            new HeaderValue("X-Custom-1,X-Custom-2"),
+        ]);
 
         const fromEh = ExposeHeaders.from(["X-Custom-1", "X-Custom-2"]);
         assert.deepEqual(fromEh, eh);

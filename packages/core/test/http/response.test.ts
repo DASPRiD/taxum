@@ -9,6 +9,7 @@ import {
     ExtensionKey,
     Extensions,
     HeaderMap,
+    HeaderValue,
     HttpResponse,
     HttpResponseBuilder,
     StatusCode,
@@ -47,7 +48,7 @@ describe("http:response", () => {
                 );
                 const result = HttpResponse.from(res);
                 assert.equal(result.status, StatusCode.CREATED);
-                assert.deepEqual(result.headers.getAll("x-test"), ["foo"]);
+                assert.deepEqual(result.headers.getAll("x-test"), [new HeaderValue("foo")]);
             });
 
             it("accepts a tuple with a single HttpResponseLikePart", () => {
@@ -61,7 +62,7 @@ describe("http:response", () => {
                 const res = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(""));
                 const result = HttpResponse.from([[["x-test", "foo"]], res]);
                 assert.equal(result.status, res.status);
-                assert.deepEqual(result.headers.getAll("x-test"), ["foo"]);
+                assert.deepEqual(result.headers.getAll("x-test"), [new HeaderValue("foo")]);
             });
 
             it("applies first element last when it is a StatusCode", () => {
@@ -103,8 +104,8 @@ describe("http:response", () => {
 
                 const result = HttpResponse.from(tuple);
 
-                assert.equal(result.headers.get("a"), "b");
-                assert.equal(result.headers.get("c"), "d");
+                assert.equal(result.headers.get("a")?.value, "b");
+                assert.equal(result.headers.get("c")?.value, "d");
                 assert.equal(result.status, StatusCode.ACCEPTED);
             });
 
@@ -142,8 +143,8 @@ describe("http:response", () => {
 
                 const res = HttpResponse.from([templateRes, overrideHeaders, baseRes]);
                 assert.equal(res.extensions.get(key), 123);
-                assert.equal(res.headers.get("a"), "b");
-                assert.equal(res.headers.get("c"), "d");
+                assert.equal(res.headers.get("a")?.value, "b");
+                assert.equal(res.headers.get("c")?.value, "d");
                 assert.equal(res.status, StatusCode.OK);
             });
         });
@@ -194,7 +195,7 @@ describe("http:response", () => {
             headers.append("x", "y");
             builder.headers(headers);
             const res = builder.body("");
-            assert.equal(res.headers.get("x"), "y");
+            assert.equal(res.headers.get("x")?.value, "y");
         });
 
         it("header() appends header", () => {
@@ -203,7 +204,7 @@ describe("http:response", () => {
             builder.header("x", "z");
             const res = builder.body("");
             const vals = res.headers.getAll("x");
-            assert.deepEqual(vals, ["y", "z"]);
+            assert.deepEqual(vals, [new HeaderValue("y"), new HeaderValue("z")]);
         });
 
         it("extensions() sets extensions", () => {

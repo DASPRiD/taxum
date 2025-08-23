@@ -100,7 +100,7 @@ const isJsonContentType = (headers: HeaderMap): boolean => {
         return false;
     }
 
-    const mimeType = new MIMEType(contentType);
+    const mimeType = new MIMEType(contentType.value);
 
     return (
         mimeType.type === "application" &&

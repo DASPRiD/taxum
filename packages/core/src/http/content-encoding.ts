@@ -111,7 +111,7 @@ export const encodings = (
 ): [Encoding, number][] => {
     return headers
         .getAll("accept-encoding")
-        .flatMap((value) => value.split(","))
+        .flatMap((value) => value.value.split(","))
         .map((value) => value.trim())
         .reduce<[Encoding, number][]>((results, value) => {
             const values = value.split(";", 2);

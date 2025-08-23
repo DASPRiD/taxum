@@ -1,3 +1,4 @@
+import { type HeaderEntry, HeaderValue } from "../../http/index.js";
 import { ANY } from "./support.js";
 
 /**
@@ -64,12 +65,12 @@ export class ExposeHeaders {
     /**
      * @internal
      */
-    public toHeader(): [string, string] | null {
+    public toHeader(): HeaderEntry | null {
         if (!this.inner) {
             return null;
         }
 
-        return ["access-control-expose-headers", this.inner];
+        return ["access-control-expose-headers", new HeaderValue(this.inner)];
     }
 }
 

@@ -1,3 +1,4 @@
+import { type HeaderEntry, HeaderValue } from "../../http/index.js";
 import type { Parts } from "../../http/request.js";
 
 export type DynamicMaxAge = (origin: string, parts: Parts) => number;
@@ -59,7 +60,7 @@ export class MaxAge {
     /**
      * @internal
      */
-    public toHeader(origin: string | null, parts: Parts): [string, string] | null {
+    public toHeader(origin: HeaderValue | null, parts: Parts): HeaderEntry | null {
         if (!this.inner) {
             return null;
         }
@@ -71,10 +72,10 @@ export class MaxAge {
         } else if (!origin) {
             return null;
         } else {
-            maxAge = this.inner(origin, parts);
+            maxAge = this.inner(origin.value, parts);
         }
 
-        return ["access-control-max-age", maxAge.toString()];
+        return ["access-control-max-age", new HeaderValue(maxAge.toString())];
     }
 }
 

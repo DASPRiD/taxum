@@ -105,13 +105,13 @@ describe("middleware:cors:index", () => {
             const res = await cors.invoke(req);
 
             assert.equal(res.status, StatusCode.OK);
-            assert.equal(res.headers.get("access-control-allow-methods"), "*");
-            assert.equal(res.headers.get("access-control-allow-headers"), "*");
-            assert.equal(res.headers.get("access-control-allow-origin"), "*");
+            assert.equal(res.headers.get("access-control-allow-methods")?.value, "*");
+            assert.equal(res.headers.get("access-control-allow-headers")?.value, "*");
+            assert.equal(res.headers.get("access-control-allow-origin")?.value, "*");
             assert.equal(res.headers.get("access-control-allow-credentials"), null);
-            assert.equal(res.headers.get("access-control-max-age"), "60");
+            assert.equal(res.headers.get("access-control-max-age")?.value, "60");
             assert.equal(
-                res.headers.get("vary"),
+                res.headers.get("vary")?.value,
                 "origin, access-control-request-method, access-control-request-headers",
             );
         });
@@ -141,13 +141,19 @@ describe("middleware:cors:index", () => {
 
             const varyHeaders = res.headers.getAll("vary");
 
-            assert(varyHeaders.includes("Origin"));
-            assert(varyHeaders.includes("Accept-Encoding"));
+            assert(varyHeaders.some((value) => value.value === "Origin"));
+            assert(varyHeaders.some((value) => value.value === "Accept-Encoding"));
 
-            assert.equal(res.headers.get("access-control-allow-private-network"), "true");
-            assert.equal(res.headers.get("access-control-expose-headers"), "X-Custom-Header");
-            assert.equal(res.headers.get("access-control-allow-credentials"), "true");
-            assert.equal(res.headers.get("access-control-allow-origin"), "https://example.com");
+            assert.equal(res.headers.get("access-control-allow-private-network")?.value, "true");
+            assert.equal(
+                res.headers.get("access-control-expose-headers")?.value,
+                "X-Custom-Header",
+            );
+            assert.equal(res.headers.get("access-control-allow-credentials")?.value, "true");
+            assert.equal(
+                res.headers.get("access-control-allow-origin")?.value,
+                "https://example.com",
+            );
         });
     });
 });

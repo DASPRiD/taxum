@@ -1,7 +1,7 @@
 /* node:coverage disable: c8 gets confused by the module mocking */
 import type { Stats } from "node:fs";
 import fs from "node:fs/promises";
-import { Encoding, type HttpRequest, Method } from "@taxum/core/http";
+import { Encoding, type HeaderValue, type HttpRequest, Method } from "@taxum/core/http";
 import mime from "mime";
 import parseRange, { type Ranges } from "range-parser";
 import type { ServeVariant } from "./serve-dir.js";
@@ -41,7 +41,7 @@ export const openFile = async (
     path: string,
     req: HttpRequest,
     negotiatedEncodings: [Encoding, number][],
-    rangeHeader: string | null,
+    rangeHeader: HeaderValue | null,
 ): Promise<OpenFileOutput> => {
     const ifUnmodifiedSince = parseDateHeader(req.headers.get("if-unmodified-since"));
     const ifModifiedSince = parseDateHeader(req.headers.get("if-modified-since"));
@@ -108,12 +108,12 @@ export const openFile = async (
     };
 };
 
-const parseDateHeader = (header: string | null): number | null => {
+const parseDateHeader = (header: HeaderValue | null): number | null => {
     if (!header) {
         return null;
     }
 
-    const date = Date.parse(header);
+    const date = Date.parse(header.value);
 
     if (Number.isNaN(date)) {
         return null;
@@ -239,12 +239,15 @@ const appendSlashOnPath = (uri: URL): URL => {
     return newUri;
 };
 
-const tryParseRange = (rangeHeader: string | null, fileSize: number): Ranges | Error | null => {
+const tryParseRange = (
+    rangeHeader: HeaderValue | null,
+    fileSize: number,
+): Ranges | Error | null => {
     if (!rangeHeader) {
         return null;
     }
 
-    const ranges = parseRange(fileSize, rangeHeader);
+    const ranges = parseRange(fileSize, rangeHeader.value);
 
     if (ranges === -1) {
         return new Error("Unsatisfiable range");

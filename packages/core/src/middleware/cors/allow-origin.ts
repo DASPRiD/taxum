@@ -1,3 +1,4 @@
+import { type HeaderEntry, HeaderValue } from "../../http/index.js";
 import type { Parts } from "../../http/request.js";
 import { ANY, MIRROR_REQUEST } from "./support.js";
 
@@ -97,11 +98,11 @@ export class AllowOrigin {
     /**
      * @internal
      */
-    public async toHeader(origin: string | null, parts: Parts): Promise<[string, string] | null> {
+    public async toHeader(origin: HeaderValue | null, parts: Parts): Promise<HeaderEntry | null> {
         const name = "access-control-allow-origin";
 
         if (typeof this.inner === "string") {
-            return [name, this.inner];
+            return [name, new HeaderValue(this.inner)];
         }
 
         if (!origin) {
@@ -113,10 +114,10 @@ export class AllowOrigin {
         }
 
         if (typeof this.inner === "function") {
-            return (await this.inner(origin, parts)) ? [name, origin] : null;
+            return (await this.inner(origin.value, parts)) ? [name, origin] : null;
         }
 
-        return this.inner.includes(origin) ? [name, origin] : null;
+        return this.inner.includes(origin.value) ? [name, origin] : null;
     }
 }
 

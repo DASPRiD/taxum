@@ -43,7 +43,7 @@ describe("middleware/from-fn", () => {
         };
         const innerService = {
             invoke: async (req: HttpRequest) => {
-                assert.equal(req.headers.get("x-test"), "test");
+                assert.equal(req.headers.get("x-test")?.value, "test");
                 return HttpResponse.builder().body("ok");
             },
         };

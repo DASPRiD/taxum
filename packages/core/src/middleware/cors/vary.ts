@@ -1,3 +1,4 @@
+import { type HeaderEntry, HeaderValue } from "../../http/index.js";
 import { PREFLIGHT_REQUEST_HEADERS } from "./support.js";
 
 /**
@@ -35,12 +36,12 @@ export class Vary {
     /**
      * @internal
      */
-    public toHeader(): [string, string] | null {
+    public toHeader(): HeaderEntry | null {
         if (this.inner.length === 0) {
             return null;
         }
 
-        return ["vary", this.inner.join(", ")];
+        return ["vary", new HeaderValue(this.inner.join(", "))];
     }
 }
 

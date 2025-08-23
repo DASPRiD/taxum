@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { HeaderMap, Method, Parts } from "../../../src/http/index.js";
+import { HeaderMap, HeaderValue, Method, Parts } from "../../../src/http/index.js";
 import {
     AllowCredentials,
     type AllowCredentialsPredicate,
@@ -17,9 +17,9 @@ describe("middleware:cors:allow-credentials", () => {
     it("yes returns true", () => {
         const ac = AllowCredentials.yes();
         assert.equal(ac.isTrue(), true);
-        assert.deepEqual(ac.toHeader("https://example.com", parts), [
+        assert.deepEqual(ac.toHeader(new HeaderValue("https://example.com"), parts), [
             "access-control-allow-credentials",
-            "true",
+            new HeaderValue("true"),
         ]);
 
         const fromAc = AllowCredentials.from(true);
@@ -29,7 +29,7 @@ describe("middleware:cors:allow-credentials", () => {
     it("no returns false", () => {
         const ac = AllowCredentials.no();
         assert.equal(ac.isTrue(), false);
-        assert.equal(ac.toHeader("https://example.com", parts), null);
+        assert.equal(ac.toHeader(new HeaderValue("https://example.com"), parts), null);
 
         const fromAc = AllowCredentials.from(false);
         assert.deepEqual(fromAc, ac);
@@ -40,12 +40,12 @@ describe("middleware:cors:allow-credentials", () => {
         const ac = AllowCredentials.predicate(pred);
 
         assert.equal(ac.isTrue(), false);
-        assert.deepEqual(ac.toHeader("https://allowed.com", parts), [
+        assert.deepEqual(ac.toHeader(new HeaderValue("https://allowed.com"), parts), [
             "access-control-allow-credentials",
-            "true",
+            new HeaderValue("true"),
         ]);
 
-        assert.equal(ac.toHeader("https://notallowed.com", parts), null);
+        assert.equal(ac.toHeader(new HeaderValue("https://notallowed.com"), parts), null);
         assert.equal(ac.toHeader(null, parts), null);
 
         const fromAc = AllowCredentials.from(pred);
@@ -54,13 +54,16 @@ describe("middleware:cors:allow-credentials", () => {
 
     it("toHeader returns header if origin is null and inner is boolean true", () => {
         const ac = AllowCredentials.yes();
-        assert.deepEqual(ac.toHeader(null, parts), ["access-control-allow-credentials", "true"]);
+        assert.deepEqual(ac.toHeader(null, parts), [
+            "access-control-allow-credentials",
+            new HeaderValue("true"),
+        ]);
     });
 
     it("toHeader returns null if predicate returns false", () => {
         const pred: AllowCredentialsPredicate = () => false;
         const ac = AllowCredentials.predicate(pred);
-        assert.equal(ac.toHeader("https://any.com", parts), null);
+        assert.equal(ac.toHeader(new HeaderValue("https://any.com"), parts), null);
     });
 
     it("returns original instance from from()", () => {

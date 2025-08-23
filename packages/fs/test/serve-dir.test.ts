@@ -66,8 +66,8 @@ describe("serve-dir", () => {
 
         const res = await service.invoke(req);
         assert.equal(res.status, StatusCode.OK);
-        assert.equal(res.headers.get("content-type"), "text/plain");
-        assert.equal(res.headers.get("content-length"), "10");
+        assert.equal(res.headers.get("content-type")?.value, "text/plain");
+        assert.equal(res.headers.get("content-length")?.value, "10");
     });
 
     it("returns 405 if method not GET or HEAD and no fallback", async () => {
@@ -122,7 +122,7 @@ describe("serve-dir", () => {
 
         const res = await service.invoke(req);
         assert.equal(res.status, StatusCode.TEMPORARY_REDIRECT);
-        assert.equal(res.headers.get("location"), "http://example.com/");
+        assert.equal(res.headers.get("location")?.value, "http://example.com/");
     });
 
     it("returns 412 on precondition_failed", async () => {
@@ -196,7 +196,7 @@ describe("serve-dir", () => {
         const req = HttpRequest.builder().path("/file.txt").body(null);
 
         const res = await service.invoke(req);
-        assert.equal(res.headers.get("content-encoding"), "gzip");
+        assert.equal(res.headers.get("content-encoding")?.value, "gzip");
     });
 
     it("omits content-encoding header with no encoding", async () => {
@@ -379,7 +379,7 @@ describe("serve-dir", () => {
 
         const res = await service.invoke(req);
         assert.equal(res.status, StatusCode.PARTIAL_CONTENT);
-        assert.equal(res.headers.get("content-length"), "11");
+        assert.equal(res.headers.get("content-length")?.value, "11");
     });
 
     it("returns ranged HEAD response with 0 content length if size is 0", async () => {
@@ -400,7 +400,7 @@ describe("serve-dir", () => {
 
         const res = await service.invoke(req);
         assert.equal(res.status, StatusCode.PARTIAL_CONTENT);
-        assert.equal(res.headers.get("content-length"), "0");
+        assert.equal(res.headers.get("content-length")?.value, "0");
     });
 
     it("forwards range to createReadStream", async () => {
@@ -435,7 +435,7 @@ describe("serve-dir", () => {
 
         const res = await service.invoke(req);
         assert.equal(res.status, StatusCode.PARTIAL_CONTENT);
-        assert.equal(res.headers.get("content-length"), "11");
+        assert.equal(res.headers.get("content-length")?.value, "11");
         assert(createReadStreamCalled);
     });
 

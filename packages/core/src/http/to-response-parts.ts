@@ -26,6 +26,13 @@ export class HttpResponseParts {
 export const TO_HTTP_RESPONSE_PARTS = Symbol("toHttpResponseParts");
 
 /**
+ * Determines if a given value implements `ToHttpResponseParts`.
+ */
+export const isToHttpResponseParts = (value: unknown): value is ToHttpResponseParts => {
+    return typeof value === "object" && value !== null && TO_HTTP_RESPONSE_PARTS in value;
+};
+
+/**
  * Interface for adding headers and extensions to a response.
  */
 export type ToHttpResponseParts = {

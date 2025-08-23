@@ -120,7 +120,7 @@ class RequestDecompression implements HttpService {
     }
 
     public async invoke(req: HttpRequest): Promise<HttpResponse> {
-        const contentEncoding = req.headers.get("content-encoding");
+        const contentEncoding = req.headers.get("content-encoding")?.value;
 
         if (!contentEncoding) {
             return this.inner.invoke(req);

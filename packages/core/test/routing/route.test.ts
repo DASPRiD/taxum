@@ -28,7 +28,7 @@ describe("routing:route", () => {
         const req = HttpRequest.builder().body(null);
         const res = await route.invokeInner(req);
 
-        assert.equal(res.headers.get("content-length"), "3");
+        assert.equal(res.headers.get("content-length")?.value, "3");
     });
 
     it("does not override existing Content-Length", async () => {
@@ -39,7 +39,7 @@ describe("routing:route", () => {
         const req = HttpRequest.builder().body(null);
         const res = await route.invokeInner(req);
 
-        assert.equal(res.headers.get("content-length"), "999");
+        assert.equal(res.headers.get("content-length")?.value, "999");
     });
 
     it("clears body for HEAD requests", async () => {

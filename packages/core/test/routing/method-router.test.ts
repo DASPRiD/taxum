@@ -128,7 +128,7 @@ describe("routing:method-router", () => {
             router.post(() => "world");
 
             const res = await router.invoke(makeRequest("OPTIONS"));
-            const allow = res.headers.get("allow");
+            const allow = res.headers.get("allow")?.value;
 
             assert(allow?.includes("GET"));
             assert(allow?.includes("POST"));

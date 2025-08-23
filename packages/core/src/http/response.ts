@@ -2,11 +2,12 @@ import type { ServerResponse } from "node:http";
 import { Readable } from "node:stream";
 import { Body, type BodyLike, isBodyLike } from "./body.js";
 import { type ExtensionKey, Extensions } from "./extensions.js";
-import { HeaderMap, type HeadersArray } from "./headers.js";
+import { type HeaderEntryLike, HeaderMap } from "./headers.js";
 import { StatusCode } from "./status.js";
 import { isToHttpResponse, TO_HTTP_RESPONSE, type ToHttpResponse } from "./to-response.js";
 import {
     HttpResponseParts,
+    isToHttpResponseParts,
     TO_HTTP_RESPONSE_PARTS,
     type ToHttpResponseParts,
 } from "./to-response-parts.js";
@@ -83,7 +84,7 @@ export class HttpResponse {
         const responseParts = new HttpResponseParts(res);
 
         for (const part of parts) {
-            const toResponseParts = Array.isArray(part) ? HeaderMap.fromArray(part) : part;
+            const toResponseParts = isToHttpResponseParts(part) ? part : HeaderMap.from(part);
             toResponseParts[TO_HTTP_RESPONSE_PARTS](responseParts);
         }
     }
@@ -100,11 +101,11 @@ export class HttpResponse {
      * {@link ServerResponse}.
      */
     public async write(res: ServerResponse): Promise<void> {
-        res.writeHead(
-            this.status.code,
-            this.status.phrase,
-            Object.fromEntries(this.headers.entries()),
-        );
+        for (const [key, value] of this.headers.entries()) {
+            res.appendHeader(key, value.value);
+        }
+
+        res.writeHead(this.status.code, this.status.phrase);
 
         const stream = Readable.fromWeb(this.body.readable);
 
@@ -181,7 +182,7 @@ export type HttpResponseLikePart = HttpResponse | ToHttpResponse | BodyLike | Re
 /**
  * Represents a type that can be used as a response part.
  */
-export type ToHttpResponsePartsLike = ToHttpResponseParts | HeadersArray;
+export type ToHttpResponsePartsLike = ToHttpResponseParts | Iterable<HeaderEntryLike>;
 
 /**
  * Represents a value that can be converted into a full {@link HttpResponse}.
@@ -228,7 +229,7 @@ const responseLikePartToResponse = (part: HttpResponseLikePart): HttpResponse =>
     if (part instanceof Response) {
         return new HttpResponse(
             StatusCode.fromCode(part.status),
-            HeaderMap.fromArray([...part.headers.entries()]),
+            HeaderMap.from([...part.headers.entries()]),
             Body.from(part.body),
         );
     }

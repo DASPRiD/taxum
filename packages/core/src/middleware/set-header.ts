@@ -1,4 +1,4 @@
-import type { HeaderMap, HttpRequest, HttpResponse } from "../http/index.js";
+import { type HeaderMap, HeaderValue, type HttpRequest, type HttpResponse } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
 import type { HttpService } from "../service/index.js";
 
@@ -7,9 +7,10 @@ export type WithHeaders = {
 };
 
 export type MakeHeaderValue<T extends WithHeaders> =
+    | HeaderValue
     | string
     | null
-    | ((message: T) => string | null);
+    | ((message: T) => HeaderValue | string | null);
 
 /**
  * A layer that sets a specific HTTP response header.
@@ -250,13 +251,20 @@ class InsertHeaderMode {
     }
 }
 
-const makeValue = <T extends WithHeaders>(target: T, make: MakeHeaderValue<T>): string | null => {
+const makeValue = <T extends WithHeaders>(
+    target: T,
+    make: MakeHeaderValue<T>,
+): HeaderValue | string | null => {
     if (make === null) {
         return null;
     }
 
     if (typeof make === "string") {
         return make;
+    }
+
+    if (make instanceof HeaderValue) {
+        return make.value;
     }
 
     return make(target);

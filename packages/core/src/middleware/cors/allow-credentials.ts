@@ -1,3 +1,4 @@
+import { type HeaderEntry, HeaderValue } from "../../http/index.js";
 import type { Parts } from "../../http/request.js";
 
 export type AllowCredentialsPredicate = (origin: string, parts: Parts) => boolean;
@@ -62,19 +63,19 @@ export class AllowCredentials {
     /**
      * @internal
      */
-    public toHeader(origin: string | null, parts: Parts): [string, string] | null {
+    public toHeader(origin: HeaderValue | null, parts: Parts): HeaderEntry | null {
         const allowCredentials =
             typeof this.inner === "boolean"
                 ? this.inner
                 : origin
-                  ? this.inner(origin, parts)
+                  ? this.inner(origin.value, parts)
                   : false;
 
         if (!allowCredentials) {
             return null;
         }
 
-        return ["access-control-allow-credentials", "true"];
+        return ["access-control-allow-credentials", new HeaderValue("true")];
     }
 }
 

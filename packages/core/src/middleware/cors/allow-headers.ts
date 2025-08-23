@@ -1,3 +1,4 @@
+import { type HeaderEntry, HeaderValue } from "../../http/index.js";
 import type { Parts } from "../../http/request.js";
 import { ANY, MIRROR_REQUEST } from "./support.js";
 
@@ -76,13 +77,13 @@ export class AllowHeaders {
     /**
      * @internal
      */
-    public toHeader(parts: Parts): [string, string] | null {
-        let allowHeaders: string | null;
+    public toHeader(parts: Parts): HeaderEntry | null {
+        let allowHeaders: HeaderValue | null = null;
 
         if (this.inner === MIRROR_REQUEST) {
             allowHeaders = parts.headers.get("access-control-request-headers");
-        } else {
-            allowHeaders = this.inner;
+        } else if (this.inner !== null) {
+            allowHeaders = new HeaderValue(this.inner);
         }
 
         return allowHeaders ? ["access-control-allow-headers", allowHeaders] : null;

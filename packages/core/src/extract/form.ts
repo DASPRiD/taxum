@@ -75,7 +75,9 @@ export const form =
         if (req.method.equals(Method.GET) || req.method.equals(Method.HEAD)) {
             source = req.uri.searchParams;
         } else {
-            if (req.head.headers.get("content-type") !== "application/x-www-form-urlencoded") {
+            if (
+                req.head.headers.get("content-type")?.value !== "application/x-www-form-urlencoded"
+            ) {
                 throw new MissingFormDataContentTypeError();
             }
 

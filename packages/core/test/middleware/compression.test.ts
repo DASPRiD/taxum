@@ -63,7 +63,7 @@ describe("middleware/compression", () => {
             const service = layer.layer(dummyService);
 
             const res = await service.invoke(req);
-            assert.equal(res.headers.get("content-encoding"), encoding);
+            assert.equal(res.headers.get("content-encoding")?.value, encoding);
 
             const decompressed = await decompressors[encoding](res);
             assert.equal(decompressed, text);
@@ -76,7 +76,7 @@ describe("middleware/compression", () => {
         const service = layer.layer(dummyService);
         const res = await service.invoke(req);
 
-        assert.equal(res.headers.get("content-encoding"), "br");
+        assert.equal(res.headers.get("content-encoding")?.value, "br");
         const decompressed = await decompressors.br(res);
         assert.equal(decompressed, text);
     });
@@ -101,8 +101,8 @@ describe("middleware/compression", () => {
         const service = layer.layer(innerService);
 
         const res = await service.invoke(req);
-        const vary = res.headers.get("vary");
-        assert(vary?.toLowerCase().includes("accept-encoding"));
+        const vary = res.headers.get("vary")?.value?.toLowerCase() ?? "";
+        assert(vary.includes("accept-encoding"));
     });
 
     it("does not duplicate Vary header if already present", async () => {
@@ -116,12 +116,11 @@ describe("middleware/compression", () => {
         const service = layer.layer(innerService);
 
         const res = await service.invoke(req);
-        const vary = res.headers.get("vary") ?? "";
-        const lowerVary = vary.toLowerCase();
+        const vary = res.headers.get("vary")?.value?.toLowerCase() ?? "";
 
-        assert(lowerVary.includes("accept-encoding"));
-        assert(lowerVary.includes("origin"));
-        assert(!lowerVary.includes("accept-encoding, accept-encoding"));
+        assert(vary.includes("accept-encoding"));
+        assert(vary.includes("origin"));
+        assert(!vary.includes("accept-encoding, accept-encoding"));
     });
 
     it("does not compress if content-encoding already present", async () => {
@@ -135,7 +134,7 @@ describe("middleware/compression", () => {
         const service = layer.layer(innerService);
 
         const res = await service.invoke(req);
-        assert.equal(res.headers.get("content-encoding"), "gzip");
+        assert.equal(res.headers.get("content-encoding")?.value, "gzip");
         assert.equal(await consumers.text(res.body.readable), text);
     });
 
@@ -195,7 +194,7 @@ describe("middleware/compression", () => {
 
         const res = await service.invoke(req);
         const vary = res.headers.get("vary");
-        assert.equal(vary?.toLowerCase(), "accept-encoding");
+        assert.equal(vary?.value?.toLowerCase(), "accept-encoding");
     });
 
     it("does not compress if predicate returns false", async () => {
@@ -229,7 +228,7 @@ describe("middleware/compression", () => {
         const service = layer.layer(innerService);
 
         const res = await service.invoke(req);
-        assert.equal(res.headers.get("content-encoding"), "gzip");
+        assert.equal(res.headers.get("content-encoding")?.value, "gzip");
         const decompressed = await decompressors.gzip(res);
         assert.equal(decompressed, text);
     });
@@ -245,7 +244,7 @@ describe("middleware/compression", () => {
                 const service = layer.layer(dummyService);
 
                 const res = await service.invoke(req);
-                assert.equal(res.headers.get("content-encoding"), encoding);
+                assert.equal(res.headers.get("content-encoding")?.value, encoding);
 
                 const decompressed = await decompressors[encoding](res);
                 assert.equal(decompressed, text);

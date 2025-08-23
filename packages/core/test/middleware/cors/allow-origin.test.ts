@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { HeaderMap, Method, Parts } from "../../../src/http/index.js";
+import { HeaderMap, HeaderValue, Method, Parts } from "../../../src/http/index.js";
 import {
     AllowOrigin,
     type AllowOriginPredicate,
@@ -14,15 +14,15 @@ describe("middleware:cors:allow-origin", () => {
     it("default returns empty list, so toHeader returns null", async () => {
         const ao = AllowOrigin.default();
         assert(!ao.isWildcard());
-        assert.deepEqual(await ao.toHeader("https://example.com", parts), null);
+        assert.deepEqual(await ao.toHeader(new HeaderValue("https://example.com"), parts), null);
     });
 
     it("any returns wildcard * with toHeader returning *", async () => {
         const ao = AllowOrigin.any();
         assert(ao.isWildcard());
-        assert.deepEqual(await ao.toHeader("https://example.com", parts), [
+        assert.deepEqual(await ao.toHeader(new HeaderValue("https://example.com"), parts), [
             "access-control-allow-origin",
-            "*",
+            new HeaderValue("*"),
         ]);
 
         const fromAo = AllowOrigin.from(ANY);
@@ -32,13 +32,13 @@ describe("middleware:cors:allow-origin", () => {
     it("exact returns exact origin", async () => {
         const ao = AllowOrigin.exact("https://allowed.com");
         assert(!ao.isWildcard());
-        assert.deepEqual(await ao.toHeader("https://allowed.com", parts), [
+        assert.deepEqual(await ao.toHeader(new HeaderValue("https://allowed.com"), parts), [
             "access-control-allow-origin",
-            "https://allowed.com",
+            new HeaderValue("https://allowed.com"),
         ]);
-        assert.deepEqual(await ao.toHeader("https://notallowed.com", parts), [
+        assert.deepEqual(await ao.toHeader(new HeaderValue("https://notallowed.com"), parts), [
             "access-control-allow-origin",
-            "https://allowed.com",
+            new HeaderValue("https://allowed.com"),
         ]);
 
         const fromAo = AllowOrigin.from("https://allowed.com");
@@ -54,11 +54,11 @@ describe("middleware:cors:allow-origin", () => {
     it("list returns origins and matches included origin", async () => {
         const ao = AllowOrigin.list(["https://allowed.com", "https://alsoallowed.com"]);
         assert(!ao.isWildcard());
-        assert.deepEqual(await ao.toHeader("https://allowed.com", parts), [
+        assert.deepEqual(await ao.toHeader(new HeaderValue("https://allowed.com"), parts), [
             "access-control-allow-origin",
-            "https://allowed.com",
+            new HeaderValue("https://allowed.com"),
         ]);
-        assert.equal(await ao.toHeader("https://notallowed.com", parts), null);
+        assert.equal(await ao.toHeader(new HeaderValue("https://notallowed.com"), parts), null);
 
         const fromAo = AllowOrigin.from(["https://allowed.com", "https://alsoallowed.com"]);
         assert.deepEqual(fromAo, ao);
@@ -69,11 +69,11 @@ describe("middleware:cors:allow-origin", () => {
         const ao = AllowOrigin.predicate(pred);
 
         assert(!ao.isWildcard());
-        assert.deepEqual(await ao.toHeader("https://allowed.com", parts), [
+        assert.deepEqual(await ao.toHeader(new HeaderValue("https://allowed.com"), parts), [
             "access-control-allow-origin",
-            "https://allowed.com",
+            new HeaderValue("https://allowed.com"),
         ]);
-        assert.equal(await ao.toHeader("https://notallowed.com", parts), null);
+        assert.equal(await ao.toHeader(new HeaderValue("https://notallowed.com"), parts), null);
 
         const fromAo = AllowOrigin.from(pred);
         assert.deepEqual(fromAo, ao);
@@ -84,19 +84,19 @@ describe("middleware:cors:allow-origin", () => {
         const ao = AllowOrigin.predicate(pred);
 
         assert(!ao.isWildcard());
-        assert.deepEqual(await ao.toHeader("https://allowed.com", parts), [
+        assert.deepEqual(await ao.toHeader(new HeaderValue("https://allowed.com"), parts), [
             "access-control-allow-origin",
-            "https://allowed.com",
+            new HeaderValue("https://allowed.com"),
         ]);
-        assert.equal(await ao.toHeader("https://notallowed.com", parts), null);
+        assert.equal(await ao.toHeader(new HeaderValue("https://notallowed.com"), parts), null);
     });
 
     it("mirrorRequest returns true for any origin", async () => {
         const ao = AllowOrigin.mirrorRequest();
         assert(!ao.isWildcard());
-        assert.deepEqual(await ao.toHeader("https://any.com", parts), [
+        assert.deepEqual(await ao.toHeader(new HeaderValue("https://any.com"), parts), [
             "access-control-allow-origin",
-            "https://any.com",
+            new HeaderValue("https://any.com"),
         ]);
         assert.equal(await ao.toHeader(null, parts), null);
 

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { HeaderMap, Method, Parts } from "../../../src/http/index.js";
+import { HeaderMap, HeaderValue, Method, Parts } from "../../../src/http/index.js";
 import {
     AllowPrivateNetwork,
     type AllowPrivateNetworkPredicate,
@@ -19,16 +19,19 @@ describe("middleware:cors:allow-private-network", () => {
 
     it("default returns no", () => {
         const apn = AllowPrivateNetwork.default();
-        assert.equal(apn.toHeader("https://example.com", createParts()), null);
+        assert.equal(apn.toHeader(new HeaderValue("https://example.com"), createParts()), null);
     });
 
     it("yes returns header if request header is 'true'", () => {
         const apn = AllowPrivateNetwork.yes();
-        assert.deepEqual(apn.toHeader("https://example.com", createParts(true)), [
+        assert.deepEqual(apn.toHeader(new HeaderValue("https://example.com"), createParts(true)), [
             "access-control-allow-private-network",
-            "true",
+            new HeaderValue("true"),
         ]);
-        assert.equal(apn.toHeader("https://example.com", createParts(false)), null);
+        assert.equal(
+            apn.toHeader(new HeaderValue("https://example.com"), createParts(false)),
+            null,
+        );
 
         const fromApn = AllowPrivateNetwork.from(true);
         assert.deepEqual(fromApn, apn);
@@ -36,8 +39,11 @@ describe("middleware:cors:allow-private-network", () => {
 
     it("no returns null regardless of request header", () => {
         const apn = AllowPrivateNetwork.no();
-        assert.equal(apn.toHeader("https://example.com", createParts(true)), null);
-        assert.equal(apn.toHeader("https://example.com", createParts(false)), null);
+        assert.equal(apn.toHeader(new HeaderValue("https://example.com"), createParts(true)), null);
+        assert.equal(
+            apn.toHeader(new HeaderValue("https://example.com"), createParts(false)),
+            null,
+        );
 
         const fromApn = AllowPrivateNetwork.from(false);
         assert.deepEqual(fromApn, apn);
@@ -47,12 +53,18 @@ describe("middleware:cors:allow-private-network", () => {
         const pred: AllowPrivateNetworkPredicate = (origin) => origin === "https://allowed.com";
         const apn = AllowPrivateNetwork.predicate(pred);
 
-        assert.deepEqual(apn.toHeader("https://allowed.com", createParts(true)), [
+        assert.deepEqual(apn.toHeader(new HeaderValue("https://allowed.com"), createParts(true)), [
             "access-control-allow-private-network",
-            "true",
+            new HeaderValue("true"),
         ]);
-        assert.equal(apn.toHeader("https://notallowed.com", createParts(true)), null);
-        assert.equal(apn.toHeader("https://allowed.com", createParts(false)), null);
+        assert.equal(
+            apn.toHeader(new HeaderValue("https://notallowed.com"), createParts(true)),
+            null,
+        );
+        assert.equal(
+            apn.toHeader(new HeaderValue("https://allowed.com"), createParts(false)),
+            null,
+        );
 
         const fromApn = AllowPrivateNetwork.from(pred);
         assert.deepEqual(fromApn, apn);

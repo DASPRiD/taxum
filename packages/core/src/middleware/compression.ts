@@ -187,7 +187,7 @@ class ResponseCompression implements HttpService {
 
         const headers = res.headers;
 
-        if (!headers.get("vary")?.toLowerCase().includes("accept-encoding")) {
+        if (!headers.get("vary")?.value.toLowerCase().includes("accept-encoding")) {
             headers.append("vary", "accept-encoding");
         }
 
@@ -361,7 +361,7 @@ export const sizeAbovePredicate =
                 return true;
             }
 
-            contentSize = Number.parseInt(contentLength, 10);
+            contentSize = Number.parseInt(contentLength.value, 10);
         }
 
         return contentSize >= minSize;
@@ -373,7 +373,7 @@ export const sizeAbovePredicate =
 export const notForContentTypePredicate =
     (contentType: string, exception?: string): Predicate =>
     (response) => {
-        const headerContentType = response.headers.get("content-type") ?? "";
+        const headerContentType = response.headers.get("content-type")?.value ?? "";
 
         if (headerContentType === exception) {
             return true;

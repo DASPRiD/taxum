@@ -69,7 +69,7 @@ class SetRequestId implements HttpService {
         const requestId = req.headers.get(this.headerName);
 
         if (requestId) {
-            req.extensions.insert(REQUEST_ID, requestId);
+            req.extensions.insert(REQUEST_ID, requestId.value);
             return this.inner.invoke(req);
         }
 
@@ -146,11 +146,11 @@ class PropagateRequestId implements HttpService {
 
         if (responseRequestId) {
             if (!response.extensions.has(REQUEST_ID)) {
-                response.extensions.insert(REQUEST_ID, responseRequestId);
+                response.extensions.insert(REQUEST_ID, responseRequestId.value);
             }
         } else if (requestRequestId) {
             response.headers.insert(this.headerName, requestRequestId);
-            response.extensions.insert(REQUEST_ID, requestRequestId);
+            response.extensions.insert(REQUEST_ID, requestRequestId.value);
         }
 
         return response;

@@ -82,7 +82,7 @@ describe("http:body", () => {
                 const res = body[TO_HTTP_RESPONSE]();
 
                 assert.equal(res.status, StatusCode.OK);
-                assert.equal(res.headers.get("content-type"), "text/plain; charset=utf-8");
+                assert.equal(res.headers.get("content-type")?.value, "text/plain; charset=utf-8");
             });
 
             it("omits content-type header if not hinted", () => {

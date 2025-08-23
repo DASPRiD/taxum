@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { HeaderMap, Method, Parts } from "../../../src/http/index.js";
+import { HeaderMap, HeaderValue, Method, Parts } from "../../../src/http/index.js";
 import { type DynamicMaxAge, MaxAge } from "../../../src/middleware/cors/index.js";
 
 describe("middleware:cors:max-age", () => {
@@ -8,12 +8,12 @@ describe("middleware:cors:max-age", () => {
 
     it("default returns none", () => {
         const maxAge = MaxAge.default();
-        assert.equal(maxAge.toHeader("https://example.com", parts), null);
+        assert.equal(maxAge.toHeader(new HeaderValue("https://example.com"), parts), null);
     });
 
     it("none returns null", () => {
         const maxAge = MaxAge.none();
-        assert.equal(maxAge.toHeader("https://example.com", parts), null);
+        assert.equal(maxAge.toHeader(new HeaderValue("https://example.com"), parts), null);
 
         const fromMaxAge = MaxAge.from(null);
         assert.deepEqual(fromMaxAge, maxAge);
@@ -21,9 +21,9 @@ describe("middleware:cors:max-age", () => {
 
     it("exact returns header with string value", () => {
         const maxAge = MaxAge.exact(3600);
-        assert.deepEqual(maxAge.toHeader("https://example.com", parts), [
+        assert.deepEqual(maxAge.toHeader(new HeaderValue("https://example.com"), parts), [
             "access-control-max-age",
-            "3600",
+            new HeaderValue("3600"),
         ]);
 
         const fromMaxAge = MaxAge.from(3600);
@@ -37,9 +37,9 @@ describe("middleware:cors:max-age", () => {
             return 1234;
         };
         const maxAge = MaxAge.dynamic(fn);
-        assert.deepEqual(maxAge.toHeader("https://example.com", parts), [
+        assert.deepEqual(maxAge.toHeader(new HeaderValue("https://example.com"), parts), [
             "access-control-max-age",
-            "1234",
+            new HeaderValue("1234"),
         ]);
 
         const fromMaxAge = MaxAge.from(fn);

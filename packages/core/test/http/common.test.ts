@@ -25,7 +25,7 @@ describe("http:common", () => {
         it("returns a JSON response with content-type header", async () => {
             const res = jsonResponse({ ok: true })[TO_HTTP_RESPONSE]();
             assert.equal(res.status.code, 200);
-            assert.equal(res.headers.get("content-type"), "application/json");
+            assert.equal(res.headers.get("content-type")?.value, "application/json");
 
             const body = await consumers.text(res.body.readable);
             assert.equal(body, JSON.stringify({ ok: true }));
@@ -37,7 +37,7 @@ describe("http:common", () => {
             const html = "<h1>Hello</h1>";
             const res = htmlResponse(html)[TO_HTTP_RESPONSE]();
             assert.equal(res.status.code, 200);
-            assert.equal(res.headers.get("content-type"), "text/html");
+            assert.equal(res.headers.get("content-type")?.value, "text/html");
 
             const body = await consumers.text(res.body.readable);
             assert.equal(body, JSON.stringify(html));
@@ -70,7 +70,7 @@ describe("http:common", () => {
             it(`returns correct response for ${label}`, async () => {
                 const res = redirect[TO_HTTP_RESPONSE]();
                 assert.equal(res.status.code, expectedStatus.code);
-                assert.equal(res.headers.get("location"), expectedLocation);
+                assert.equal(res.headers.get("location")?.value, expectedLocation);
 
                 const body = await consumers.text(res.body.readable);
                 assert.equal(body, "");
@@ -81,7 +81,7 @@ describe("http:common", () => {
             const url = new URL("https://example.com/foo");
             const res = Redirect.to(url)[TO_HTTP_RESPONSE]();
             assert.equal(res.status.code, 303);
-            assert.equal(res.headers.get("location"), url.toString());
+            assert.equal(res.headers.get("location")?.value, url.toString());
         });
     });
 });

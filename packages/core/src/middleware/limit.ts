@@ -50,7 +50,7 @@ class RequestBodyLimit implements HttpService {
             return this.inner.invoke(req);
         }
 
-        const contentLength = Number.parseInt(rawContentLength, 10);
+        const contentLength = Number.parseInt(rawContentLength.value, 10);
 
         if (!Number.isNaN(contentLength) && contentLength > this.limit) {
             throw new ContentTooLargeError(this.limit);

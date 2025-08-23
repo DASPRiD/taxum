@@ -101,7 +101,7 @@ describe("RequestDecompressionLayer", () => {
         const res = await service.invoke(req);
 
         assert.equal(res.status, StatusCode.UNSUPPORTED_MEDIA_TYPE);
-        assert.equal(res.headers.get("accept-encoding"), "identity");
+        assert.equal(res.headers.get("accept-encoding")?.value, "identity");
     });
 
     it("passes through request when encoding is identity", async () => {

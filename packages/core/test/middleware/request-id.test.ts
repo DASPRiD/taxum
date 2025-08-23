@@ -51,7 +51,7 @@ describe("middleware:request-id", () => {
         it("generates request ID when none is present", async () => {
             const innerService: HttpService = {
                 invoke: async (req) => {
-                    const fromHeader = req.headers.get("x-custom-id");
+                    const fromHeader = req.headers.get("x-custom-id")?.value;
                     const fromExt = req.extensions.get(REQUEST_ID);
                     return HttpResponse.builder().body(`${fromHeader} ${fromExt}`);
                 },
@@ -70,7 +70,7 @@ describe("middleware:request-id", () => {
             const innerService: HttpService = {
                 invoke: async (req) => {
                     const val = req.headers.get("x-request-id");
-                    return HttpResponse.builder().body(val ?? "missing");
+                    return HttpResponse.builder().body(val?.value ?? "missing");
                 },
             };
 
@@ -97,7 +97,7 @@ describe("middleware:request-id", () => {
 
             const res = await wrapped.invoke(req);
 
-            assert.equal(res.headers.get("x-request-id"), "abc-xyz");
+            assert.equal(res.headers.get("x-request-id")?.value, "abc-xyz");
             assert.equal(res.extensions.get(REQUEST_ID), "abc-xyz");
         });
 
@@ -114,7 +114,7 @@ describe("middleware:request-id", () => {
 
             const res = await wrapped.invoke(req);
 
-            assert.equal(res.headers.get("x-request-id"), "from-response");
+            assert.equal(res.headers.get("x-request-id")?.value, "from-response");
             assert.equal(res.extensions.get(REQUEST_ID), "from-response");
         });
 

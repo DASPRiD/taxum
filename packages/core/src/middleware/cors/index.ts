@@ -1,5 +1,11 @@
 import assert from "node:assert";
-import { HeaderMap, type HttpRequest, HttpResponse, Method } from "../../http/index.js";
+import {
+    type HeaderEntry,
+    HeaderMap,
+    type HttpRequest,
+    HttpResponse,
+    Method,
+} from "../../http/index.js";
 import type { HttpLayer } from "../../layer/index.js";
 import type { HttpService } from "../../service/index.js";
 import { AllowCredentials, type AllowCredentialsLike } from "./allow-credentials.js";
@@ -190,7 +196,7 @@ export class CorsLayer implements HttpLayer {
      * import { CorsLayer, ANY } from "@taxum/core/middleware/cors";
      *
      * const layer = CorsLayer.default().allowOrigin((origin, parts) => {
-     *     if (req.head.headers.get("x-custom-header") === "true") {
+     *     if (req.headers.get("x-custom-header") === "true") {
      *         return "https://example.com";
      *     }
      * });
@@ -410,5 +416,4 @@ class Cors implements HttpService {
     }
 }
 
-const maybeHeader = (item: [string, string] | null): Iterable<[string, string]> =>
-    item ? [item] : [];
+const maybeHeader = (entry: HeaderEntry | null): Iterable<HeaderEntry> => (entry ? [entry] : []);
