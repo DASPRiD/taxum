@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0](https://github.com/DASPRiD/taxum/compare/cookie-v0.1.7...cookie-v0.2.0) (2025-08-23)
+
+
+### Features
+
+* **core:** turn header values into a class with sensitive flag ([5e525ee](https://github.com/DASPRiD/taxum/commit/5e525eeb58d75d3e6a7b9995d60a1e1ed4eba7a4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 0.13.0
+
 ## [0.1.7](https://github.com/DASPRiD/taxum/compare/cookie-v0.1.6...cookie-v0.1.7) (2025-08-22)
 
 
