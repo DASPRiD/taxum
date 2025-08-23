@@ -126,6 +126,10 @@ export default withMermaid(
                                 link: "/guide/middleware/request-id",
                             },
                             {
+                                text: "Sensitive Headers",
+                                link: "/guide/middleware/sensitive-headers",
+                            },
+                            {
                                 text: "Set Header",
                                 link: "/guide/middleware/set-header",
                             },

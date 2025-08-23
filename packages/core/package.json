@@ -118,6 +118,22 @@
             "taxum": "./src/middleware/request-id.ts",
             "default": "./dist/middleware/request-id.js"
         },
+        "./middleware/sensitive-headers": {
+            "types": [
+                "./dist/middleware/sensitive-headers.d.ts",
+                "./src/middleware/sensitive-headers.ts"
+            ],
+            "taxum": "./src/middleware/sensitive-headers.ts",
+            "default": "./dist/middleware/sensitive-headers.js"
+        },
+        "./middleware/set-header": {
+            "types": [
+                "./dist/middleware/set-header.d.ts",
+                "./src/middleware/set-header.ts"
+            ],
+            "taxum": "./src/middleware/set-header.ts",
+            "default": "./dist/middleware/set-header.js"
+        },
         "./middleware/set-status": {
             "types": [
                 "./dist/middleware/set-status.d.ts",

@@ -15,6 +15,11 @@ import { type FromFnClosure, FromFnLayer } from "./from-fn.js";
 import { RequestBodyLimitLayer } from "./limit.js";
 import { type MakeRequestId, PropagateRequestIdLayer, SetRequestIdLayer } from "./request-id.js";
 import {
+    SetSensitiveHeadersLayer,
+    SetSensitiveRequestHeadersLayer,
+    SetSensitiveResponseHeadersLayer,
+} from "./sensitive-headers.js";
+import {
     type MakeHeaderValue,
     SetRequestHeaderLayer,
     SetResponseHeaderLayer,
@@ -174,6 +179,33 @@ export class ServiceBuilder<Out extends AnyService, In extends AnyService>
         limit: number,
     ): ServiceBuilder<Out, HttpService> {
         return this.withLayer(new RequestBodyLimitLayer(limit));
+    }
+
+    /**
+     * Mark headers as sensitive on both requests and responses.
+     *
+     * @see {@link SetSensitiveHeadersLayer}
+     */
+    public sensitiveHeaders(this: ServiceBuilder<Out, HttpService>, headers: string[]) {
+        return this.withLayer(new SetSensitiveHeadersLayer(headers));
+    }
+
+    /**
+     * Mark headers as sensitive on requests.
+     *
+     * @see {@link SetSensitiveRequestHeadersLayer}
+     */
+    public sensitiveRequestHeaders(this: ServiceBuilder<Out, HttpService>, headers: string[]) {
+        return this.withLayer(new SetSensitiveRequestHeadersLayer(headers));
+    }
+
+    /**
+     * Mark headers as sensitive on responses.
+     *
+     * @see {@link SetSensitiveRequestHeadersLayer}
+     */
+    public sensitiveResponseHeaders(this: ServiceBuilder<Out, HttpService>, headers: string[]) {
+        return this.withLayer(new SetSensitiveResponseHeadersLayer(headers));
     }
 
     /**
