@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.14.0](https://github.com/DASPRiD/taxum/compare/core-v0.13.0...core-v0.14.0) (2025-08-25)
+
+
+### Features
+
+* **core:** add better debugging to HTTP components ([131fcfe](https://github.com/DASPRiD/taxum/commit/131fcfe33d01b8e7b003b2746218514ff1148a05))
+
+
+### Bug Fixes
+
+* **core:** make InsertHeaderMode constants read-only ([67f0fb2](https://github.com/DASPRiD/taxum/commit/67f0fb25e6b4fffd216538d77d6b7db6f556f50e))
+
 ## [0.13.0](https://github.com/DASPRiD/taxum/compare/core-v0.12.0...core-v0.13.0) (2025-08-23)
 
 
