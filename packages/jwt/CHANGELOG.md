@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.1](https://github.com/DASPRiD/taxum/compare/jwt-v0.6.0...jwt-v0.6.1) (2025-08-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 0.14.0
+
 ## [0.6.0](https://github.com/DASPRiD/taxum/compare/jwt-v0.5.2...jwt-v0.6.0) (2025-08-23)
 
 
