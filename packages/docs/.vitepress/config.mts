@@ -143,8 +143,12 @@ export default withMermaid(
                         text: "Addons",
                         items: [
                             {
-                                text: "JWT authentication",
+                                text: "JWT Authentication",
                                 link: "/guide/addons/jwt",
+                            },
+                            {
+                                text: "Cookie Management",
+                                link: "/guide/addons/cookie",
                             },
                             {
                                 text: "Serving Static Files",

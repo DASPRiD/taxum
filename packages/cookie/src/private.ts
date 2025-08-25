@@ -5,6 +5,15 @@ import type { CookieJar } from "./jar.js";
 const IV_LEN = 12;
 const TAG_LEN = 16;
 
+/**
+ * A child cookie jar that provides authenticated encryption for its cookies.
+ *
+ * A _private_ child jar signs and encrypts all the cookies added to it and
+ * verifies and decrypts cookies retrieved from it. Any cookies stored in the
+ * `PrivateJar` are simultaneously assured confidentiality, integrity and
+ * authenticity. In other words, clients cannot discover nor tamper with the
+ * contents of a cookie, nor can they fabricate cookie data.
+ */
 export class PrivateJar {
     private readonly parent: CookieJar;
     private readonly key: CipherKey;
