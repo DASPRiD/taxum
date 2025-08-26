@@ -13,6 +13,7 @@ HTTP handling, routing, standard layers, etc.
 
 For additional functionality, check out the following packages:
 
+- [`@taxum/cookie`](https://github.com/DASPRiD/taxum/tree/main/packages/cookie): for cookie management
 - [`@taxum/fs`](https://github.com/DASPRiD/taxum/tree/main/packages/fs): for serving files from your filesystem
 - [`@taxum/jwt`](https://github.com/DASPRiD/taxum/tree/main/packages/jwt): for handling JWT authentication
 

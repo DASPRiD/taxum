@@ -21,6 +21,9 @@
         "test:ci": "c8 --reporter=lcov pnpm test",
         "typecheck": "tsc --noEmit"
     },
+    "files": [
+        "dist/**/*"
+    ],
     "exports": {
         "./extract": {
             "types": [

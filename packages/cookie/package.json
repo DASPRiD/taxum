@@ -23,6 +23,9 @@
         "test:ci": " pnpm test",
         "typecheck": "tsc --noEmit"
     },
+    "files": [
+        "dist/**/*"
+    ],
     "exports": {
         ".": {
             "types": [
