@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/DASPRiD/taxum/compare/cookie-v0.3.0...cookie-v0.3.1) (2025-08-31)
+
+
+### Bug Fixes
+
+* **cookie:** import global temporal-spec ([1a5e9b5](https://github.com/DASPRiD/taxum/commit/1a5e9b5e89d723819380488c5cc735d474af351e))
+
 ## [0.3.0](https://github.com/DASPRiD/taxum/compare/cookie-v0.2.1...cookie-v0.3.0) (2025-08-31)
 
 
