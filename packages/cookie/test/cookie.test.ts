@@ -159,6 +159,12 @@ describe("cookie", () => {
             assert(cookie.encode().includes("Max-Age=86400"));
         });
 
+        it("handles maxAge as Temporal.Duration (large units)", () => {
+            const duration = Temporal.Duration.from({ years: 1 });
+            const cookie = new Cookie("a", "b", { maxAge: duration });
+            assert(cookie.encode().includes("Max-Age="));
+        });
+
         it("handles expires as Date", () => {
             const date = new Date("2020-01-01T00:00:00Z");
             const cookie = new Cookie("a", "b", { expires: date });

@@ -1,5 +1,3 @@
-import type { Temporal } from "temporal-spec";
-
 export type CookieOptions = {
     expires?: Date | Temporal.ZonedDateTime;
     maxAge?: number | Temporal.Duration;
@@ -141,7 +139,9 @@ export class Cookie {
             if (typeof this.maxAge === "number") {
                 parameters.push(`Max-Age=${Math.max(0, Math.floor(this.maxAge))}`);
             } else {
-                parameters.push(`Max-Age=${Math.max(0, this.maxAge.total({ unit: "seconds" }))}`);
+                parameters.push(
+                    `Max-Age=${Math.max(0, this.maxAge.total({ unit: "seconds", relativeTo: Temporal.Now.zonedDateTimeISO() }))}`,
+                );
             }
         }
 

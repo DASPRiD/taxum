@@ -57,9 +57,6 @@ importers:
       temporal-polyfill:
         specifier: ^0.3.0
         version: 0.3.0
-      temporal-spec:
-        specifier: ^0.3.0
-        version: 0.3.0
 
   packages/core:
     dependencies:

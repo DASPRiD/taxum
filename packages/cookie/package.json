@@ -40,7 +40,6 @@
         "@taxum/core": "workspace:*"
     },
     "devDependencies": {
-        "temporal-polyfill": "^0.3.0",
-        "temporal-spec": "^0.3.0"
+        "temporal-polyfill": "^0.3.0"
     }
 }
