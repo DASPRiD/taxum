@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/DASPRiD/taxum/compare/cookie-v0.2.1...cookie-v0.3.0) (2025-08-31)
+
+
+### Features
+
+* **cookie:** allow max age units which require relativeTo now ([2751d76](https://github.com/DASPRiD/taxum/commit/2751d7622ef665ad90e05de0613778cfd281c366))
+
 ## [0.2.1](https://github.com/DASPRiD/taxum/compare/cookie-v0.2.0...cookie-v0.2.1) (2025-08-25)
 
 

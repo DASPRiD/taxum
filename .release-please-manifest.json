@@ -1,5 +1,5 @@
 {
-    "packages/cookie": "0.2.1",
+    "packages/cookie": "0.3.0",
     "packages/core": "0.14.0",
     "packages/fs": "0.6.1",
     "packages/jwt": "0.6.1"
