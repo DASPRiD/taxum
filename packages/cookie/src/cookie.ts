@@ -1,3 +1,5 @@
+import "temporal-spec/global";
+
 export type CookieOptions = {
     expires?: Date | Temporal.ZonedDateTime;
     maxAge?: number | Temporal.Duration;
