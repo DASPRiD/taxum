@@ -1,10 +1,10 @@
 import { pathParam } from "@taxum/core/extract";
-import { extractHandler, m, Router } from "@taxum/core/routing";
+import { createExtractHandler, m, Router } from "@taxum/core/routing";
 import { serve } from "@taxum/core/server";
 import { z } from "zod";
 
-const getFoo = extractHandler(pathParam(z.string().regex(/[0-9]+/)), (params) => {
-    return `Hello ${params.foo}`;
+const getFoo = createExtractHandler(pathParam(z.string().regex(/[0-9]+/))).handler((foo) => {
+    return `Hello ${foo}`;
 });
 
 const router = new Router().route("/:foo", m.get(getFoo));

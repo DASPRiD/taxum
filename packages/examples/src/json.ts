@@ -1,18 +1,17 @@
 import { json } from "@taxum/core/extract";
-import { extractHandler, m, Router } from "@taxum/core/routing";
+import { createExtractHandler, m, Router } from "@taxum/core/routing";
 import { serve } from "@taxum/core/server";
 import { z } from "zod";
 
-const createFoo = extractHandler(
+const createFoo = createExtractHandler(
     json(
         z.object({
             foo: z.string(),
         }),
     ),
-    (body) => {
-        return `Hello ${body.foo}`;
-    },
-);
+).handler((body) => {
+    return `Hello ${body.foo}`;
+});
 
 const router = new Router().route("/", m.post(createFoo));
 
