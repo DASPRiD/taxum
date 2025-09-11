@@ -135,6 +135,22 @@ const myHandler = extractHandler(
 );
 ```
 
+### `header(headerName, required?)`
+
+Extracts a header stored from the request.
+
+```ts
+import { header } from "@taxum/core/extract";
+import { extractHandler } from "@taxum/core/routing";
+
+const myHandler = extractHandler(
+    header("if-none-match"),
+    (etag) => {
+        console.log(etag);
+    },
+);
+```
+
 ### `extension(key, required?)`
 
 Extracts a custom extension stored in the request.
