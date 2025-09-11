@@ -12,28 +12,21 @@ import type { HttpService } from "../service/index.js";
 export type Handler = (req: HttpRequest) => Promise<HttpResponseLike> | HttpResponseLike;
 
 /**
- * @see {@link extractHandler}
+ * A handler which receives values extracted from the request.
  */
-export type ExtractHandler = {
-    // Array form
-    <Extractors extends readonly AnyExtractor[]>(
-        extractors: Extractors,
-        fn: (...args: ExtractorResults<Extractors>) => Promise<HttpResponseLike> | HttpResponseLike,
-    ): Handler;
+export type ExtractHandler<Extractors extends readonly AnyExtractor[]> = (
+    ...args: ExtractorResults<Extractors>
+) => Promise<HttpResponseLike> | HttpResponseLike;
 
-    // Positional form
-    <Extractors extends readonly AnyExtractor[]>(
-        ...args: [
-            ...Extractors,
-            fn: (
-                ...args: NoInfer<ExtractorResults<Extractors>>
-            ) => Promise<HttpResponseLike> | HttpResponseLike,
-        ]
-    ): Handler;
+/**
+ * A builder for extract handlers.
+ */
+export type ExtractHandlerBuilder<Extractors extends readonly AnyExtractor[]> = {
+    handler: (fn: ExtractHandler<Extractors>) => Handler;
 };
 
 /**
- * Builder for creating extract-based request handlers.
+ * Creates a builder for creating extract-based request handlers.
  *
  * Usage:
  * ```ts
@@ -49,22 +42,16 @@ export type ExtractHandler = {
  * });
  * ```
  */
-export function createExtractHandler<Extractors extends readonly AnyExtractor[]>(
+export const createExtractHandler = <Extractors extends readonly AnyExtractor[]>(
     ...extractors: Extractors
-) {
-    return {
-        handler: (
-            fn: (
-                ...args: ExtractorResults<Extractors>
-            ) => Promise<HttpResponseLike> | HttpResponseLike,
-        ): Handler => {
-            return async (req: HttpRequest) => {
-                const values = await Promise.all(extractors.map((e) => e(req)));
-                return fn(...(values as ExtractorResults<Extractors>));
-            };
+): ExtractHandlerBuilder<Extractors> => ({
+    handler:
+        (fn: ExtractHandler<Extractors>): Handler =>
+        async (req: HttpRequest) => {
+            const values = await Promise.all(extractors.map((e) => e(req)));
+            return fn(...(values as ExtractorResults<Extractors>));
         },
-    };
-}
+});
 
 /**
  * Represents the result type extracted from an `Extractor`.
