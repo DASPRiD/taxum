@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.0](https://github.com/DASPRiD/taxum/compare/core-v0.15.1...core-v0.16.0) (2025-09-11)
+
+
+### Features
+
+* replace extractHandler with new createExtractHandler builder ([0835291](https://github.com/DASPRiD/taxum/commit/083529119336088f26097195985ea855147338e5))
+
 ## [0.15.1](https://github.com/DASPRiD/taxum/compare/core-v0.15.0...core-v0.15.1) (2025-09-11)
 
 
