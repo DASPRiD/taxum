@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.1](https://github.com/DASPRiD/taxum/compare/core-v0.15.0...core-v0.15.1) (2025-09-11)
+
+
+### Bug Fixes
+
+* **core:** export header extractor from extract namespace ([31dc140](https://github.com/DASPRiD/taxum/commit/31dc140840fbc4b8de6203c6ca523bd6a1dd913e))
+
 ## [0.15.0](https://github.com/DASPRiD/taxum/compare/core-v0.14.0...core-v0.15.0) (2025-09-11)
 
 
