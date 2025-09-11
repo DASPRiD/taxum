@@ -3,7 +3,7 @@ import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import type { Extractor } from "../../src/extract/index.js";
 import { HttpRequest, HttpResponse } from "../../src/http/index.js";
-import { extractHandler, HandlerService } from "../../src/routing/index.js";
+import { createExtractHandler, HandlerService } from "../../src/routing/index.js";
 
 const makeExtractor =
     <T>(value: T): Extractor<T> =>
@@ -11,79 +11,41 @@ const makeExtractor =
         value;
 
 describe("routing:handler", () => {
-    describe("extractHandler", () => {
-        describe("array-style", () => {
-            it("calls handler with no extractors", async () => {
-                const h = extractHandler([], () => HttpResponse.builder().body("ok"));
+    describe("createExtractHandler", () => {
+        it("calls handler with no extractors", async () => {
+            const h = createExtractHandler().handler(() => HttpResponse.builder().body("ok"));
 
-                const req = HttpRequest.builder().body(null);
-                const res = HttpResponse.from(await h(req));
+            const req = HttpRequest.builder().body(null);
+            const res = HttpResponse.from(await h(req));
 
-                assert.equal(await consumers.text(res.body.readable), "ok");
-            });
-
-            it("calls handler with one extractor", async () => {
-                const h = extractHandler([makeExtractor("foo")], (val: string) =>
-                    HttpResponse.builder().body(val.toUpperCase()),
-                );
-
-                const req = HttpRequest.builder().body(null);
-                const res = HttpResponse.from(await h(req));
-
-                assert.equal(await consumers.text(res.body.readable), "FOO");
-            });
-
-            it("calls handler with multiple extractors", async () => {
-                const h = extractHandler(
-                    [makeExtractor("foo"), makeExtractor("bar")],
-                    (a: string, b: string) => HttpResponse.builder().body(`${a}-${b}`),
-                );
-
-                const req = HttpRequest.builder().body(null);
-                const res = HttpResponse.from(await h(req));
-
-                assert.equal(await consumers.text(res.body.readable), "foo-bar");
-            });
+            assert.equal(await consumers.text(res.body.readable), "ok");
         });
 
-        describe("positional-style", () => {
-            it("calls handler with no extractors", async () => {
-                const h = extractHandler(() => HttpResponse.builder().body("ok"));
+        it("calls handler with one extractor", async () => {
+            const h = createExtractHandler(makeExtractor("foo")).handler((val) =>
+                HttpResponse.builder().body(val.toUpperCase()),
+            );
 
-                const req = HttpRequest.builder().body(null);
-                const res = HttpResponse.from(await h(req));
+            const req = HttpRequest.builder().body(null);
+            const res = HttpResponse.from(await h(req));
 
-                assert.equal(await consumers.text(res.body.readable), "ok");
-            });
+            assert.equal(await consumers.text(res.body.readable), "FOO");
+        });
 
-            it("calls handler with one extractor", async () => {
-                const h = extractHandler(makeExtractor("foo"), (val: string) =>
-                    HttpResponse.builder().body(val.toUpperCase()),
-                );
+        it("calls handler with multiple extractors", async () => {
+            const h = createExtractHandler(makeExtractor("foo"), makeExtractor(1)).handler((a, b) =>
+                HttpResponse.builder().body(`${a}-${b}`),
+            );
 
-                const req = HttpRequest.builder().body(null);
-                const res = HttpResponse.from(await h(req));
+            const req = HttpRequest.builder().body(null);
+            const res = HttpResponse.from(await h(req));
 
-                assert.equal(await consumers.text(res.body.readable), "FOO");
-            });
-
-            it("calls handler with multiple extractors", async () => {
-                const h = extractHandler(
-                    makeExtractor("foo"),
-                    makeExtractor("bar"),
-                    (a: string, b: string) => HttpResponse.builder().body(`${a}-${b}`),
-                );
-
-                const req = HttpRequest.builder().body(null);
-                const res = HttpResponse.from(await h(req));
-
-                assert.equal(await consumers.text(res.body.readable), "foo-bar");
-            });
+            assert.equal(await consumers.text(res.body.readable), "foo-1");
         });
 
         it("supports sync extractors", async () => {
             const syncExtractor = () => 42;
-            const h = extractHandler([syncExtractor], (num: number) =>
+            const h = createExtractHandler(syncExtractor).handler((num) =>
                 HttpResponse.builder().body(num.toString()),
             );
 
@@ -94,7 +56,7 @@ describe("routing:handler", () => {
         });
 
         it("supports async handler function", async () => {
-            const h = extractHandler([makeExtractor("a")], async (val: string) => {
+            const h = createExtractHandler(makeExtractor("a")).handler(async (val) => {
                 return HttpResponse.builder().body(val.repeat(2));
             });
 
@@ -108,7 +70,7 @@ describe("routing:handler", () => {
             const failingExtractor = () => {
                 throw new Error("Extractor failed");
             };
-            const h = extractHandler([failingExtractor], () =>
+            const h = createExtractHandler(failingExtractor).handler(() =>
                 HttpResponse.builder().body("never"),
             );
 
@@ -120,7 +82,7 @@ describe("routing:handler", () => {
         });
 
         it("throws if handler throws", async () => {
-            const h = extractHandler([makeExtractor("x")], () => {
+            const h = createExtractHandler(makeExtractor("x")).handler((_) => {
                 throw new Error("Handler failed");
             });
 

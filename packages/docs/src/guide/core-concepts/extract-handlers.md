@@ -9,33 +9,24 @@ This approach makes your code cleaner, safer, and easier to maintain.
 
 ## Creating an Extract Handler
 
-To create an extract handler, you pass extractors as positional arguments to the handler function, followed by your
-handling function:
+To create an extract handler, use the `createExtractHandler` function. You provide one or more extractors and then call
+`.handler(...)` to supply the handling function:
 
 ```ts
 import { json, query } from "@taxum/core/extract";
-import { extractHandler } from "@taxum/core/routing";
+import { createExtractHandler } from "@taxum/core/routing";
 import { z } from "zod";
 
 const bodySchema = z.object({ name: z.string() });
 const querySchema = z.object({ page: z.coerce.number().int().nonnegative() });
 
-const myHandler = extractHandler(
+const myHandler = createExtractHandler(
     json(bodySchema),
     query(querySchema),
-    (body, query) => {
-        console.log(body.name, query.page);
-        return { success: true };
-    },
-);
+).handler((body, query) => {
+    console.log(body.name, query.page);
+});
 ```
-
-::: tip NOTE
-
-While the examples here use positional arguments, extractors can also be provided in an array. The positional style is
-recommended for most cases because it is simpler and clearer.
-
-:::
 
 ## Built-in Extractors
 
@@ -49,17 +40,16 @@ Extracts and parses a JSON body according to the provided schema.
 
 ```ts
 import { json } from "@taxum/core/extract";
-import { extractHandler } from "@taxum/core/routing";
+import { createExtractHandler } from "@taxum/core/routing";
 import { z } from "zod";
 
 const bodySchema = z.object({ title: z.string() });
 
-const myHandler = e(
+const myHandler = createExtractHandler(
     json(bodySchema),
-    (body) => {
-        console.log(body.title);
-    },
-);
+).handler((body) => {
+    console.log(body.title);
+});
 ```
 
 ### `form(schema)`
@@ -69,17 +59,16 @@ validates it against a schema.
 
 ```ts
 import { form } from "@taxum/core/extract";
-import { extractHandler } from "@taxum/core/routing";
+import { createExtractHandler } from "@taxum/core/routing";
 import { z } from "zod";
 
 const formSchema = z.object({ email: z.string().email() });
 
-const myHandler = extractHandler(
+const myHandler = createExtractHandler(
     form(formSchema),
-    (body) => {
-        console.log(body.email);
-    },
-);
+).handler((body) => {
+    console.log(body.email);
+});
 ```
 
 ### `query(schema)`
@@ -88,17 +77,16 @@ Parses and validates query parameters.
 
 ```ts
 import { query } from "@taxum/core/extract";
-import { extractHandler } from "@taxum/core/routing";
+import { createExtractHandler } from "@taxum/core/routing";
 import { z } from "zod";
 
 const paginationSchema = z.object({ page: z.coerce.number().int().nonnegative() });
 
-const myHandler = extractHandler(
+const myHandler = createExtractHandler(
     query(paginationSchema),
-    (query) => {
-        console.log(query.page);
-    },
-);
+).handler((query) => {
+    console.log(query.page);
+});
 ```
 
 ### `rawQuery`
@@ -107,14 +95,13 @@ Provides the raw query parameters without validation.
 
 ```ts
 import { rawQuery } from "@taxum/core/extract";
-import { extractHandler } from "@taxum/core/routing";
+import { createExtractHandler } from "@taxum/core/routing";
 
-const myHandler = extractHandler(
+const myHandler = createExtractHandler(
     rawQuery,
-    (query) => {
-        console.log(query);
-    },
-);
+).handler((query) => {
+    console.log(query);
+});
 ```
 
 ### `pathParam(schema)` and `pathParams(schema)`
@@ -124,15 +111,14 @@ Extracts and validates path parameters. If the path only has a single parameter,
 
 ```ts
 import { pathParam } from "@taxum/core/extract";
-import { extractHandler } from "@taxum/core/routing";
+import { createExtractHandler } from "@taxum/core/routing";
 import { z } from "zod";
 
-const myHandler = extractHandler(
+const myHandler = createExtractHandler(
     pathParam(z.uuid()),
-    (id) => {
-        console.log(id);
-    },
-);
+).handler((id) => {
+    console.log(id);
+});
 ```
 
 ### `header(headerName, required?)`
@@ -141,14 +127,13 @@ Extracts a header stored from the request.
 
 ```ts
 import { header } from "@taxum/core/extract";
-import { extractHandler } from "@taxum/core/routing";
+import { createExtractHandler } from "@taxum/core/routing";
 
-const myHandler = extractHandler(
+const myHandler = createExtractHandler(
     header("if-none-match"),
-    (etag) => {
-        console.log(etag);
-    },
-);
+).handler((etag) => {
+    console.log(etag);
+});
 ```
 
 ### `extension(key, required?)`
@@ -158,14 +143,13 @@ Extracts a custom extension stored in the request.
 ```ts
 import { extension } from "@taxum/core/extract";
 import { ExtensionKey } from "@taxum/core/http";
-import { extractHandler } from "@taxum/core/routing";
+import { createExtractHandler } from "@taxum/core/routing";
 
 const MY_EXTENSION = new ExtensionKey<string>("My extension");
 
-const myHandler = extractHandler(
+const myHandler = createExtractHandler(
     extension(MY_EXTENSION),
-    (myExtension) => {
-        console.log(myExtension);
-    },
-);
+).handler((myExtension) => {
+    console.log(myExtension);
+});
 ```
