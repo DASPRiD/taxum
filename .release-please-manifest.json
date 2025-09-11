@@ -1,6 +1,6 @@
 {
-    "packages/cookie": "0.3.3",
-    "packages/core": "0.15.1",
-    "packages/fs": "0.6.3",
-    "packages/jwt": "0.6.3"
+    "packages/cookie": "0.3.4",
+    "packages/core": "0.16.0",
+    "packages/fs": "0.6.4",
+    "packages/jwt": "0.6.4"
 }
