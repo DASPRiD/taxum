@@ -13,6 +13,7 @@ export type AnyExtractor = Extractor<any>;
 export * from "./error.js";
 export * from "./extension.js";
 export * from "./form.js";
+export * from "./header.js";
 export * from "./json.js";
 export * from "./path.js";
 export * from "./query.js";

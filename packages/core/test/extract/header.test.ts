@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { header, MissingHeaderError } from "../../src/extract/header.js";
+import { header, MissingHeaderError } from "../../src/extract/index.js";
 import { HttpRequest } from "../../src/http/index.js";
 
 describe("extract:header", () => {
