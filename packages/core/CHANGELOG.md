@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.1](https://github.com/DASPRiD/taxum/compare/core-v0.16.0...core-v0.16.1) (2025-09-11)
+
+
+### Bug Fixes
+
+* **core:** update createExtractHandler typings and remove legacy types ([ff700c8](https://github.com/DASPRiD/taxum/commit/ff700c814bf646933a9ce6a9bdc27c24b39564c4))
+
 ## [0.16.0](https://github.com/DASPRiD/taxum/compare/core-v0.15.1...core-v0.16.0) (2025-09-11)
 
 
