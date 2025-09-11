@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/DASPRiD/taxum/compare/core-v0.14.0...core-v0.15.0) (2025-09-11)
+
+
+### Features
+
+* **core:** add header extractor ([57a3290](https://github.com/DASPRiD/taxum/commit/57a3290027966f64a74f005bc89bb3ce4a15b0d7))
+
 ## [0.14.0](https://github.com/DASPRiD/taxum/compare/core-v0.13.0...core-v0.14.0) (2025-08-25)
 
 
