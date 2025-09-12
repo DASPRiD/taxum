@@ -25,7 +25,7 @@ const defaultFallbackRoute = new Route({
  * This is required as the URI within a `HttpRequest` can be mutated during
  * the request lifecycle.
  */
-export const ORIGINAL_URI = new ExtensionKey("OriginalUri");
+export const ORIGINAL_URI = new ExtensionKey<URL>("OriginalUri");
 
 /**
  * The Router class is responsible for handling and routing HTTP requests based
