@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.2](https://github.com/DASPRiD/taxum/compare/core-v0.16.1...core-v0.16.2) (2025-09-12)
+
+
+### Bug Fixes
+
+* **core:** add missing typehint to ORIGINAL_URI extension ([0b983de](https://github.com/DASPRiD/taxum/commit/0b983decb33d8c3589f86936ed2aad34c951a4b9))
+
 ## [0.16.1](https://github.com/DASPRiD/taxum/compare/core-v0.16.0...core-v0.16.1) (2025-09-11)
 
 
