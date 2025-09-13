@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0](https://github.com/DASPRiD/taxum/compare/core-v0.16.2...core-v1.0.0) (2025-09-13)
+
+
+### Miscellaneous Chores
+
+* **core:** release 1.0.0 ([5620f54](https://github.com/DASPRiD/taxum/commit/5620f543b974018abc0203c6da5ff499b366575e))
+
 ## [0.16.2](https://github.com/DASPRiD/taxum/compare/core-v0.16.1...core-v0.16.2) (2025-09-12)
 
 
