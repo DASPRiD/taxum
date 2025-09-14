@@ -20,4 +20,4 @@ req.extensions.insert(MY_EXTENSION, "foo");
 ```
 
 To retrieve extensions, you can either get them directly from the request (or response), or you can use the
-{@link @taxum/core!extract.extension | extension} extractor in your handlers.
+[extension extractor](/guide/core-concepts/extract-handlers.html#extension-key-required) in your handlers.
