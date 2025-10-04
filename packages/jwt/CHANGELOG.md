@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/DASPRiD/taxum/compare/jwt-v1.0.0...jwt-v1.0.1) (2025-10-04)
+
+
+### Bug Fixes
+
+* **jwt:** allow GetKey function as key parameter ([1cfe0e8](https://github.com/DASPRiD/taxum/commit/1cfe0e83abde971235443ddf9bcd56133ebceb51))
+
 ## [1.0.0](https://github.com/DASPRiD/taxum/compare/jwt-v0.6.6...jwt-v1.0.0) (2025-09-13)
 
 
