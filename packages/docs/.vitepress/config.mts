@@ -159,7 +159,7 @@ export default withMermaid(
                 ],
             },
 
-            socialLinks: [{ icon: "github", link: "https://github.com/dasprid/jsonapi-serde-js" }],
+            socialLinks: [{ icon: "github", link: "https://github.com/dasprid/taxum" }],
         },
         srcDir: "src",
     }),
