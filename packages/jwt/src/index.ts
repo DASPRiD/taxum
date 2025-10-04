@@ -15,6 +15,7 @@ import { ClientError } from "@taxum/core/util";
 import {
     type CryptoKey,
     type JWK,
+    type JWTVerifyGetKey,
     type JWTVerifyOptions,
     type JWTVerifyResult,
     jwtVerify,
@@ -48,7 +49,7 @@ export const JWT = new ExtensionKey<JWTVerifyResult>("JWT");
  * @see [jose](https://github.com/panva/jose)
  */
 export class JwtLayer implements HttpLayer {
-    private readonly key: CryptoKey | KeyObject | JWK | Uint8Array;
+    private readonly key: CryptoKey | KeyObject | JWK | Uint8Array | JWTVerifyGetKey;
     private verifyOptions_: JWTVerifyOptions | (() => JWTVerifyOptions) | undefined;
     private allowUnauthorized_: boolean;
     private debug_: boolean;
@@ -58,7 +59,7 @@ export class JwtLayer implements HttpLayer {
      *
      * @see [jose](https://github.com/panva/jose/blob/main/docs/jwt/verify/functions/jwtVerify.md)
      */
-    public constructor(key: CryptoKey | KeyObject | JWK | Uint8Array) {
+    public constructor(key: CryptoKey | KeyObject | JWK | Uint8Array | JWTVerifyGetKey) {
         this.key = key;
         this.verifyOptions_ = undefined;
         this.allowUnauthorized_ = false;
@@ -107,14 +108,14 @@ export class JwtLayer implements HttpLayer {
 
 class Jwt implements HttpService {
     private readonly inner: HttpService;
-    private readonly key: CryptoKey | KeyObject | JWK | Uint8Array;
+    private readonly key: CryptoKey | KeyObject | JWK | Uint8Array | JWTVerifyGetKey;
     private readonly verifyOptions: JWTVerifyOptions | (() => JWTVerifyOptions) | undefined;
     private readonly allowUnauthorized: boolean;
     private readonly debug: boolean;
 
     public constructor(
         inner: HttpService,
-        key: CryptoKey | KeyObject | JWK | Uint8Array,
+        key: CryptoKey | KeyObject | JWK | Uint8Array | JWTVerifyGetKey,
         verifyOptions: JWTVerifyOptions | (() => JWTVerifyOptions) | undefined,
         allowUnauthorized: boolean,
         debug: boolean,
@@ -158,7 +159,11 @@ class Jwt implements HttpService {
             typeof this.verifyOptions === "function" ? this.verifyOptions() : this.verifyOptions;
 
         try {
-            return await jwtVerify(parts[1], this.key, verifyOptions);
+            return await jwtVerify(
+                parts[1],
+                this.key as Parameters<typeof jwtVerify>[1],
+                verifyOptions,
+            );
         } catch (error) {
             return new UnauthorizedError(
                 /* node:coverage ignore next */

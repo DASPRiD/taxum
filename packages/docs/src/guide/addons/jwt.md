@@ -35,8 +35,8 @@ import { JwtLayer } from "@taxum/jwt"
 import { createRemoteJWKSet } from "jose"
 
 const jwtLayer = new JwtLayer(createRemoteJWKSet(
-    new URL("https://{yourDomain}/.well-known/jwks.json"))
-)
+    new URL("https://{yourDomain}/.well-known/jwks.json")
+))
     .verifyOptions({
         issuer: "https://{yourDomain}/",
         audience: "https://{yourApi}/"
