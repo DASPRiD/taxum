@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.1](https://github.com/DASPRiD/taxum/compare/cookie-v1.0.0...cookie-v1.0.1) (2025-10-11)
+
+
+### Bug Fixes
+
+* update repository URL casing ([d627606](https://github.com/DASPRiD/taxum/commit/d62760614b6b8d959c78c8ce1efba3f601dbe66d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 1.0.1
+
 ## [1.0.0](https://github.com/DASPRiD/taxum/compare/cookie-v0.3.6...cookie-v1.0.0) (2025-09-13)
 
 
