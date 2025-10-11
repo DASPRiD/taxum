@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/DASPRiD/taxum/compare/core-v1.0.0...core-v1.0.1) (2025-10-11)
+
+
+### Bug Fixes
+
+* **core:** bump dependencies ([1143735](https://github.com/DASPRiD/taxum/commit/114373520abd8b1087e01b4b261049f34d35e2ef))
+
 ## [1.0.0](https://github.com/DASPRiD/taxum/compare/core-v0.16.2...core-v1.0.0) (2025-09-13)
 
 
