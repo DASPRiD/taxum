@@ -83,11 +83,11 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2
       node-mock-http:
-        specifier: ^1.0.2
-        version: 1.0.2
+        specifier: ^1.0.3
+        version: 1.0.3
       zod:
-        specifier: ^4.0.17
-        version: 4.0.17
+        specifier: ^4.1.12
+        version: 4.1.12
 
   packages/docs:
     devDependencies:
@@ -1698,8 +1698,8 @@ packages:
   nested-search-params@1.0.0:
     resolution: {integrity: sha512-IHgB8A+L2Fpuh8GHnFH7YqdqYFmKgNlsslVjyNrD5WJ6cUS8aXNISIprAV0XLIjZNpfGsF5DrcdcsB60CIrGeQ==}
 
-  node-mock-http@1.0.2:
-    resolution: {integrity: sha512-zWaamgDUdo9SSLw47we78+zYw/bDr5gH8pH7oRRs8V3KmBtu8GLgGIbV2p/gRPd3LWpEOpjQj7X1FOU3VFMJ8g==}
+  node-mock-http@1.0.3:
+    resolution: {integrity: sha512-jN8dK25fsfnMrVsEhluUTPkBFY+6ybu7jSB1n+ri/vOGjJxU8J9CZhpSGkHXSkFjtUhbmoncG/YG9ta5Ludqog==}
 
   non-layered-tidy-tree-layout@2.0.2:
     resolution: {integrity: sha512-gkXMxRzUH+PB0ax9dUN0yYF0S25BqeAYqhgMaLUFmpXLEk7Fcu8f4emJuOAY0V8kjDICxROIKsTAKsV/v355xw==}
@@ -2174,8 +2174,8 @@ packages:
   zod@4.0.14:
     resolution: {integrity: sha512-nGFJTnJN6cM2v9kXL+SOBq3AtjQby3Mv5ySGFof5UGRHrRioSJ5iG680cYNjE/yWk671nROcpPj4hAS8nyLhSw==}
 
-  zod@4.0.17:
-    resolution: {integrity: sha512-1PHjlYRevNxxdy2JZ8JcNAw7rX8V9P1AKkP+x/xZfxB0K5FYfuV+Ug6P/6NVSR2jHQ+FzDDoDHS04nYUsOIyLQ==}
+  zod@4.1.12:
+    resolution: {integrity: sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -3719,7 +3719,7 @@ snapshots:
 
   nested-search-params@1.0.0: {}
 
-  node-mock-http@1.0.2: {}
+  node-mock-http@1.0.3: {}
 
   non-layered-tidy-tree-layout@2.0.2:
     optional: true
@@ -4204,6 +4204,6 @@ snapshots:
 
   zod@4.0.14: {}
 
-  zod@4.0.17: {}
+  zod@4.1.12: {}
 
   zwitch@2.0.4: {}

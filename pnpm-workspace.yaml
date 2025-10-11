@@ -1,6 +1,6 @@
+sideEffectsCache: false
 packages:
   - packages/*
-
 onlyBuiltDependencies:
   - esbuild
   - lefthook
