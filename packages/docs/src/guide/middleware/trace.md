@@ -1,3 +1,7 @@
+---
+description: Trace requests and responses. 
+---
+
 # Trace Middleware
 
 A middleware that traces HTTP request lifecycles, logging events when a request is received, a response is produced, or

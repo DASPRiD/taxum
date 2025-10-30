@@ -1,3 +1,7 @@
+---
+description: Assign request IDs to incoming requests and propagate them to outgoing responses. 
+---
+
 # Request ID Middleware
 
 The request ID middleware ensures that every incoming HTTP request is associated with a unique identifier. This ID can

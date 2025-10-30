@@ -1,3 +1,7 @@
+---
+description: Mark certain headers as sensitive on both requests and responses to exclude them from logs. 
+---
+
 # Sensitive Headers Middleware
 
 The sensitive headers middleware allows you to mark certain headers as sensitive on both requests and responses. Marking

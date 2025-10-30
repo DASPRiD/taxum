@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { type DefaultTheme, defineConfig } from "vitepress";
 import { groupIconMdPlugin, groupIconVitePlugin } from "vitepress-plugin-group-icons";
 import { withMermaid } from "vitepress-plugin-mermaid";
+import llmstxt from "vitepress-plugin-llms";
 
 let typedocSidebar: DefaultTheme.SidebarItem[];
 
@@ -30,7 +31,17 @@ export default withMermaid(
             },
         },
         vite: {
-            plugins: [groupIconVitePlugin()],
+            plugins: [
+                groupIconVitePlugin(),
+                llmstxt({
+                    generateLLMsFullTxt: false,
+                    ignoreFiles: [
+                        "guide/index.md",
+                        "api/index.md",
+                        "api/packages.md",
+                    ],
+                }),
+            ],
         },
         head: [["link", { rel: "icon", type: "image/svg+xml", href: "/icon.svg" }]],
         themeConfig: {

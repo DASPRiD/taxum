@@ -1,3 +1,7 @@
+---
+description: Decompress request bodies. 
+---
+
 # Request Decompression Middleware
 
 A middleware that automatically decompresses request bodies based on the `Content-Encoding` header. Supports Gzip,

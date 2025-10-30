@@ -1,3 +1,7 @@
+---
+description: Compress responses based on the Accept-Encoding header. 
+---
+
 # Response Compression Middleware
 
 A middleware that compresses response bodies based on the `Accept-Encoding` header, supporting multiple algorithms

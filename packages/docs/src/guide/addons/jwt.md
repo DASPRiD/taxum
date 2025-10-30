@@ -1,3 +1,7 @@
+---
+description: How to handle JWT authentication with jose.
+---
+
 # JWT Authentication
 
 Taxum provides JWT authentication via middleware, powered by [jose](https://github.com/panva/jose).

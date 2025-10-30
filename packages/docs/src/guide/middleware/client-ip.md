@@ -1,3 +1,7 @@
+---
+description: Retrieve the client IP address from an incoming request. 
+---
+
 # Client IP Middleware
 
 The Client IP middleware extracts the originating IP address of an incoming HTTP request and stores it in the request

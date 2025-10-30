@@ -1,3 +1,7 @@
+---
+description: Creating and registering middleware. 
+---
+
 # Middleware
 
 ## Intro

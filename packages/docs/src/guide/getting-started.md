@@ -1,3 +1,7 @@
+---
+description: How to install Taxum and create a small API with just a few lines of code.
+---
+
 # Getting Started
 
 ## Overview

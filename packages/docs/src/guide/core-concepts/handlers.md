@@ -1,3 +1,7 @@
+---
+description: How to return responses from handlers.
+---
+
 # Handlers
 
 A handler is a function that takes an HTTP request and produces a response. Handlers are flexible, they don’t need to

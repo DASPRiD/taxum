@@ -1,3 +1,7 @@
+---
+description: Assigning a logger framework to Taxum.
+---
+
 # Logging
 
 By default, any logs will be logged to the `console` as is. You might want to modify this to use your preferred logging

@@ -1,3 +1,7 @@
+---
+description: Emit CORS headers in your responses. 
+---
+
 # CORS Middleware
 
 A middleware that sets CORS headers on responses, including support for preflight requests (OPTIONS) and fine-grained

@@ -1,3 +1,7 @@
+---
+description: Inject headers into requests and responses. 
+---
+
 # Set Header Middleware
 
 The set header middleware allows you to insert, override, or append HTTP headers on both incoming requests and

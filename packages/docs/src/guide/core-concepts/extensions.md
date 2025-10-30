@@ -1,3 +1,7 @@
+---
+description: Setting and tracking state within the request lifecycle.
+---
+
 # Extensions
 
 Taxum allows keeping track of state within the request lifecycle through extensions. Extensions are typed values on the

@@ -1,3 +1,7 @@
+---
+description: Extracting request information into handler arguments. 
+---
+
 # Extract Handlers
 
 An extract handler is a special kind of request handler that allows you to automatically extract and validate pieces of

@@ -1,3 +1,7 @@
+---
+description: Handling errors thrown from middleware and handlers.
+---
+
 # Error Handling
 
 In Taxum, errors are handled after every registered layer and handler. The default behavior is as follows:

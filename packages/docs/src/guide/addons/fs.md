@@ -1,3 +1,7 @@
+---
+description: How to serve static files from your filesystem. 
+---
+
 # Serving Static Files
 
 Taxum supports serving static files from your filesystem via the {@link @taxum/fs!ServeDir | ServeDir} service.
