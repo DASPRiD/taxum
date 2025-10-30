@@ -2,8 +2,8 @@ import * as fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { type DefaultTheme, defineConfig } from "vitepress";
 import { groupIconMdPlugin, groupIconVitePlugin } from "vitepress-plugin-group-icons";
-import { withMermaid } from "vitepress-plugin-mermaid";
 import llmstxt from "vitepress-plugin-llms";
+import { withMermaid } from "vitepress-plugin-mermaid";
 
 let typedocSidebar: DefaultTheme.SidebarItem[];
 
@@ -35,11 +35,7 @@ export default withMermaid(
                 groupIconVitePlugin(),
                 llmstxt({
                     generateLLMsFullTxt: false,
-                    ignoreFiles: [
-                        "guide/index.md",
-                        "api/index.md",
-                        "api/packages.md",
-                    ],
+                    ignoreFiles: ["guide/index.md", "api/index.md", "api/packages.md"],
                 }),
             ],
         },
