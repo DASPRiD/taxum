@@ -8,7 +8,7 @@
 import assert from "node:assert";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
-import { HttpRequest } from "../http/index.js";
+import { HttpRequest, HttpResponse, StatusCode } from "../http/index.js";
 import { getLoggerProxy } from "../logging/index.js";
 import type { HttpService } from "../service/index.js";
 
@@ -92,8 +92,19 @@ export type ServeConfig = {
  */
 export const serve = async (service: HttpService, config?: ServeConfig): Promise<void> => {
     const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+        let httpRequests: HttpRequest;
+
         try {
-            const httpRequests = HttpRequest.fromIncomingMessage(req, config?.trustProxy ?? false);
+            httpRequests = HttpRequest.fromIncomingMessage(req, config?.trustProxy ?? false);
+        } catch {
+            const response = HttpResponse.builder()
+                .status(StatusCode.BAD_REQUEST)
+                .body("Malformed HTTP request");
+            await response.write(res);
+            return;
+        }
+
+        try {
             const response = await service.invoke(httpRequests);
             await response.write(res);
         } catch (error) {

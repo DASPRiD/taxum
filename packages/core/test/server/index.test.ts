@@ -55,6 +55,29 @@ describe("server:index", () => {
             assert.match(spy.mock.calls[0].arguments[0], /Uncaught error in router/i);
         });
 
+        it("handles malformed request", async () => {
+            const service = makeMockService(() => {
+                throw new Error("Should not be called");
+            });
+            const controller = new AbortController();
+
+            const config: ServeConfig = {
+                trustProxy: true,
+                onListen: async ({ port }) => {
+                    const response = await fetch(`http://localhost:${port}`, {
+                        headers: {
+                            "x-forwarded-host": "invalid@host",
+                        },
+                    });
+                    assert(response.status === 400);
+                    controller.abort();
+                },
+                abortSignal: controller.signal,
+            };
+
+            await serve(service, config);
+        });
+
         it("calls onListen with address info", async () => {
             let listenCalled = false;
             const service = makeMockService(() => noContentResponse[TO_HTTP_RESPONSE]());

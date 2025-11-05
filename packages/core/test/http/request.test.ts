@@ -100,6 +100,17 @@ describe("http:request", () => {
             const parts = Parts.fromIncomingMessage(message, false);
             assert.equal(parts.method.value, "");
         });
+
+        it("fromIncomingMessage throws error on invalid host", () => {
+            const message = new IncomingMessage();
+            message.method = "GET";
+            message.headers.host = "invalid@host";
+
+            assert.throws(
+                () => Parts.fromIncomingMessage(message, false),
+                /Host injection discovered: invalid@host/,
+            );
+        });
     });
 
     describe("HttpRequest", () => {

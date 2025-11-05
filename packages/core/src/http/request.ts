@@ -74,6 +74,10 @@ export class Parts {
 
         const uri = new URL(`${protocol}://${host}${message.url}`);
 
+        if (uri.host !== host) {
+            throw new Error(`Host injection discovered: ${host}`);
+        }
+
         return new Parts(
             Method.fromString(message.method ?? ""),
             uri,
