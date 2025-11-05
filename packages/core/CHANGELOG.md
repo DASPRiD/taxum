@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/DASPRiD/taxum/compare/core-v1.0.1...core-v1.0.2) (2025-11-05)
+
+
+### Bug Fixes
+
+* **core:** prevent host injection ([b256e0b](https://github.com/DASPRiD/taxum/commit/b256e0b923ccc5becc09a0f2b34d7e3e2720b3ca))
+
 ## [1.0.1](https://github.com/DASPRiD/taxum/compare/core-v1.0.0...core-v1.0.1) (2025-10-11)
 
 
