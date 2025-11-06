@@ -73,8 +73,9 @@ export class Parts {
         }
 
         const uri = new URL(`${protocol}://${host}${message.url}`);
+        const inferredPort = uri.port === "" ? (protocol === "http" ? "80" : "443") : uri.port;
 
-        if (uri.host !== host) {
+        if (uri.host !== host && `${uri.hostname}:${inferredPort}` !== host) {
             throw new Error(`Host injection discovered: ${host}`);
         }
 

@@ -111,6 +111,15 @@ describe("http:request", () => {
                 /Host injection discovered: invalid@host/,
             );
         });
+
+        it("fromIncomingMessage throws no error on valid host with default port", () => {
+            const message = new IncomingMessage();
+            message.method = "GET";
+            message.headers["x-forwarded-proto"] = "http";
+            message.headers["x-forwarded-host"] = "proxy.com:80";
+
+            Parts.fromIncomingMessage(message, true);
+        });
     });
 
     describe("HttpRequest", () => {
