@@ -1,7 +1,7 @@
 {
     "name": "@taxum/cookie",
     "description": "Cookie jar for Taxum",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "type": "module",
     "author": "Ben Scholzen 'DASPRiD'",
     "license": "BSD-3-Clause",
