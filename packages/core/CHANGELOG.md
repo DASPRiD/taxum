@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/DASPRiD/taxum/compare/core-v1.0.2...core-v1.0.3) (2025-11-06)
+
+
+### Bug Fixes
+
+* **core:** allow host headers with default ports ([b6953e9](https://github.com/DASPRiD/taxum/commit/b6953e9dfca7083c0766f82e64e1fc532fbc1668))
+
 ## [1.0.2](https://github.com/DASPRiD/taxum/compare/core-v1.0.1...core-v1.0.2) (2025-11-05)
 
 
