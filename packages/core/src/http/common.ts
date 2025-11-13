@@ -55,9 +55,7 @@ export const jsonResponse = (value: JsonSerializable): ToHttpResponse => ({
  */
 export const htmlResponse = (html: string): ToHttpResponse => ({
     [TO_HTTP_RESPONSE]: (): HttpResponse => {
-        return HttpResponse.builder()
-            .header("content-type", "text/html")
-            .body(JSON.stringify(html));
+        return HttpResponse.builder().header("content-type", "text/html").body(html);
     },
 });
 

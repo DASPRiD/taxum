@@ -40,7 +40,7 @@ describe("http:common", () => {
             assert.equal(res.headers.get("content-type")?.value, "text/html");
 
             const body = await consumers.text(res.body.readable);
-            assert.equal(body, JSON.stringify(html));
+            assert.equal(body, html);
         });
     });
 
