@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/DASPRiD/taxum/compare/core-v1.0.3...core-v1.0.4) (2025-11-13)
+
+
+### Bug Fixes
+
+* **core:** do not stringify HTML responses as JSON ([66127ff](https://github.com/DASPRiD/taxum/commit/66127ff327f11072a0951e0a28f5d314a5239595))
+
 ## [1.0.3](https://github.com/DASPRiD/taxum/compare/core-v1.0.2...core-v1.0.3) (2025-11-06)
 
 
