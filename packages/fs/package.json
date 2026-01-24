@@ -37,7 +37,7 @@
     },
     "dependencies": {
         "@taxum/core": "workspace:*",
-        "mime": "^4.0.7",
+        "mime": "^4.1.0",
         "range-parser": "^1.2.1"
     },
     "devDependencies": {

@@ -7,12 +7,12 @@
         "cytoscape": "^3.33.1",
         "cytoscape-cose-bilkent": "^4.1.0",
         "dayjs": "^1.11.19",
-        "mermaid": "^11.12.1",
+        "mermaid": "^11.12.2",
         "vitepress": "2.0.0-alpha.12",
-        "vitepress-plugin-group-icons": "^1.6.5",
-        "vitepress-plugin-llms": "^1.8.1",
+        "vitepress-plugin-group-icons": "^1.7.1",
+        "vitepress-plugin-llms": "^1.10.0",
         "vitepress-plugin-mermaid": "^2.0.17",
-        "vue": "^3.5.22"
+        "vue": "^3.5.27"
     },
     "scripts": {
         "start": "vitepress dev",

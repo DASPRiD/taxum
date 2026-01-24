@@ -1,6 +1,6 @@
 import consumers from "node:stream/consumers";
+import { MIMEType } from "node:util";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import MIMEType from "whatwg-mimetype";
 import { type HeaderMap, type HttpRequest, StatusCode } from "../http/index.js";
 import { ClientError } from "../util/index.js";
 import { ValidationError } from "./error.js";

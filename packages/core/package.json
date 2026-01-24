@@ -187,15 +187,13 @@
         }
     },
     "dependencies": {
-        "@standard-schema/spec": "^1.0.0",
-        "find-my-way": "^9.3.0",
-        "nested-search-params": "^1.0.0",
-        "ts-pattern": "^5.8.0",
-        "whatwg-mimetype": "^4.0.0"
+        "@standard-schema/spec": "^1.1.0",
+        "find-my-way": "^9.4.0",
+        "nested-search-params": "^1.0.1",
+        "ts-pattern": "^5.9.0"
     },
     "devDependencies": {
-        "@types/whatwg-mimetype": "^3.0.2",
-        "node-mock-http": "^1.0.3",
-        "zod": "^4.1.12"
+        "node-mock-http": "^1.0.4",
+        "zod": "^4.3.6"
     }
 }
