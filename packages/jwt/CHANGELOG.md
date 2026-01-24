@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/DASPRiD/taxum/compare/jwt-v1.0.5...jwt-v1.1.0) (2026-01-24)
+
+
+### Features
+
+* **core:** replace whatwg-mimetypes with native node:utils ([67c6929](https://github.com/DASPRiD/taxum/commit/67c692911c136e210415b22edfe7786c51706dc7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 1.1.0
+
 ## [1.0.5](https://github.com/DASPRiD/taxum/compare/jwt-v1.0.4...jwt-v1.0.5) (2025-11-13)
 
 

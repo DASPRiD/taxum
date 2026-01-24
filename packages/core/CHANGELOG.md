@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/DASPRiD/taxum/compare/core-v1.0.4...core-v1.1.0) (2026-01-24)
+
+
+### Features
+
+* **core:** replace whatwg-mimetypes with native node:utils ([67c6929](https://github.com/DASPRiD/taxum/commit/67c692911c136e210415b22edfe7786c51706dc7))
+
 ## [1.0.4](https://github.com/DASPRiD/taxum/compare/core-v1.0.3...core-v1.0.4) (2025-11-13)
 
 
