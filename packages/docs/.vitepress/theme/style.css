@@ -130,5 +130,6 @@
  * -------------------------------------------------------------------------- */
 
 .DocSearch {
+    /* biome-ignore lint/complexity/noImportantStyles: defined by vitepress */
     --docsearch-primary-color: var(--vp-c-brand-1) !important;
 }
