@@ -37,7 +37,7 @@ describe("http:common", () => {
             const html = "<h1>Hello</h1>";
             const res = htmlResponse(html)[TO_HTTP_RESPONSE]();
             assert.equal(res.status.code, 200);
-            assert.equal(res.headers.get("content-type")?.value, "text/html");
+            assert.equal(res.headers.get("content-type")?.value, "text/html; charset=utf-8");
 
             const body = await consumers.text(res.body.readable);
             assert.equal(body, html);

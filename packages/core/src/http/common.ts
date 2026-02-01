@@ -53,9 +53,11 @@ export const jsonResponse = (value: JsonSerializable): ToHttpResponse => ({
 /**
  * An HTML response with the content-type header set to text/html.
  */
-export const htmlResponse = (html: string): ToHttpResponse => ({
+export const htmlResponse = (html: string, charset = "utf-8"): ToHttpResponse => ({
     [TO_HTTP_RESPONSE]: (): HttpResponse => {
-        return HttpResponse.builder().header("content-type", "text/html").body(html);
+        return HttpResponse.builder()
+            .header("content-type", `text/html; charset=${charset}`)
+            .body(html);
     },
 });
 
