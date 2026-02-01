@@ -1,7 +1,7 @@
 {
     "name": "@taxum/fs",
     "description": "File system integration for Taxum",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "type": "module",
     "author": "Ben Scholzen 'DASPRiD'",
     "license": "BSD-3-Clause",

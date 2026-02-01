@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/DASPRiD/taxum/compare/core-v1.1.0...core-v1.2.0) (2026-02-01)
+
+
+### Features
+
+* **core:** add charset parameter to HTML response header ([023dcaf](https://github.com/DASPRiD/taxum/commit/023dcaf7f9f6e69936e9ddc35cae81b9d8ca699f))
+
 ## [1.1.0](https://github.com/DASPRiD/taxum/compare/core-v1.0.4...core-v1.1.0) (2026-01-24)
 
 
