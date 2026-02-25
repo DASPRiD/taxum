@@ -178,5 +178,13 @@ describe("cookie", () => {
                 cookie.encode().includes(`Expires=${new Date(Date.UTC(2020, 0, 1)).toUTCString()}`),
             );
         });
+
+        it("handles expires as Temporal.Instant", () => {
+            const dateTime = Temporal.Instant.from("2020-01-01T00:00:00Z");
+            const cookie = new Cookie("a", "b", { expires: dateTime });
+            assert(
+                cookie.encode().includes(`Expires=${new Date(Date.UTC(2020, 0, 1)).toUTCString()}`),
+            );
+        });
     });
 });

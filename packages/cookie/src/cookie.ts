@@ -1,7 +1,7 @@
 import "temporal-spec/global";
 
 export type CookieOptions = {
-    expires?: Date | Temporal.ZonedDateTime;
+    expires?: Date | Temporal.ZonedDateTime | Temporal.Instant;
     maxAge?: number | Temporal.Duration;
     domain?: string;
     path?: string;
@@ -24,7 +24,7 @@ export type CookieOptions = {
 export class Cookie {
     public readonly name: string;
     public readonly value: string;
-    public readonly expires: Date | Temporal.ZonedDateTime | undefined;
+    public readonly expires: Date | Temporal.ZonedDateTime | Temporal.Instant | undefined;
     public readonly maxAge: number | Temporal.Duration | undefined;
     public readonly domain: string | undefined;
     public readonly path: string | undefined;
@@ -150,10 +150,13 @@ export class Cookie {
         if (this.expires) {
             if (this.expires instanceof Date) {
                 parameters.push(`Expires=${this.expires.toUTCString()}`);
-            } else {
-                parameters.push(
-                    `Expires=${new Date(this.expires.toInstant().epochMilliseconds).toUTCString()}`,
-                );
+            } else if (typeof Temporal !== "undefined") {
+                const instant =
+                    this.expires instanceof Temporal.Instant
+                        ? this.expires
+                        : this.expires.toInstant();
+
+                parameters.push(`Expires=${new Date(instant.epochMilliseconds).toUTCString()}`);
             }
         }
 
