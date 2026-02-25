@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/DASPRiD/taxum/compare/cookie-v1.0.6...cookie-v1.1.0) (2026-02-25)
+
+
+### Features
+
+* **cookie:** accept Temporal.Instant as expires value ([5556bf5](https://github.com/DASPRiD/taxum/commit/5556bf5950a77ad5ecff08b719a6c88d26382b88))
+
 ## [1.0.6](https://github.com/DASPRiD/taxum/compare/cookie-v1.0.5...cookie-v1.0.6) (2026-02-01)
 
 
