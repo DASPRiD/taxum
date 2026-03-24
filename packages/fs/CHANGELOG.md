@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.2](https://github.com/DASPRiD/taxum/compare/fs-v1.1.1...fs-v1.1.2) (2026-03-24)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 1.2.1
+
 ## [1.1.1](https://github.com/DASPRiD/taxum/compare/fs-v1.1.0...fs-v1.1.1) (2026-02-01)
 
 

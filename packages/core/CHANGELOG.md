@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/DASPRiD/taxum/compare/core-v1.2.0...core-v1.2.1) (2026-03-24)
+
+
+### Bug Fixes
+
+* **core:** use string | undefined for hostname type ([96493f6](https://github.com/DASPRiD/taxum/commit/96493f63a8340f6a27d3100c902ee25641e1bfd1))
+
 ## [1.2.0](https://github.com/DASPRiD/taxum/compare/core-v1.1.0...core-v1.2.0) (2026-02-01)
 
 
