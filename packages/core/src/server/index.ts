@@ -28,7 +28,7 @@ export type ServeConfig = {
      *
      * Defaults to not specific binding.
      */
-    hostname?: number | undefined;
+    hostname?: string | undefined;
 
     /**
      * Whether to trust proxy headers.
