@@ -1,10 +1,8 @@
 import assert from "node:assert/strict";
 import { Buffer } from "node:buffer";
-import type { ServerResponse } from "node:http";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import util from "node:util";
-import { callNodeRequestHandler } from "node-mock-http";
 import { Body } from "../../src/http/body.js";
 import {
     ExtensionKey,
@@ -15,6 +13,7 @@ import {
     HttpResponseBuilder,
     StatusCode,
 } from "../../src/http/index.js";
+import { callRequestHandler } from "../mock-http.js";
 
 describe("http:response", () => {
     describe("HttpResponse", () => {
@@ -158,9 +157,9 @@ describe("http:response", () => {
                 const body = Body.from("hello");
                 const res = new HttpResponse(status, headers, body);
 
-                const response = await callNodeRequestHandler(async (_, serverResponse) => {
-                    await res.write(serverResponse as unknown as ServerResponse);
-                }, {});
+                const response = await callRequestHandler(async (_, serverResponse) => {
+                    await res.write(serverResponse);
+                });
 
                 assert.equal(response.headers["content-type"], "text/plain");
                 assert.equal(response.status, 200);

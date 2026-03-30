@@ -3,7 +3,6 @@ import { SocketAddress } from "node:net";
 import { describe, it } from "node:test";
 import type { TLSSocket } from "node:tls";
 import util from "node:util";
-import { IncomingMessage } from "node-mock-http";
 import {
     Body,
     ExtensionKey,
@@ -15,6 +14,7 @@ import {
     Method,
     Parts,
 } from "../../src/http/index.js";
+import { createIncomingMessage } from "../mock-http.js";
 
 describe("http:request", () => {
     describe("Parts", () => {
@@ -39,11 +39,14 @@ describe("http:request", () => {
         });
 
         it("fromIncomingMessage parses request with no trustProxy", () => {
-            const message = new IncomingMessage();
+            const message = createIncomingMessage({
+                headers: {
+                    "x-forwarded-proto": "https",
+                    "x-forwarded-host": "proxy.com",
+                    host: "example.com",
+                },
+            });
             message.url = "/path?query=1";
-            message.headers["x-forwarded-proto"] = "https";
-            message.headers["x-forwarded-host"] = "proxy.com";
-            message.headers.host = "example.com";
 
             const parts = Parts.fromIncomingMessage(message, false);
             assert.equal(parts.method.value, "GET");
@@ -53,10 +56,13 @@ describe("http:request", () => {
         });
 
         it("fromIncomingMessage respects x-forwarded headers if trustProxy is true", () => {
-            const message = new IncomingMessage();
+            const message = createIncomingMessage({
+                headers: {
+                    "x-forwarded-proto": "https",
+                    "x-forwarded-host": "proxy.com",
+                },
+            });
             message.method = "POST";
-            message.headers["x-forwarded-proto"] = "https";
-            message.headers["x-forwarded-host"] = "proxy.com";
 
             const parts = Parts.fromIncomingMessage(message, true);
             assert.equal(parts.uri.protocol, "https:");
@@ -66,7 +72,7 @@ describe("http:request", () => {
         });
 
         it("fromIncomingMessage falls back to local protocol and host with missing proxy headers", () => {
-            const message = new IncomingMessage();
+            const message = createIncomingMessage();
             (message.socket as unknown as TLSSocket).encrypted = true;
 
             const parts = Parts.fromIncomingMessage(message, true);
@@ -75,9 +81,8 @@ describe("http:request", () => {
         });
 
         it("fromIncomingMessage falls back to host header with missing proxy headers", () => {
-            const message = new IncomingMessage();
+            const message = createIncomingMessage({ headers: { host: "real.com" } });
             (message.socket as unknown as TLSSocket).encrypted = true;
-            message.headers.host = "real.com";
 
             const parts = Parts.fromIncomingMessage(message, true);
             assert.equal(parts.uri.protocol, "https:");
@@ -85,7 +90,7 @@ describe("http:request", () => {
         });
 
         it("fromIncomingMessage falls back to local protocol and host with trustProxy false", () => {
-            const message = new IncomingMessage();
+            const message = createIncomingMessage();
             (message.socket as unknown as TLSSocket).encrypted = true;
 
             const parts = Parts.fromIncomingMessage(message, false);
@@ -94,7 +99,7 @@ describe("http:request", () => {
         });
 
         it("fromIncomingMessage does not crash with missing method", () => {
-            const message = new IncomingMessage();
+            const message = createIncomingMessage();
             (message.method as string | undefined) = undefined;
 
             const parts = Parts.fromIncomingMessage(message, false);
@@ -102,9 +107,7 @@ describe("http:request", () => {
         });
 
         it("fromIncomingMessage throws error on invalid host", () => {
-            const message = new IncomingMessage();
-            message.method = "GET";
-            message.headers.host = "invalid@host";
+            const message = createIncomingMessage({ headers: { host: "invalid@host" } });
 
             assert.throws(
                 () => Parts.fromIncomingMessage(message, false),
@@ -113,10 +116,12 @@ describe("http:request", () => {
         });
 
         it("fromIncomingMessage throws no error on valid host with default port", () => {
-            const message = new IncomingMessage();
-            message.method = "GET";
-            message.headers["x-forwarded-proto"] = "http";
-            message.headers["x-forwarded-host"] = "proxy.com:80";
+            const message = createIncomingMessage({
+                headers: {
+                    "x-forwarded-proto": "http",
+                    "x-forwarded-host": "proxy.com:80",
+                },
+            });
 
             Parts.fromIncomingMessage(message, true);
         });
@@ -146,8 +151,7 @@ describe("http:request", () => {
         });
 
         it("fromIncomingMessage creates HttpRequest", () => {
-            const message = new IncomingMessage();
-            message.headers.host = "example.com";
+            const message = createIncomingMessage({ headers: { host: "example.com" } });
 
             const req = HttpRequest.fromIncomingMessage(message, false);
             assert.equal(req.method.value, "GET");

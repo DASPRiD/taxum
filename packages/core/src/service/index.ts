@@ -24,11 +24,11 @@ export type HttpService<Response = HttpResponse> = Service<HttpRequest, Response
 // biome-ignore lint/suspicious/noExplicitAny: required for inference
 export type AnyService = Service<any, any>;
 export type UnknownService = Service<unknown, unknown>;
-// biome-ignore lint/suspicious/noExplicitAny: required for inference
 export type InferRequest<S extends AnyService> =
+    // biome-ignore lint/suspicious/noExplicitAny: required for inference
     S extends Service<infer Request, any> ? Request : never;
-// biome-ignore lint/suspicious/noExplicitAny: required for inference
 export type InferResponse<S extends AnyService> =
+    // biome-ignore lint/suspicious/noExplicitAny: required for inference
     S extends Service<any, infer Response> ? Response : never;
 
 export * from "./service-fn.js";

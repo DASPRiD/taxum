@@ -188,12 +188,11 @@
     },
     "dependencies": {
         "@standard-schema/spec": "^1.1.0",
-        "find-my-way": "^9.4.0",
+        "find-my-way": "^9.5.0",
         "nested-search-params": "^1.0.1",
         "ts-pattern": "^5.9.0"
     },
     "devDependencies": {
-        "node-mock-http": "^1.0.4",
         "zod": "^4.3.6"
     }
 }
