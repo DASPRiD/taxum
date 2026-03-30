@@ -97,6 +97,8 @@ describe("cookie", () => {
                 path: "/foo",
                 secure: true,
                 httpOnly: false,
+                sameSite: "Lax",
+                partitioned: true,
             });
             const updated = original.withValue("new");
 
@@ -108,6 +110,8 @@ describe("cookie", () => {
             assert.equal(updated.path, original.path);
             assert.equal(updated.secure, original.secure);
             assert.equal(updated.httpOnly, original.httpOnly);
+            assert.equal(updated.sameSite, original.sameSite);
+            assert.equal(updated.partitioned, original.partitioned);
         });
     });
 

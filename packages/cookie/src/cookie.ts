@@ -98,6 +98,8 @@ export class Cookie {
             path: this.path,
             secure: this.secure,
             httpOnly: this.httpOnly,
+            sameSite: this.sameSite,
+            partitioned: this.partitioned,
         });
     }
 
