@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.3](https://github.com/DASPRiD/taxum/compare/fs-v1.1.2...fs-v1.1.3) (2026-03-30)
+
+
+### Bug Fixes
+
+* **fs:** correct EACCESS typo to EACCES ([f35be92](https://github.com/DASPRiD/taxum/commit/f35be926918625f418910d50f9d12af876508943))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 1.2.2
+
 ## [1.1.2](https://github.com/DASPRiD/taxum/compare/fs-v1.1.1...fs-v1.1.2) (2026-03-24)
 
 

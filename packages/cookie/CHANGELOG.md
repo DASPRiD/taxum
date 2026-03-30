@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.2](https://github.com/DASPRiD/taxum/compare/cookie-v1.1.1...cookie-v1.1.2) (2026-03-30)
+
+
+### Bug Fixes
+
+* **cookie:** preserve sameSite and partitioned in Cookie.withValue() ([5064b28](https://github.com/DASPRiD/taxum/commit/5064b2812caed864a806a0239d735d82cc2e03b9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 1.2.2
+
 ## [1.1.1](https://github.com/DASPRiD/taxum/compare/cookie-v1.1.0...cookie-v1.1.1) (2026-03-24)
 
 
