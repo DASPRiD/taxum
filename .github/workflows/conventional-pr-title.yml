@@ -20,6 +20,7 @@ jobs:
         with:
           scopes: |
             core
+            cookie
             fs
             jwt
             examples
