@@ -53,9 +53,6 @@ importers:
       '@taxum/core':
         specifier: workspace:*
         version: link:../core
-      temporal-spec:
-        specifier: ^0.3.0
-        version: 0.3.0
     devDependencies:
       temporal-polyfill:
         specifier: ^0.3.0

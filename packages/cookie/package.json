@@ -37,8 +37,7 @@
         }
     },
     "dependencies": {
-        "@taxum/core": "workspace:*",
-        "temporal-spec": "^0.3.0"
+        "@taxum/core": "workspace:*"
     },
     "devDependencies": {
         "temporal-polyfill": "^0.3.0"

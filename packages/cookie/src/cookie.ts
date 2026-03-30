@@ -1,8 +1,33 @@
-import "temporal-spec/global";
+declare const Temporal: {
+    Now: {
+        zonedDateTimeISO(): TemporalZonedDateTimeLike;
+    };
+};
+
+/**
+ * A Temporal.Instant-compatible object.
+ */
+type TemporalInstantLike = {
+    readonly epochMilliseconds: number;
+};
+
+/**
+ * A Temporal.ZonedDateTime-compatible object.
+ */
+type TemporalZonedDateTimeLike = {
+    toInstant(): TemporalInstantLike;
+};
+
+/**
+ * A Temporal.Duration-compatible object.
+ */
+type TemporalDurationLike = {
+    total(totalOf: { unit: "seconds" }): number;
+};
 
 export type CookieOptions = {
-    expires?: Date | Temporal.ZonedDateTime | Temporal.Instant;
-    maxAge?: number | Temporal.Duration;
+    expires?: Date | TemporalZonedDateTimeLike | TemporalInstantLike;
+    maxAge?: number | TemporalDurationLike;
     domain?: string;
     path?: string;
     secure?: boolean;
@@ -24,8 +49,8 @@ export type CookieOptions = {
 export class Cookie {
     public readonly name: string;
     public readonly value: string;
-    public readonly expires: Date | Temporal.ZonedDateTime | Temporal.Instant | undefined;
-    public readonly maxAge: number | Temporal.Duration | undefined;
+    public readonly expires: Date | TemporalZonedDateTimeLike | TemporalInstantLike | undefined;
+    public readonly maxAge: number | TemporalDurationLike | undefined;
     public readonly domain: string | undefined;
     public readonly path: string | undefined;
     public readonly secure: boolean | undefined;
@@ -143,20 +168,20 @@ export class Cookie {
             if (typeof this.maxAge === "number") {
                 parameters.push(`Max-Age=${Math.max(0, Math.floor(this.maxAge))}`);
             } else {
-                parameters.push(
-                    `Max-Age=${Math.max(0, this.maxAge.total({ unit: "seconds", relativeTo: Temporal.Now.zonedDateTimeISO() }))}`,
-                );
+                const totalOf = {
+                    unit: "seconds" as const,
+                    relativeTo: Temporal.Now.zonedDateTimeISO(),
+                };
+                parameters.push(`Max-Age=${Math.max(0, this.maxAge.total(totalOf))}`);
             }
         }
 
         if (this.expires) {
             if (this.expires instanceof Date) {
                 parameters.push(`Expires=${this.expires.toUTCString()}`);
-            } else if (typeof Temporal !== "undefined") {
+            } else {
                 const instant =
-                    this.expires instanceof Temporal.Instant
-                        ? this.expires
-                        : this.expires.toInstant();
+                    "toInstant" in this.expires ? this.expires.toInstant() : this.expires;
 
                 parameters.push(`Expires=${new Date(instant.epochMilliseconds).toUTCString()}`);
             }
