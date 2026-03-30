@@ -28,7 +28,7 @@ describe("serve-dir", () => {
         openFileMock.mock.resetCalls();
     });
 
-    for (const code of ["ENOENT", "ENOTDIR", "EACCESS"]) {
+    for (const code of ["ENOENT", "ENOTDIR", "EACCES"]) {
         it(`returns 404 if openFile throws ${code} and no fallback`, async () => {
             openFileMock.mock.mockImplementationOnce(async () => {
                 const error = new Error("FS error");

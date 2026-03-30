@@ -257,7 +257,7 @@ export class ServeDir implements HttpService {
                 throw error;
             }
 
-            if (error.code === "ENOENT" || error.code === "ENOTDIR" || error.code === "EACCESS") {
+            if (error.code === "ENOENT" || error.code === "ENOTDIR" || error.code === "EACCES") {
                 return this.handleNotFound(req);
             }
 
