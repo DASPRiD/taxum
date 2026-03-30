@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/DASPRiD/taxum/compare/core-v1.2.1...core-v1.2.2) (2026-03-30)
+
+
+### Bug Fixes
+
+* **core:** rename eror-handler.ts to error-handler.ts ([31fc9fd](https://github.com/DASPRiD/taxum/commit/31fc9fdb232283bd6d332e84381920b02f023692))
+
 ## [1.2.1](https://github.com/DASPRiD/taxum/compare/core-v1.2.0...core-v1.2.1) (2026-03-24)
 
 
