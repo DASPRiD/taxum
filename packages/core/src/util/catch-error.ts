@@ -1,7 +1,7 @@
 import { type HttpRequest, HttpResponse } from "../http/index.js";
 import type { HttpLayer, Layer } from "../layer/index.js";
 import type { HttpService } from "../service/index.js";
-import { getErrorHandler } from "./eror-handler.js";
+import { getErrorHandler } from "./error-handler.js";
 
 /**
  * A {@link Layer} that produces {@link CatchError} services.
