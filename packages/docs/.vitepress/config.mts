@@ -100,6 +100,10 @@ export default withMermaid(
                                 link: "/guide/core-concepts/logging",
                             },
                             {
+                                text: "Server-Sent Events",
+                                link: "/guide/core-concepts/sse",
+                            },
+                            {
                                 text: "Graceful Shutdown",
                                 link: "/guide/core-concepts/graceful-shutdown",
                             },

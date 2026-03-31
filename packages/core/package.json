@@ -161,6 +161,14 @@
             "taxum": "./src/routing/index.ts",
             "default": "./dist/routing/index.js"
         },
+        "./sse": {
+            "types": [
+                "./dist/sse/index.d.ts",
+                "./src/sse/index.ts"
+            ],
+            "taxum": "./src/sse/index.ts",
+            "default": "./dist/sse/index.js"
+        },
         "./server": {
             "types": [
                 "./dist/server/index.d.ts",
