@@ -100,6 +100,10 @@ export default withMermaid(
                                 link: "/guide/core-concepts/logging",
                             },
                             {
+                                text: "Server-Sent Events",
+                                link: "/guide/core-concepts/sse",
+                            },
+                            {
                                 text: "Testing",
                                 link: "/guide/core-concepts/testing",
                             },
