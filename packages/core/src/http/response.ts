@@ -1,5 +1,6 @@
 import type { ServerResponse } from "node:http";
 import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import type util from "node:util";
 import { Body, type BodyLike, isBodyLike } from "./body.js";
 import { type ExtensionKey, Extensions } from "./extensions.js";
@@ -110,13 +111,15 @@ export class HttpResponse {
 
         const stream = Readable.fromWeb(this.body.readable);
 
-        return new Promise<void>((resolve, reject) => {
-            stream.pipe(res);
+        try {
+            await pipeline(stream, res);
+        } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === "ERR_STREAM_PREMATURE_CLOSE") {
+                return;
+            }
 
-            res.on("finish", resolve);
-            res.on("error", reject);
-            stream.on("error", reject);
-        });
+            throw error;
+        }
     }
 
     public toJSON(): Record<string, unknown> {

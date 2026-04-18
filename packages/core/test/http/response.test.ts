@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import { Buffer } from "node:buffer";
+import http from "node:http";
+import type { AddressInfo } from "node:net";
+import { Readable } from "node:stream";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import util from "node:util";
@@ -164,6 +167,67 @@ describe("http:response", () => {
                 assert.equal(response.headers["content-type"], "text/plain");
                 assert.equal(response.status, 200);
                 assert.deepEqual(response.body, Buffer.from([104, 101, 108, 108, 111]));
+            });
+
+            it("destroys source stream and settles when client aborts", async () => {
+                const source = new Readable({
+                    read: () => {
+                        source.push(Buffer.alloc(1024, "x"));
+                    },
+                });
+
+                const res = new HttpResponse(StatusCode.OK, new HeaderMap(), Body.from(source));
+
+                let writePromise: Promise<void> | undefined;
+
+                const server = http.createServer((_req, serverRes) => {
+                    writePromise = res.write(serverRes);
+                });
+
+                await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+                const { port } = server.address() as AddressInfo;
+
+                try {
+                    const controller = new AbortController();
+                    const response = await fetch(`http://127.0.0.1:${port}`, {
+                        signal: controller.signal,
+                    });
+
+                    const reader = response.body?.getReader();
+                    assert(reader);
+                    await reader.read();
+                    controller.abort();
+                    await reader.cancel().catch(() => undefined);
+
+                    assert(writePromise);
+                    await Promise.race([
+                        writePromise.catch(() => undefined),
+                        new Promise<void>((_, reject) =>
+                            setTimeout(
+                                () => reject(new Error("write() did not settle after abort")),
+                                500,
+                            ),
+                        ),
+                    ]);
+
+                    const destroyed = await Promise.race([
+                        new Promise<boolean>((resolve) => {
+                            if (source.destroyed) {
+                                resolve(true);
+                                return;
+                            }
+                            source.once("close", () => resolve(source.destroyed));
+                        }),
+                        new Promise<boolean>((resolve) =>
+                            setTimeout(() => resolve(source.destroyed), 500),
+                        ),
+                    ]);
+
+                    assert(destroyed, "source stream should be destroyed on client abort");
+                } finally {
+                    source.destroy();
+                    await new Promise<void>((resolve) => server.close(() => resolve()));
+                }
             });
         });
 
