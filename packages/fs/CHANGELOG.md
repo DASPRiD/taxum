@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.4](https://github.com/DASPRiD/taxum/compare/fs-v1.1.3...fs-v1.1.4) (2026-04-18)
+
+
+### Bug Fixes
+
+* **fs:** close file handle on range errors in ServeDir ([9414ec4](https://github.com/DASPRiD/taxum/commit/9414ec463034f0d9c480d772a174ddac5470a125))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 1.2.3
+
 ## [1.1.3](https://github.com/DASPRiD/taxum/compare/fs-v1.1.2...fs-v1.1.3) (2026-03-30)
 
 

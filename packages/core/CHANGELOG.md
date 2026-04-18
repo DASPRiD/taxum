@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.3](https://github.com/DASPRiD/taxum/compare/core-v1.2.2...core-v1.2.3) (2026-04-18)
+
+
+### Bug Fixes
+
+* **core:** destroy body stream on client abort in HttpResponse.write ([eff6e3b](https://github.com/DASPRiD/taxum/commit/eff6e3b7f1a530efb42a5692a8258f9dbdba4754))
+
 ## [1.2.2](https://github.com/DASPRiD/taxum/compare/core-v1.2.1...core-v1.2.2) (2026-03-30)
 
 
