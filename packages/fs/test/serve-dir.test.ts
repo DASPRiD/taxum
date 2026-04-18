@@ -313,6 +313,35 @@ describe("serve-dir", () => {
         assert.equal(res.status, StatusCode.RANGE_NOT_SATISFIABLE);
     });
 
+    it("closes file handle when range header is invalid on GET", async () => {
+        let closeCalled = false;
+
+        openFileMock.mock.mockImplementationOnce(async () => ({
+            type: "file_opened",
+            extent: {
+                type: "full",
+                stats: { size: 10 } as Stats,
+                file: {
+                    createReadStream: () => Readable.from("stream"),
+                    close: async () => {
+                        closeCalled = true;
+                    },
+                } as fs.FileHandle,
+            },
+            range: new Error(),
+            lastModified: new Date(),
+            encoding: null,
+            mime: "text/plain",
+        }));
+
+        const service = new ServeDir("testdir");
+        const req = HttpRequest.builder().path("/file.txt").body(null);
+
+        const res = await service.invoke(req);
+        assert.equal(res.status, StatusCode.RANGE_NOT_SATISFIABLE);
+        assert(closeCalled, "file.close() should be called when range is invalid");
+    });
+
     it("returns 416 when range header has no ranges", async () => {
         const range = [] as unknown as Ranges;
         range.type = "bytes";
@@ -337,6 +366,37 @@ describe("serve-dir", () => {
         );
     });
 
+    it("closes file handle when range header has no ranges on GET", async () => {
+        let closeCalled = false;
+        const range = [] as unknown as Ranges;
+        range.type = "bytes";
+
+        openFileMock.mock.mockImplementationOnce(async () => ({
+            type: "file_opened",
+            extent: {
+                type: "full",
+                stats: { size: 10 } as Stats,
+                file: {
+                    createReadStream: () => Readable.from("stream"),
+                    close: async () => {
+                        closeCalled = true;
+                    },
+                } as fs.FileHandle,
+            },
+            range,
+            lastModified: new Date(),
+            encoding: null,
+            mime: "text/plain",
+        }));
+
+        const service = new ServeDir("testdir");
+        const req = HttpRequest.builder().path("/file.txt").body(null);
+
+        const res = await service.invoke(req);
+        assert.equal(res.status, StatusCode.RANGE_NOT_SATISFIABLE);
+        assert(closeCalled, "file.close() should be called when range has no entries");
+    });
+
     it("returns 416 when range header has more than one range", async () => {
         const range = [{}, {}] as unknown as Ranges;
         range.type = "bytes";
@@ -359,6 +419,37 @@ describe("serve-dir", () => {
             await consumers.text(res.body.readable),
             "Cannot serve multipart range requests",
         );
+    });
+
+    it("closes file handle when range header has more than one range on GET", async () => {
+        let closeCalled = false;
+        const range = [{}, {}] as unknown as Ranges;
+        range.type = "bytes";
+
+        openFileMock.mock.mockImplementationOnce(async () => ({
+            type: "file_opened",
+            extent: {
+                type: "full",
+                stats: { size: 10 } as Stats,
+                file: {
+                    createReadStream: () => Readable.from("stream"),
+                    close: async () => {
+                        closeCalled = true;
+                    },
+                } as fs.FileHandle,
+            },
+            range,
+            lastModified: new Date(),
+            encoding: null,
+            mime: "text/plain",
+        }));
+
+        const service = new ServeDir("testdir");
+        const req = HttpRequest.builder().path("/file.txt").body(null);
+
+        const res = await service.invoke(req);
+        assert.equal(res.status, StatusCode.RANGE_NOT_SATISFIABLE);
+        assert(closeCalled, "file.close() should be called when range is multipart");
     });
 
     it("returns ranged HEAD response", async () => {

@@ -13,6 +13,7 @@ import {
 import { getLoggerProxy } from "@taxum/core/logging";
 import { SetStatusLayer } from "@taxum/core/middleware/set-status";
 import type { HttpService } from "@taxum/core/service";
+import type { Range, Ranges } from "range-parser";
 import { type OpenFileOutput, openFile } from "./open-file.js";
 import { isErrnoException } from "./util.js";
 /* node:coverage enable */
@@ -294,7 +295,23 @@ export class ServeDir implements HttpService {
     }
 }
 
-const buildResponse = (output: OpenFileOutput & { type: "file_opened" }): HttpResponse => {
+const buildResponse = async (
+    output: OpenFileOutput & { type: "file_opened" },
+): Promise<HttpResponse> => {
+    try {
+        return await buildResponseInner(output);
+    } catch (error) {
+        if (output.extent.type === "full") {
+            await output.extent.file.close();
+        }
+
+        throw error;
+    }
+};
+
+const buildResponseInner = async (
+    output: OpenFileOutput & { type: "file_opened" },
+): Promise<HttpResponse> => {
     const builder = HttpResponse.builder()
         .header("content-type", output.mime)
         .header("accept-ranges", "bytes")
@@ -316,28 +333,20 @@ const buildResponse = (output: OpenFileOutput & { type: "file_opened" }): HttpRe
         return builder.body(output.extent.file.createReadStream());
     }
 
-    if (output.range instanceof Error) {
+    const classified = classifyRange(output.range);
+
+    if (!classified.ok) {
+        if (output.extent.type === "full") {
+            await output.extent.file.close();
+        }
+
         return builder
             .header("content-range", `bytes */${size}`)
             .status(StatusCode.RANGE_NOT_SATISFIABLE)
-            .body(null);
+            .body(classified.body);
     }
 
-    if (output.range.length === 0) {
-        return builder
-            .header("content-range", `bytes */${size}`)
-            .status(StatusCode.RANGE_NOT_SATISFIABLE)
-            .body("No range found after parsing range header, please file an issue");
-    }
-
-    if (output.range.length > 1) {
-        return builder
-            .header("content-range", `bytes */${size}`)
-            .status(StatusCode.RANGE_NOT_SATISFIABLE)
-            .body("Cannot serve multipart range requests");
-    }
-
-    const { start, end } = output.range[0];
+    const { start, end } = classified.range;
     const contentLength = size === 0 ? 0 : end - start + 1;
 
     builder
@@ -350,6 +359,27 @@ const buildResponse = (output: OpenFileOutput & { type: "file_opened" }): HttpRe
     }
 
     return builder.body(output.extent.file.createReadStream({ start, end }));
+};
+
+type ClassifiedRange = { ok: true; range: Range } | { ok: false; body: string | null };
+
+const classifyRange = (range: Ranges | Error): ClassifiedRange => {
+    if (range instanceof Error) {
+        return { ok: false, body: null };
+    }
+
+    if (range.length === 0) {
+        return {
+            ok: false,
+            body: "No range found after parsing range header, please file an issue",
+        };
+    }
+
+    if (range.length > 1) {
+        return { ok: false, body: "Cannot serve multipart range requests" };
+    }
+
+    return { ok: true, range: range[0] };
 };
 
 export class PrecompressedVariants implements SupportedEncodings {
