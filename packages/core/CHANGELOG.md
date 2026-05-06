@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.4](https://github.com/DASPRiD/taxum/compare/core-v1.2.3...core-v1.2.4) (2026-05-06)
+
+
+### Bug Fixes
+
+* **core:** swallow more client-abort errors in HttpResponse.write ([08c0369](https://github.com/DASPRiD/taxum/commit/08c03697827e40078ce5afb051b9c22ed6c81db8))
+
 ## [1.2.3](https://github.com/DASPRiD/taxum/compare/core-v1.2.2...core-v1.2.3) (2026-04-18)
 
 
