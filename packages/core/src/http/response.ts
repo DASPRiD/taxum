@@ -114,8 +114,16 @@ export class HttpResponse {
         try {
             await pipeline(stream, res);
         } catch (error) {
-            if ((error as NodeJS.ErrnoException).code === "ERR_STREAM_PREMATURE_CLOSE") {
+            if (res.destroyed || res.req.destroyed) {
                 return;
+            }
+
+            if (error instanceof Error && "code" in error) {
+                const code = error.code;
+
+                if (code === "ERR_STREAM_PREMATURE_CLOSE" || code === "ERR_STREAM_UNABLE_TO_PIPE") {
+                    return;
+                }
             }
 
             throw error;
