@@ -8,7 +8,7 @@ Taxum is a composable, type-safe HTTP framework for Node.js inspired by Rust's A
 
 ## Commands
 
-- **Build all**: `pnpm build`
+- **Build all**: `pnpm -r build`
 - **Test all**: `pnpm test`
 - **Test single package**: `cd packages/core && pnpm test`
 - **Test single file**: `cd packages/core && npx tsx --test test/some-test.ts`
