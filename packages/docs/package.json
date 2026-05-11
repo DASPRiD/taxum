@@ -7,7 +7,7 @@
         "cytoscape": "^3.33.3",
         "cytoscape-cose-bilkent": "^4.1.0",
         "dayjs": "^1.11.20",
-        "mermaid": "^11.14.0",
+        "mermaid": "^11.15.0",
         "vitepress": "2.0.0-alpha.17",
         "vitepress-plugin-group-icons": "^1.7.5",
         "vitepress-plugin-llms": "^1.12.2",
