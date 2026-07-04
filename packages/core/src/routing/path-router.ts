@@ -272,9 +272,13 @@ class Node {
     public readonly pathToRouteId = new Map<string, number>();
 
     public insert(path: string, routeId: number): void {
+        // Attempt the find-my-way registration first: it throws on a
+        // duplicate or overlapping path, and the id maps must not be mutated
+        // when that happens, or they would be left pointing at a route id that
+        // has no corresponding entry.
+        this.findMyWay.on("GET", path, NOOP_HANDLER, { routeId });
         this.routeIdToPath.set(routeId, path);
         this.pathToRouteId.set(path, routeId);
-        this.findMyWay.on("GET", path, NOOP_HANDLER, { routeId });
     }
 
     public at(path: string): Match | null {

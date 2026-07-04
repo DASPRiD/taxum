@@ -223,6 +223,43 @@ describe("routing:PathRouter", () => {
         assert.equal(await consumers.text(postRes.body.readable), "POST OK");
     });
 
+    it("keeps the route maps consistent when a conflicting registration throws", async () => {
+        const router = PathRouter.default();
+        router.route(
+            "/keep",
+            m.get(() => "get"),
+        );
+
+        assert.throws(() => {
+            router.routeEndpoint("/keep", Endpoint.route(new Route({ invoke: async () => "svc" })));
+        });
+
+        // A different, validly-registered route dispatches normally.
+        router.route(
+            "/other",
+            m.get(() => "other"),
+        );
+
+        // Re-registering a method on the conflicting path must merge rather than
+        // trip the "no registered method router" assertion that a half-updated
+        // id map would leave behind.
+        router.route(
+            "/keep",
+            m.post(() => "post"),
+        );
+
+        const otherRes = await router.invoke(makeRequest("/other"));
+        assert.equal(await consumers.text(otherRes.body.readable), "other");
+
+        const getRes = await router.invoke(makeRequest("/keep"));
+        assert.equal(await consumers.text(getRes.body.readable), "get");
+
+        const postRes = await router.invoke(
+            HttpRequest.builder().method("POST").path("/keep").body(null),
+        );
+        assert.equal(await consumers.text(postRes.body.readable), "post");
+    });
+
     it("throws if nesting path contains only a wildcard segment", () => {
         const router = PathRouter.default();
         const nested = PathRouter.default();

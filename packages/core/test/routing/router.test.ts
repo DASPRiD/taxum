@@ -46,6 +46,24 @@ describe("routing:Router", () => {
         assert.equal(await consumers.text(res.body.readable), "oops");
     });
 
+    it("sets content-length on a HEAD request handled by a custom fallback", async () => {
+        const body = "hello fallback";
+        const expectedLength = Buffer.byteLength(body).toString();
+
+        const router = new Router();
+        router.fallback(() => body);
+
+        const getRes = await router.invoke(
+            HttpRequest.builder().method("GET").path("/nope").body(null),
+        );
+        assert.equal(getRes.headers.get("content-length")?.value, expectedLength);
+
+        const headRes = await router.invoke(
+            HttpRequest.builder().method("HEAD").path("/nope").body(null),
+        );
+        assert.equal(headRes.headers.get("content-length")?.value, expectedLength);
+    });
+
     it("can reset fallback to default", async () => {
         const router = new Router();
         router.fallback(() => StatusCode.NO_CONTENT);
