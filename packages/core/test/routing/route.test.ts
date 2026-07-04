@@ -120,6 +120,28 @@ describe("routing:route", () => {
         await withTimeout(cancellation, 500, "discarded HEAD body was not cancelled");
     });
 
+    it("ignores cancellation errors from the discarded body", async () => {
+        const stream = new ReadableStream<Uint8Array>({
+            pull: (controller) => {
+                controller.enqueue(new TextEncoder().encode("data"));
+            },
+            cancel: () => {
+                throw new Error("cancel failed");
+            },
+        });
+
+        const route = new Route({
+            invoke: async () => HttpResponse.builder().body(stream),
+        });
+
+        const req = HttpRequest.builder().method("HEAD").body(null);
+        const res = await route.invokeInner(req);
+
+        assert.equal(await consumers.text(res.body.readable), "");
+        // An unhandled rejection from the discarded body would fail this test.
+        await delay(10);
+    });
+
     it("cancels the discarded streaming body for CONNECT responses", async (t) => {
         t.mock.method(console, "error", () => {
             // Suppress console.error
