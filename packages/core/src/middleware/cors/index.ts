@@ -321,7 +321,7 @@ export class CorsLayer implements HttpLayer {
     }
 
     private ensureUsableCorsRules(): void {
-        if (!this.allowCredentials_.isTrue()) {
+        if (!this.allowCredentials_.isPossiblyTrue()) {
             return;
         }
 
