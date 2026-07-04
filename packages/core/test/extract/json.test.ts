@@ -61,6 +61,28 @@ describe("extract:json", () => {
         await assert.rejects(async () => extract(req), MissingJsonContentTypeError);
     });
 
+    it("throws MissingJsonContentTypeError if content-type is malformed", async () => {
+        const req = HttpRequest.builder()
+            .method("POST")
+            .header("Content-Type", "application")
+            .body('{ "foo": "bar" }');
+
+        const extract = json(schema);
+        await assert.rejects(async () => extract(req), MissingJsonContentTypeError);
+    });
+
+    it("parses valid JSON body with content-type parameters", async () => {
+        const req = HttpRequest.builder()
+            .method("POST")
+            .header("Content-Type", "application/json; charset=UTF-8")
+            .body('{ "foo": "bar" }');
+
+        const extract = json(schema);
+        const result = await extract(req);
+
+        assert.deepEqual(result, { foo: "bar" });
+    });
+
     it("throws MalformedJsonError for invalid JSON syntax", async () => {
         const req = HttpRequest.builder()
             .method("POST")
