@@ -48,10 +48,11 @@ export type ServeConfig = {
     catchCtrlC?: boolean;
 
     /**
-     * Maximum time (in milliseconds) to wait before returning.
+     * Maximum time (in milliseconds) to wait for open connections to close during shutdown.
      *
-     * This will `unref` the server once the timeout expired and return early. The server will still be open until your
-     * program exits.
+     * Once the timeout expires, all remaining connections are forcefully closed and their
+     * response body streams are cancelled. Without this, the server waits indefinitely for
+     * long-running responses (e.g. streams) to finish.
      */
     shutdownTimeout?: number;
 
@@ -91,22 +92,34 @@ export type ServeConfig = {
  * ```
  */
 export const serve = async (service: HttpService, config?: ServeConfig): Promise<void> => {
-    const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-        let httpRequests: HttpRequest;
+    let closing = false;
+
+    const writeResponse = async (response: HttpResponse, res: ServerResponse): Promise<void> => {
+        if (closing) {
+            // Tell keep-alive clients to stop reusing this connection; Node.js closes the
+            // socket once the response has finished.
+            response.headers.insert("connection", "close");
+        }
+
+        await response.write(res);
+    };
+
+    const respond = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+        let httpRequest: HttpRequest;
 
         try {
-            httpRequests = HttpRequest.fromIncomingMessage(req, config?.trustProxy ?? false);
+            httpRequest = HttpRequest.fromIncomingMessage(req, config?.trustProxy ?? false);
         } catch {
             const response = HttpResponse.builder()
                 .status(StatusCode.BAD_REQUEST)
                 .body("Malformed HTTP request");
-            await response.write(res);
+            await writeResponse(response, res);
             return;
         }
 
         try {
-            const response = await service.invoke(httpRequests);
-            await response.write(res);
+            const response = await service.invoke(httpRequest);
+            await writeResponse(response, res);
         } catch (error) {
             getLoggerProxy().error("Uncaught error in router", { error });
 
@@ -118,14 +131,22 @@ export const serve = async (service: HttpService, config?: ServeConfig): Promise
                 // Noop
             }
         }
+    };
+
+    const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+        await respond(req, res);
+
+        // Responses whose headers were already sent when shutdown began cannot carry a
+        // `connection: close` header, so their sockets must be torn down explicitly once the
+        // response has finished.
+        if (closing && !req.socket.destroyed) {
+            req.socket.destroySoon();
+        }
     });
 
     if (config?.unrefOnStart) {
         server.unref();
     }
-
-    const abortController = new AbortController();
-    let closing = false;
 
     const closeServer = (): void => {
         /* node:coverage ignore next 3 */
@@ -142,9 +163,13 @@ export const serve = async (service: HttpService, config?: ServeConfig): Promise
         server.close();
 
         if (config?.shutdownTimeout) {
-            setTimeout(() => {
-                abortController.abort();
+            const forceCloseTimer = setTimeout(() => {
+                server.closeAllConnections();
             }, config.shutdownTimeout);
+
+            server.once("close", () => {
+                clearTimeout(forceCloseTimer);
+            });
         }
     };
 
@@ -171,10 +196,6 @@ export const serve = async (service: HttpService, config?: ServeConfig): Promise
             );
 
             config?.onListen?.(address);
-        });
-
-        abortController.signal.addEventListener("abort", () => {
-            resolve();
         });
     });
 };
