@@ -150,6 +150,30 @@ describe("http:response", () => {
                 assert.equal(res.headers.get("c")?.value, "d");
                 assert.equal(res.status, StatusCode.OK);
             });
+
+            it("cancels a discarded leading response body", { timeout: 1000 }, async () => {
+                const { promise: cancellation, resolve: cancelled } = Promise.withResolvers<void>();
+                const leadingBody = new Body(
+                    new ReadableStream<Uint8Array>({
+                        cancel: () => {
+                            cancelled();
+                        },
+                    }),
+                );
+                const leadingRes = new HttpResponse(StatusCode.OK, new HeaderMap(), leadingBody);
+
+                const res = HttpResponse.from([leadingRes, "replacement"]);
+
+                await cancellation;
+                assert.equal(await consumers.text(res.body.readable), "replacement");
+            });
+
+            it("keeps the body when the same response is both leading and trailing part", async () => {
+                const original = HttpResponse.builder().body("payload");
+                const res = HttpResponse.from([original, original]);
+
+                assert.equal(await consumers.text(res.body.readable), "payload");
+            });
         });
 
         describe("write()", () => {

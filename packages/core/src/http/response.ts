@@ -61,6 +61,14 @@ export class HttpResponse {
             res.status = first.status;
             res.headers.extend(first.headers);
             res.extensions.extend(first.extensions);
+
+            if (first.body.readable !== res.body.readable) {
+                first.body.readable.cancel().catch(() => {
+                    // The leading response's body is replaced by the trailing part, so
+                    // errors from cancelling the discarded stream are of no interest.
+                });
+            }
+
             return res;
         }
 
