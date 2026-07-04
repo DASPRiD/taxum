@@ -5,15 +5,23 @@ import { setTimeout as delay } from "node:timers/promises";
 import {
     Body,
     HeaderMap,
+    type HttpRequest,
     HttpResponse,
     noContentResponse,
     StatusCode,
     TO_HTTP_RESPONSE,
 } from "../../src/http/index.js";
-import { type ServeConfig, serve } from "../../src/server/index.js";
+import {
+    DISCONNECT_SIGNAL,
+    type ServeConfig,
+    SHUTDOWN_SIGNAL,
+    serve,
+} from "../../src/server/index.js";
 import type { HttpService } from "../../src/service/index.js";
 
-const makeMockService = (f: () => Promise<HttpResponse> | HttpResponse): HttpService => ({
+const makeMockService = (
+    f: (req: HttpRequest) => Promise<HttpResponse> | HttpResponse,
+): HttpService => ({
     invoke: f,
 });
 
@@ -397,6 +405,188 @@ describe("server:index", () => {
             } finally {
                 socket?.destroy();
             }
+        });
+
+        it("aborts the disconnect signal when the client disconnects mid-response", async () => {
+            const encoder = new TextEncoder();
+            const { promise: disconnected, resolve: sawDisconnect } = Promise.withResolvers<void>();
+
+            const service = makeMockService((req) => {
+                const signal = req.extensions.get(DISCONNECT_SIGNAL);
+                assert(signal);
+                signal.addEventListener("abort", () => sawDisconnect());
+
+                async function* endlessChunks(): AsyncGenerator<Uint8Array> {
+                    while (true) {
+                        yield encoder.encode("data: ping\n\n");
+                        await delay(20);
+                    }
+                }
+
+                return new HttpResponse(
+                    StatusCode.OK,
+                    new HeaderMap(),
+                    new Body(ReadableStream.from(endlessChunks())),
+                );
+            });
+
+            const serverController = new AbortController();
+
+            const config: ServeConfig = {
+                abortSignal: serverController.signal,
+                onListen: async ({ port }) => {
+                    const fetchController = new AbortController();
+                    const response = await fetch(`http://localhost:${port}`, {
+                        signal: fetchController.signal,
+                    });
+                    await response.body?.getReader().read();
+                    fetchController.abort();
+
+                    await withTimeout(
+                        disconnected,
+                        1000,
+                        "disconnect signal was not aborted on client disconnect",
+                    ).finally(() => {
+                        serverController.abort();
+                    });
+                },
+            };
+
+            await withTimeout(serve(service, config), 2000, "serve() did not resolve");
+            await disconnected;
+        });
+
+        it("aborts the disconnect signal when a connection is force-closed at the deadline", async () => {
+            const encoder = new TextEncoder();
+            const { promise: disconnected, resolve: sawDisconnect } = Promise.withResolvers<void>();
+
+            const service = makeMockService((req) => {
+                const signal = req.extensions.get(DISCONNECT_SIGNAL);
+                assert(signal);
+                signal.addEventListener("abort", () => sawDisconnect());
+
+                async function* endlessChunks(): AsyncGenerator<Uint8Array> {
+                    while (true) {
+                        yield encoder.encode("data: ping\n\n");
+                        await delay(20);
+                    }
+                }
+
+                return new HttpResponse(
+                    StatusCode.OK,
+                    new HeaderMap(),
+                    new Body(ReadableStream.from(endlessChunks())),
+                );
+            });
+
+            const controller = new AbortController();
+            let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+
+            const config: ServeConfig = {
+                shutdownTimeout: 200,
+                abortSignal: controller.signal,
+                onListen: async ({ port }) => {
+                    const response = await fetch(`http://localhost:${port}`);
+                    reader = response.body?.getReader();
+                    await reader?.read();
+                    controller.abort();
+                },
+            };
+
+            try {
+                await withTimeout(serve(service, config), 2000, "serve() did not resolve");
+                await withTimeout(
+                    disconnected,
+                    1000,
+                    "disconnect signal was not aborted on force-close",
+                );
+            } finally {
+                await reader?.cancel().catch(() => undefined);
+            }
+        });
+
+        it("does not abort the disconnect signal when the response completes normally", async () => {
+            let disconnectSignal: AbortSignal | undefined;
+
+            const service = makeMockService((req) => {
+                disconnectSignal = req.extensions.get(DISCONNECT_SIGNAL);
+                return HttpResponse.builder().body("hello");
+            });
+
+            const controller = new AbortController();
+
+            const config: ServeConfig = {
+                abortSignal: controller.signal,
+                onListen: async ({ port }) => {
+                    const response = await fetch(`http://localhost:${port}`);
+                    await response.text();
+                    controller.abort();
+                },
+            };
+
+            await withTimeout(serve(service, config), 2000, "serve() did not resolve");
+
+            assert(disconnectSignal);
+            assert(!disconnectSignal.aborted, "disconnect signal must not abort on completion");
+        });
+
+        it("allows streaming responses to end cooperatively via the shutdown signal", async () => {
+            const encoder = new TextEncoder();
+            let clientBody = "";
+
+            const service = makeMockService((req) => {
+                const shutdownSignal = req.extensions.get(SHUTDOWN_SIGNAL);
+                assert(shutdownSignal);
+
+                async function* events(signal: AbortSignal): AsyncGenerator<Uint8Array> {
+                    while (!signal.aborted) {
+                        yield encoder.encode("data: ping\n\n");
+                        await delay(20);
+                    }
+
+                    yield encoder.encode("data: bye\n\n");
+                }
+
+                return new HttpResponse(
+                    StatusCode.OK,
+                    new HeaderMap(),
+                    new Body(ReadableStream.from(events(shutdownSignal))),
+                );
+            });
+
+            const controller = new AbortController();
+            const { promise: clientDone, resolve: clientFinished } = Promise.withResolvers<void>();
+
+            const config: ServeConfig = {
+                abortSignal: controller.signal,
+                onListen: async ({ port }) => {
+                    const response = await fetch(`http://localhost:${port}`);
+                    const reader = response.body?.getReader();
+                    assert(reader);
+                    await reader.read();
+                    controller.abort();
+
+                    const decoder = new TextDecoder();
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+
+                        if (done) {
+                            break;
+                        }
+
+                        clientBody += decoder.decode(value);
+                    }
+
+                    clientFinished();
+                },
+            };
+
+            // No shutdownTimeout: shutdown completes through cooperation alone.
+            await withTimeout(serve(service, config), 2000, "serve() did not resolve");
+            await withTimeout(clientDone, 1000, "client did not receive the end of the stream");
+
+            assert.match(clientBody, /data: bye/);
         });
     });
 });

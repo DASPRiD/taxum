@@ -100,6 +100,10 @@ export default withMermaid(
                                 link: "/guide/core-concepts/logging",
                             },
                             {
+                                text: "Graceful Shutdown",
+                                link: "/guide/core-concepts/graceful-shutdown",
+                            },
+                            {
                                 text: "Testing",
                                 link: "/guide/core-concepts/testing",
                             },

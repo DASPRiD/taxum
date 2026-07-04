@@ -8,9 +8,44 @@
 import assert from "node:assert";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
-import { HttpRequest, HttpResponse, StatusCode } from "../http/index.js";
+import { ExtensionKey, HttpRequest, HttpResponse, StatusCode } from "../http/index.js";
 import { getLoggerProxy } from "../logging/index.js";
 import type { HttpService } from "../service/index.js";
+
+/**
+ * Extension containing an {@link AbortSignal} which is aborted when the connection is closed
+ * before the response has finished, whether because the client disconnected or because the
+ * connection was forcefully closed when {@link ServeConfig.shutdownTimeout} expired.
+ *
+ * Once this signal aborts, nothing the handler produces can be delivered anymore, so any
+ * ongoing work for the response should be cancelled.
+ *
+ * Absent on requests which were not created by {@link serve}.
+ *
+ * @example
+ * ```ts
+ * import { extension } from "@taxum/core/extract";
+ * import { DISCONNECT_SIGNAL } from "@taxum/core/server";
+ *
+ * const handler = createExtractHandler(extension(DISCONNECT_SIGNAL))((signal) => {
+ *     // ...
+ * });
+ * ```
+ */
+export const DISCONNECT_SIGNAL = new ExtensionKey<AbortSignal>("Disconnect signal");
+
+/**
+ * Extension containing an {@link AbortSignal} which is aborted when the server begins its
+ * graceful shutdown.
+ *
+ * In contrast to {@link DISCONNECT_SIGNAL}, the connection is still writable when this signal
+ * aborts. Long-running responses (e.g. Server-Sent Event streams) should finish up promptly,
+ * possibly emitting a final message; otherwise they are forcefully terminated once the
+ * configured {@link ServeConfig.shutdownTimeout} expires.
+ *
+ * Absent on requests which were not created by {@link serve}.
+ */
+export const SHUTDOWN_SIGNAL = new ExtensionKey<AbortSignal>("Shutdown signal");
 
 /**
  * Configuration options for starting a server.
@@ -93,6 +128,7 @@ export type ServeConfig = {
  */
 export const serve = async (service: HttpService, config?: ServeConfig): Promise<void> => {
     let closing = false;
+    const shutdownController = new AbortController();
 
     const writeResponse = async (response: HttpResponse, res: ServerResponse): Promise<void> => {
         if (closing) {
@@ -116,6 +152,17 @@ export const serve = async (service: HttpService, config?: ServeConfig): Promise
             await writeResponse(response, res);
             return;
         }
+
+        const disconnectController = new AbortController();
+
+        res.once("close", () => {
+            if (!res.writableFinished) {
+                disconnectController.abort();
+            }
+        });
+
+        httpRequest.extensions.insert(DISCONNECT_SIGNAL, disconnectController.signal);
+        httpRequest.extensions.insert(SHUTDOWN_SIGNAL, shutdownController.signal);
 
         try {
             const response = await service.invoke(httpRequest);
@@ -160,6 +207,7 @@ export const serve = async (service: HttpService, config?: ServeConfig): Promise
         process.removeAllListeners("SIGTERM");
 
         closing = true;
+        shutdownController.abort();
         server.close();
 
         if (config?.shutdownTimeout) {
