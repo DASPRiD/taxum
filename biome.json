@@ -10,13 +10,14 @@
             "!**/.vitepress/cache/**/*",
             "!**/dist/**/*",
             "!**/package.json",
-            "!**/coverage/**/*"
+            "!**/coverage/**/*",
+            "!**/public/**/*.svg"
         ]
     },
     "linter": {
         "enabled": true,
         "rules": {
-            "recommended": true,
+            "preset": "recommended",
             "complexity": {
                 "noExcessiveCognitiveComplexity": "warn",
                 "useSimplifiedLogicExpression": "error"

@@ -1,4 +1,5 @@
 import "temporal-polyfill/global";
+import "temporal-polyfill/types/global";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { Cookie } from "../src/index.js";
