@@ -58,7 +58,6 @@ The `Sse` class sets the following response headers automatically:
 
 - `Content-Type: text/event-stream`
 - `Cache-Control: no-cache`
-- `Connection: keep-alive`
 
 ## Event fields
 
@@ -141,8 +140,8 @@ import { m, Router } from "@taxum/core/routing";
 import type { HttpRequest } from "@taxum/core/http";
 
 const handler = (req: HttpRequest) => {
-    const lastId = req.headers.get("last-event-id")?.value;
-    const startFrom = lastId ? Number.parseInt(lastId, 10) + 1 : 0;
+    const lastId = Number.parseInt(req.headers.get("last-event-id")?.value ?? "", 10);
+    const startFrom = Number.isNaN(lastId) ? 0 : lastId + 1;
 
     async function* events(): AsyncGenerator<SseEvent> {
         for (let i = startFrom; i < 100; i++) {
