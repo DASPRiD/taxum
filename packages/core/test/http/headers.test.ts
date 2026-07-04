@@ -127,6 +127,31 @@ describe("http:headers", () => {
             assert.deepEqual(map.getAll("hello"), [new HeaderValue("world")]);
         });
 
+        it("extend preserves multiple values for the same key", () => {
+            const map = new HeaderMap();
+            map.extend([
+                ["set-cookie", new HeaderValue("a=1")],
+                ["set-cookie", new HeaderValue("b=2")],
+            ]);
+            assert.deepEqual(map.getAll("set-cookie"), [
+                new HeaderValue("a=1"),
+                new HeaderValue("b=2"),
+            ]);
+        });
+
+        it("extend replaces an existing key with the first value then appends the rest", () => {
+            const map = new HeaderMap();
+            map.insert("set-cookie", "stale=1");
+            map.extend([
+                ["set-cookie", new HeaderValue("a=1")],
+                ["set-cookie", new HeaderValue("b=2")],
+            ]);
+            assert.deepEqual(map.getAll("set-cookie"), [
+                new HeaderValue("a=1"),
+                new HeaderValue("b=2"),
+            ]);
+        });
+
         it("toJSON includes all header values", () => {
             const map = HeaderMap.from([
                 ["x-a", "1"],
