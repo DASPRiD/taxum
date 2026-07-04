@@ -167,3 +167,60 @@ const event: SseEvent = {
     data: "hello",
 };
 ```
+
+## Graceful shutdown
+
+An SSE stream never ends on its own, so it blocks a [graceful shutdown](/guide/core-concepts/graceful-shutdown) until
+the `shutdownTimeout` force-closes the connection. End the stream cooperatively instead: the `SHUTDOWN_SIGNAL`
+extension aborts the moment shutdown begins, while the connection is still writable, so you can send a final event
+with a `retry` hint before closing:
+
+```ts
+import { extension } from "@taxum/core/extract";
+import { createExtractHandler } from "@taxum/core/routing";
+import { SHUTDOWN_SIGNAL } from "@taxum/core/server";
+import { Sse, type SseEvent } from "@taxum/core/sse";
+
+const handler = createExtractHandler(extension(SHUTDOWN_SIGNAL, true)).handler(
+    (shutdownSignal) => {
+        async function* events(): AsyncGenerator<SseEvent> {
+            let counter = 0;
+
+            while (!shutdownSignal.aborted) {
+                yield { id: String(counter++), data: "tick" };
+                await sleep(1000);
+            }
+
+            yield { retry: 5000, comment: "server shutting down" };
+        }
+
+        return new Sse(events());
+    },
+);
+```
+
+The client's `EventSource` reconnects after the `retry` delay, resuming against a fresh server instance via
+`Last-Event-ID` as shown above. When every stream ends cooperatively, the server shuts down without waiting for the
+timeout.
+
+## Client disconnects
+
+When the client disconnects, the event stream is cancelled automatically. For an async generator this runs its
+`finally` blocks, which is the place to release resources:
+
+```ts
+async function* events(): AsyncGenerator<SseEvent> {
+    const subscription = pubsub.subscribe("news");
+
+    try {
+        for await (const message of subscription) {
+            yield { data: message };
+        }
+    } finally {
+        subscription.unsubscribe();
+    }
+}
+```
+
+If your producer performs work outside the generator, the `DISCONNECT_SIGNAL` extension provides the same information
+as an `AbortSignal`; see [Graceful Shutdown](/guide/core-concepts/graceful-shutdown#disconnect-signal).
