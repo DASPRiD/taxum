@@ -5,6 +5,7 @@ import type { TLSSocket } from "node:tls";
 import util from "node:util";
 import {
     Body,
+    CONNECT_INFO,
     ExtensionKey,
     Extensions,
     HeaderMap,
@@ -157,6 +158,74 @@ describe("http:request", () => {
             assert.equal(req.method.value, "GET");
             assert.equal(req.uri.host, "example.com");
             assert.equal(req.version, "1.1");
+        });
+
+        it("stores connectInfo as CONNECT_INFO extension", () => {
+            const parts = new Parts(Method.GET, new URL("http://a"), "1.1", new HeaderMap());
+            const req = new HttpRequest(
+                parts,
+                Body.from(""),
+                SocketAddress.parse("127.0.0.1:8080"),
+            );
+
+            assert.equal(req.extensions.get(CONNECT_INFO)?.address, "127.0.0.1");
+            assert.equal(req.extensions.get(CONNECT_INFO)?.port, 8080);
+        });
+
+        it("lets constructor connectInfo override an existing CONNECT_INFO extension", () => {
+            const extensions = new Extensions();
+            const existing = SocketAddress.parse("10.0.0.1:1234");
+            assert(existing);
+            extensions.insert(CONNECT_INFO, existing);
+
+            const parts = new Parts(
+                Method.GET,
+                new URL("http://a"),
+                "1.1",
+                new HeaderMap(),
+                extensions,
+            );
+            const req = new HttpRequest(
+                parts,
+                Body.from(""),
+                SocketAddress.parse("127.0.0.1:8080"),
+            );
+
+            assert.equal(req.extensions.get(CONNECT_INFO)?.address, "127.0.0.1");
+        });
+
+        it("preserves CONNECT_INFO through withBody and withUri", () => {
+            const parts = new Parts(Method.GET, new URL("http://a"), "1.1", new HeaderMap());
+            const req = new HttpRequest(
+                parts,
+                Body.from(""),
+                SocketAddress.parse("127.0.0.1:8080"),
+            );
+
+            const rebuilt = req.withBody(Body.from("x")).withUri(new URL("http://b"));
+
+            assert.equal(rebuilt.extensions.get(CONNECT_INFO)?.address, "127.0.0.1");
+        });
+
+        it("fromIncomingMessage inserts CONNECT_INFO from the socket", () => {
+            const message = createIncomingMessage({ headers: { host: "example.com" } });
+            Object.defineProperty(message.socket, "remoteAddress", { value: "10.1.2.3" });
+            Object.defineProperty(message.socket, "remoteFamily", { value: "IPv4" });
+            Object.defineProperty(message.socket, "remotePort", { value: 54321 });
+
+            const req = HttpRequest.fromIncomingMessage(message, false);
+
+            assert.equal(req.extensions.get(CONNECT_INFO)?.address, "10.1.2.3");
+            assert.equal(req.extensions.get(CONNECT_INFO)?.port, 54321);
+        });
+
+        it("fromIncomingMessage omits CONNECT_INFO when the socket has no remote address", () => {
+            const message = createIncomingMessage({ headers: { host: "example.com" } });
+
+            const req = HttpRequest.fromIncomingMessage(message, false);
+
+            assert.equal(req.extensions.get(CONNECT_INFO), undefined);
+            assert.equal(req.connectInfo.address, "0.0.0.0");
         });
 
         it("accessor getters return correct properties", () => {

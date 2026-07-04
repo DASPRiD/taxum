@@ -7,6 +7,19 @@ import { CLIENT_IP, SetClientIpLayer } from "../../src/middleware/client-ip.js";
 describe("middleware/client-ip", () => {
     const dummyResponse = HttpResponse.builder().body(null);
 
+    it("throws when connect info is absent", async () => {
+        const innerService = {
+            invoke: async () => dummyResponse,
+        };
+
+        const layer = new SetClientIpLayer(false);
+        const service = layer.layer(innerService);
+
+        const req = HttpRequest.builder().body(null);
+
+        await assert.rejects(async () => service.invoke(req), /requires connect info/);
+    });
+
     it("inserts connectInfo.address as client IP when trustProxy is false", async () => {
         const connectInfo = new SocketAddress({ address: "192.168.1.100" });
         const innerService = {
