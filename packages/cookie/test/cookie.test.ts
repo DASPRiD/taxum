@@ -37,6 +37,17 @@ describe("cookie", () => {
             const cookie = new Cookie("empty");
             assert.equal(cookie.value, "");
         });
+
+        it("rejects control characters in the path", () => {
+            assert.throws(() => new Cookie("name", "value", { path: "/a\r\nb" }), TypeError);
+        });
+
+        it("rejects a ';' separator in the domain", () => {
+            assert.throws(
+                () => new Cookie("name", "value", { domain: "evil.com; Path=/" }),
+                TypeError,
+            );
+        });
     });
 
     describe("parse()", () => {
@@ -60,6 +71,19 @@ describe("cookie", () => {
 
         it("returns null if name is empty", () => {
             assert.equal(Cookie.parse("=value"), null);
+        });
+
+        it("keeps '=' characters in the value", () => {
+            const parsed = Cookie.parse("token=a=b=c");
+            assert(parsed);
+            assert.equal(parsed.name, "token");
+            assert.equal(parsed.value, "a=b=c");
+        });
+
+        it("passes through malformed percent-encoding instead of throwing", () => {
+            const parsed = Cookie.parse("foo=%");
+            assert(parsed);
+            assert.equal(parsed.value, "%");
         });
     });
 
@@ -168,6 +192,11 @@ describe("cookie", () => {
             const duration = Temporal.Duration.from({ years: 1 });
             const cookie = new Cookie("a", "b", { maxAge: duration });
             assert(cookie.encode().includes("Max-Age="));
+        });
+
+        it("floors a fractional Max-Age from a Temporal.Duration", () => {
+            const cookie = new Cookie("a", "b", { maxAge: { total: () => 1.5 } });
+            assert.match(cookie.encode(), /Max-Age=1$/);
         });
 
         it("handles expires as Date", () => {

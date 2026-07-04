@@ -1,4 +1,4 @@
-import { type BinaryLike, createHmac, type KeyObject } from "node:crypto";
+import { type BinaryLike, createHmac, type KeyObject, timingSafeEqual } from "node:crypto";
 import type { Cookie } from "./cookie.js";
 import type { CookieJar } from "./jar.js";
 
@@ -84,6 +84,10 @@ export class SignedJar {
         hmac.update(value);
         const actualDigest = hmac.digest();
 
-        return digest.equals(actualDigest) ? value : null;
+        if (digest.length !== actualDigest.length) {
+            return null;
+        }
+
+        return timingSafeEqual(digest, actualDigest) ? value : null;
     }
 }

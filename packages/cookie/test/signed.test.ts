@@ -37,6 +37,12 @@ describe("signed", () => {
         assert.equal(jar.get("secure")?.value, "tampered-value");
     });
 
+    it("returns null for a too-short signature without throwing", () => {
+        const { signed, jar } = makeSignedJar();
+        jar.add(new Cookie("x", "short"));
+        assert.equal(signed.get("x"), null);
+    });
+
     it("roundtrip with known key and pre-signed values", () => {
         const keyBytes = Uint8Array.from([
             89, 202, 200, 125, 230, 90, 197, 245, 166, 249, 34, 169, 135, 31, 20, 197, 94, 154, 254,
