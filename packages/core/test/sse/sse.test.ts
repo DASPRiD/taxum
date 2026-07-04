@@ -246,6 +246,33 @@ describe("sse:Sse", () => {
             assert.equal(done, true);
         });
 
+        it("does not arm the keep-alive timer until the body is read", async () => {
+            const { stream } = createControllableStream();
+
+            const sse = new Sse(stream).keepAlive({ interval: 30 });
+            const reader = sse[TO_HTTP_RESPONSE]().body.readable.getReader();
+
+            // Wait well past several intervals without reading. With eager arming a keep-alive
+            // would already be buffered; with lazy arming nothing is produced until the read.
+            await delay(120);
+
+            let resolvedEarly = false;
+            const read = reader.read().then((result) => {
+                resolvedEarly = true;
+                return result;
+            });
+
+            // Far shorter than the interval: the first read must still be pending, proving no
+            // keep-alive was buffered before the read armed the timer.
+            await delay(5);
+            assert.equal(resolvedEarly, false);
+
+            const { value } = await read;
+            assert.equal(new TextDecoder().decode(value), ": \n\n");
+
+            await reader.cancel();
+        });
+
         it("uses custom keep-alive comment", async () => {
             const { stream, close } = createControllableStream();
 
