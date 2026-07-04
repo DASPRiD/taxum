@@ -24,6 +24,9 @@ jobs:
             fs
             jwt
             examples
+            docs
+            deps
+            deps-dev
           subjectPattern: ^(?![A-Z]).+$
           subjectPatternError: |
             The subject "{subject}" found in the pull request title "{title}"
