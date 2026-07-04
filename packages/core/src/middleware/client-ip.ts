@@ -1,5 +1,5 @@
 import { isIP } from "node:net";
-import { ExtensionKey, type HttpRequest, type HttpResponse } from "../http/index.js";
+import { CONNECT_INFO, ExtensionKey, type HttpRequest, type HttpResponse } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
 import type { HttpService } from "../service/index.js";
 
@@ -53,15 +53,25 @@ class SetClientIp implements HttpService {
     }
 
     public async invoke(req: HttpRequest): Promise<HttpResponse> {
+        const connectInfo = req.extensions.get(CONNECT_INFO);
+
+        if (connectInfo === undefined) {
+            throw new Error(
+                "SetClientIp requires connect info. The CONNECT_INFO extension is inserted by " +
+                    "HttpRequest.fromIncomingMessage(); when building requests manually, insert " +
+                    "the extension yourself.",
+            );
+        }
+
         if (!this.trustProxy) {
-            req.extensions.insert(CLIENT_IP, req.connectInfo.address);
+            req.extensions.insert(CLIENT_IP, connectInfo.address);
             return this.inner.invoke(req);
         }
 
         const forwardedFor = req.headers.get("x-forwarded-for");
 
         if (!forwardedFor) {
-            req.extensions.insert(CLIENT_IP, req.connectInfo.address);
+            req.extensions.insert(CLIENT_IP, connectInfo.address);
             return this.inner.invoke(req);
         }
 
@@ -71,7 +81,7 @@ class SetClientIp implements HttpService {
             .filter((ip) => isIP(ip) !== 0);
 
         if (ips.length === 0) {
-            req.extensions.insert(CLIENT_IP, req.connectInfo.address);
+            req.extensions.insert(CLIENT_IP, connectInfo.address);
             return this.inner.invoke(req);
         }
 

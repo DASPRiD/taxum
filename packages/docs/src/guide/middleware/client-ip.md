@@ -24,7 +24,8 @@ const router = new Router()
 
 ## How It Works
 
-1. If `trustProxy` is **false** (default), the layer uses the direct remote address from the request.
+1. If `trustProxy` is **false** (default), the layer uses the connection's remote address from the `CONNECT_INFO`
+   extension.
 2. If `trustProxy` is **true**, the layer checks the `X-Forwarded-For` header and returns the first valid IP.
 3. If no valid proxy header is found, the remote address is used as a fallback.
 
@@ -34,6 +35,18 @@ const router = new Router()
 - Should be applied **after** any rate-limiting or logging layers that rely on the client IP.
 - If behind multiple proxies, make sure your trusted proxy chain is properly configured, otherwise spoofed
   `X-Forwarded-For` headers could be used.
+- The layer requires the `CONNECT_INFO` extension and throws when it is missing. It is present on all requests
+  handled through `serve()` or created via `HttpRequest.fromIncomingMessage()`. When testing routes behind this
+  layer with manually built requests, insert it yourself:
+
+```ts
+import { SocketAddress } from "node:net";
+import { CONNECT_INFO, HttpRequest } from "@taxum/core/http";
+
+const req = HttpRequest.builder()
+    .extension(CONNECT_INFO, new SocketAddress({ address: "192.0.2.1", family: "ipv4" }))
+    .body(null);
+```
 
 ## Layer Ordering
 

@@ -2,9 +2,22 @@ import type { IncomingMessage } from "node:http";
 import { SocketAddress } from "node:net";
 import type util from "node:util";
 import { Body, type BodyLike } from "./body.js";
-import { type ExtensionKey, Extensions } from "./extensions.js";
+import { ExtensionKey, Extensions } from "./extensions.js";
 import { HeaderMap, type HeaderValueLike } from "./headers.js";
 import { Method } from "./method.js";
+
+/**
+ * Extension containing the {@link SocketAddress} of the connection a request was received on.
+ *
+ * Inserted by {@link HttpRequest.fromIncomingMessage}. Absent on requests without an underlying
+ * connection, e.g. requests built manually in tests, unless inserted explicitly.
+ */
+export const CONNECT_INFO = new ExtensionKey<SocketAddress>("Connect info");
+
+const FALLBACK_CONNECT_INFO = new SocketAddress({
+    address: "0.0.0.0",
+    family: "ipv4",
+});
 
 /**
  * Represents the components of an HTTP request, encapsulating method, URI,
@@ -95,20 +108,33 @@ export class Parts {
 export class HttpRequest {
     public readonly head: Parts;
     public readonly body: Body;
-    public readonly connectInfo: SocketAddress;
 
     /**
      * Creates a new {@link HttpRequest}.
+     *
+     * @param connectInfo - stored as {@link CONNECT_INFO} extension, overriding any present
+     *                      value. Deprecated; insert the extension directly instead.
      */
     public constructor(head: Parts, body: Body, connectInfo?: SocketAddress) {
         this.head = head;
         this.body = body;
-        this.connectInfo =
-            connectInfo ??
-            new SocketAddress({
-                address: "0.0.0.0",
-                family: "ipv4",
-            });
+
+        if (connectInfo !== undefined) {
+            head.extensions.insert(CONNECT_INFO, connectInfo);
+        }
+    }
+
+    /**
+     * The {@link SocketAddress} of the connection the request was received on.
+     *
+     * Returns a `0.0.0.0` placeholder when no connect info is present.
+     *
+     * @deprecated Use the {@link CONNECT_INFO} extension instead, which is absent rather than
+     *             a placeholder when a request has no underlying connection. This getter will
+     *             be removed in the next major version.
+     */
+    public get connectInfo(): SocketAddress {
+        return this.extensions.get(CONNECT_INFO) ?? FALLBACK_CONNECT_INFO;
     }
 
     /**
@@ -125,15 +151,18 @@ export class HttpRequest {
      *      parameter.
      */
     public static fromIncomingMessage(message: IncomingMessage, trustProxy: boolean): HttpRequest {
+        const { remoteAddress, remoteFamily, remotePort } = message.socket;
+
         return new HttpRequest(
             Parts.fromIncomingMessage(message, trustProxy),
             Body.from(message),
-            new SocketAddress({
-                address:
-                    message.socket.remoteAddress === "" ? "0.0.0.0" : message.socket.remoteAddress,
-                family: message.socket.remoteFamily === "IPv6" ? "ipv6" : "ipv4",
-                port: message.socket.remotePort,
-            }),
+            remoteAddress !== undefined && remoteAddress !== ""
+                ? new SocketAddress({
+                      address: remoteAddress,
+                      family: remoteFamily === "IPv6" ? "ipv6" : "ipv4",
+                      port: remotePort,
+                  })
+                : undefined,
         );
     }
 
@@ -141,14 +170,14 @@ export class HttpRequest {
      * Creates a new {@link HttpRequest} with the provided body.
      */
     public withBody(body: Body): HttpRequest {
-        return new HttpRequest(this.head, body, this.connectInfo);
+        return new HttpRequest(this.head, body);
     }
 
     /**
      * Creates a new {@link HttpRequest} with the provided URI.
      */
     public withUri(uri: URL): HttpRequest {
-        return new HttpRequest(this.head.withUri(uri), this.body, this.connectInfo);
+        return new HttpRequest(this.head.withUri(uri), this.body);
     }
 
     public get method(): Method {
@@ -250,6 +279,10 @@ export class HttpRequestBuilder {
         return this;
     }
 
+    /**
+     * @deprecated Use `extension(CONNECT_INFO, connectInfo)` instead. This method will be
+     *             removed in the next major version.
+     */
     public connectInfo(connectInfo: SocketAddress): this {
         this.connectInfo_ = connectInfo;
         return this;
