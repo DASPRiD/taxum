@@ -44,9 +44,9 @@ Use the `cookieJar` extractor to read and modify cookies inside a handler. Any m
 
 ```ts
 import { cookieJar, Cookie } from "@taxum/cookie";
-import { extractHandler } from "@taxum/core/routing";
+import { createExtractHandler } from "@taxum/core/routing";
 
-const handler = extractHandler(cookieJar, (jar) => {
+const handler = createExtractHandler(cookieJar).handler((jar) => {
     // Add a cookie
     jar.add(new Cookie("foo", "bar"));
 
@@ -63,9 +63,9 @@ Calling `.remove()` will generate a "removal cookie" (empty value, expired) in t
 
 ```ts
 import { cookieJar, Cookie } from "@taxum/cookie";
-import { extractHandler } from "@taxum/core/routing";
+import { createExtractHandler } from "@taxum/core/routing";
 
-const handler = extractHandler(cookieJar, (jar) => {
+const handler = createExtractHandler(cookieJar).handler((jar) => {
     jar.remove(new Cookie("foo"));
 
     return [jar, "cookie removed"];
@@ -78,13 +78,13 @@ Signed cookies ensure **integrity** and **authenticity**. Clients can read value
 forge them.
 
 ```ts
-import { generateKey } from "node:crypto";
+import { generateKeySync } from "node:crypto";
 import { cookieJar, Cookie } from "@taxum/cookie";
-import { extractHandler } from "@taxum/core/routing";
+import { createExtractHandler } from "@taxum/core/routing";
 
-const key = generateKey("hmac", { length: 512 });
+const key = generateKeySync("hmac", { length: 512 });
 
-const handler = extractHandler(cookieJar, (jar) => {
+const handler = createExtractHandler(cookieJar).handler((jar) => {
     const signed = jar.signed(key);
 
     signed.add(new Cookie("secure", "hello"));
@@ -103,13 +103,13 @@ Private cookies are both **encrypted** and **authenticated**, ensuring confident
 authenticity.
 
 ```ts
-import { generateKey } from "node:crypto";
+import { generateKeySync } from "node:crypto";
 import { cookieJar, Cookie } from "@taxum/cookie";
-import { extractHandler } from "@taxum/core/routing";
+import { createExtractHandler } from "@taxum/core/routing";
 
-const key = generateKey("aes", { length: 256 });
+const key = generateKeySync("aes", { length: 256 });
 
-const handler = extractHandler(cookieJar, (jar) => {
+const handler = createExtractHandler(cookieJar).handler((jar) => {
     const priv = jar.private(key);
 
     priv.add(new Cookie("secret", "hidden-value"));

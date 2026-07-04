@@ -13,7 +13,7 @@ can define your own extensions like this:
 ```ts
 import { ExtensionKey } from "@taxum/core/http";
 
-const MY_EXTENSION = new ExtensionKey<string>();
+const MY_EXTENSION = new ExtensionKey<string>("My extension");
 ```
 
 The type parameter you use during construction ensures that only those values can be set and retrieved. You can insert

@@ -59,7 +59,7 @@ Example with [zod](https://github.com/colinhacks/zod) for validation:
 ```ts
 import { pathParam } from "@taxum/core/extract";
 import { jsonResponse } from "@taxum/core/http";
-import { extractHandler, m, Router } from "@taxum/core/routing";
+import { createExtractHandler, m, Router } from "@taxum/core/routing";
 import { serve } from "@taxum/core/server";
 import { z } from "zod";
 
@@ -70,10 +70,9 @@ const listUsers = () => jsonResponse([
 ]);
 
 // Handler with extractor for typed userId
-const getUser = extractHandler(
+const getUser = createExtractHandler(
   pathParam(z.uuid()),
-  (id) => jsonResponse({ id }),
-);
+).handler((id) => jsonResponse({ id }));
 
 const router = new Router()
   .route("/users", m.get(listUsers))

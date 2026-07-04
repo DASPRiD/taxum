@@ -152,7 +152,7 @@ class MyService implements HttpService {
 
     async invoke(req: HttpRequest): Promise<HttpResponse> {
         // Do something with the request
-        const res = await next.invoke(req);
+        const res = await this.inner.invoke(req);
         // Do something with the response
 
         return res;
@@ -183,7 +183,7 @@ class MyService implements HttpService {
 
     async invoke(req: HttpRequest): Promise<HttpResponse> {
         // Do something with the request
-        const res = await next.invoke(req);
+        const res = await this.inner.invoke(req);
         // Do something with the response
 
         return res;
