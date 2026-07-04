@@ -1,9 +1,6 @@
-import { Body } from "../http/body.js";
-import { HeaderMap } from "../http/headers.js";
 import { HttpResponse } from "../http/response.js";
-import { SizeHint } from "../http/size-hint.js";
-import { StatusCode } from "../http/status.js";
 import { TO_HTTP_RESPONSE, type ToHttpResponse } from "../http/to-response.js";
+import { getLoggerProxy } from "../logging/index.js";
 import { type SseEvent, serializeSseEvent } from "./event.js";
 
 /**
@@ -12,6 +9,8 @@ import { type SseEvent, serializeSseEvent } from "./event.js";
 export type SseKeepAliveOptions = {
     /**
      * The interval in milliseconds between keep-alive messages.
+     *
+     * Must be a positive finite number.
      *
      * @defaultValue 15000
      */
@@ -33,6 +32,9 @@ export type SseKeepAliveOptions = {
  *
  * Accepts either a `ReadableStream<SseEvent>` or any `AsyncIterable<SseEvent>` (including async
  * generators).
+ *
+ * An instance is single-use: converting it into a response consumes the underlying stream, so a
+ * new instance must be created for each request.
  *
  * @example Using an async generator:
  * ```ts
@@ -56,6 +58,7 @@ export type SseKeepAliveOptions = {
 export class Sse implements ToHttpResponse {
     private readonly stream: ReadableStream<SseEvent>;
     private keepAliveOptions: Required<SseKeepAliveOptions> | undefined;
+    private converted = false;
 
     /**
      * Creates a new {@link Sse} response from a stream of events.
@@ -72,96 +75,105 @@ export class Sse implements ToHttpResponse {
      * handlers.
      *
      * @param options - Optional configuration for keep-alive behavior.
+     * @throws {@link !Error} if the interval is not a positive finite number, or if the instance
+     *         was already converted into a response.
      */
     public keepAlive(options?: SseKeepAliveOptions): this {
+        if (this.converted) {
+            throw new Error(
+                "keepAlive() must be called before the Sse is converted into a response",
+            );
+        }
+
+        const interval = options?.interval ?? 15_000;
+
+        if (!Number.isFinite(interval) || interval <= 0) {
+            throw new Error(
+                `Keep-alive interval must be a positive finite number of milliseconds, got: ${interval}`,
+            );
+        }
+
         this.keepAliveOptions = {
-            interval: options?.interval ?? 15_000,
+            interval,
             comment: options?.comment ?? "",
         };
         return this;
     }
 
+    /**
+     * @throws {@link !Error} if the instance was already converted into a response.
+     */
     public [TO_HTTP_RESPONSE](): HttpResponse {
-        const headers = new HeaderMap();
-        headers.insert("content-type", "text/event-stream");
-        headers.insert("cache-control", "no-cache");
-        headers.insert("connection", "keep-alive");
-
-        const byteStream = this.createByteStream();
-        const body = new Body(byteStream, SizeHint.unbounded());
-
-        return new HttpResponse(StatusCode.OK, headers, body);
-    }
-
-    private createByteStream(): ReadableStream<Uint8Array> {
-        const source = this.stream;
-        const keepAlive = this.keepAliveOptions;
-
-        if (!keepAlive) {
-            return source.pipeThrough(
-                new TransformStream<SseEvent, Uint8Array>({
-                    transform(event, controller) {
-                        controller.enqueue(serializeSseEvent(event));
-                    },
-                }),
+        if (this.converted) {
+            throw new Error(
+                "An Sse instance can only be converted into a response once; create a new instance for each request",
             );
         }
 
-        const interval = keepAlive.interval;
-        const keepAliveBytes = serializeSseEvent({ comment: keepAlive.comment });
-        let timer: ReturnType<typeof setInterval> | undefined;
-        const reader = source.getReader();
+        this.converted = true;
 
-        return new ReadableStream<Uint8Array>({
-            start(controller) {
-                const resetTimer = (): void => {
-                    if (timer !== undefined) {
-                        clearInterval(timer);
+        return HttpResponse.builder()
+            .header("content-type", "text/event-stream")
+            .header("cache-control", "no-cache")
+            .body(this.createByteStream());
+    }
+
+    private createByteStream(): ReadableStream<Uint8Array> {
+        const serialized = this.stream.pipeThrough(
+            new TransformStream<SseEvent, Uint8Array>({
+                transform: (event, controller) => {
+                    try {
+                        controller.enqueue(serializeSseEvent(event));
+                    } catch (error) {
+                        // The response headers are already sent when this happens, so the error
+                        // only surfaces as an aborted connection; logging is the sole signal
+                        // pointing at the invalid event.
+                        getLoggerProxy().error("Failed to serialize SSE event", { error });
+                        throw error;
                     }
+                },
+            }),
+        );
 
-                    timer = setInterval(() => {
-                        controller.enqueue(keepAliveBytes);
-                    }, interval);
-                };
+        if (!this.keepAliveOptions) {
+            return serialized;
+        }
 
-                const pump = (): void => {
-                    reader
-                        .read()
-                        .then(({ done, value }) => {
-                            if (done) {
-                                if (timer !== undefined) {
-                                    clearInterval(timer);
-                                }
-
-                                controller.close();
-                                return;
-                            }
-
-                            controller.enqueue(serializeSseEvent(value));
-                            resetTimer();
-                            pump();
-                        })
-                        .catch((error: unknown) => {
-                            if (timer !== undefined) {
-                                clearInterval(timer);
-                            }
-
-                            controller.error(error);
-                        });
-                };
-
-                resetTimer();
-                pump();
-            },
-            cancel() {
-                if (timer !== undefined) {
-                    clearInterval(timer);
-                }
-
-                reader.cancel().catch(() => {
-                    // Ignore cancel errors
-                });
-            },
-        });
+        return serialized.pipeThrough(createKeepAliveTransform(this.keepAliveOptions));
     }
 }
+
+const createKeepAliveTransform = (
+    options: Required<SseKeepAliveOptions>,
+): TransformStream<Uint8Array, Uint8Array> => {
+    const keepAliveBytes = serializeSseEvent({ comment: options.comment });
+    let timer: ReturnType<typeof setInterval>;
+
+    return new TransformStream<Uint8Array, Uint8Array>(
+        {
+            start: (controller) => {
+                timer = setInterval(() => {
+                    // Skip when the consumer isn't keeping up: a buffered keep-alive serves no
+                    // purpose and would only grow the queue of a stalled connection.
+                    if ((controller.desiredSize ?? 0) > 0) {
+                        controller.enqueue(keepAliveBytes);
+                    }
+                }, options.interval);
+            },
+            transform: (chunk, controller) => {
+                controller.enqueue(chunk);
+                timer.refresh();
+            },
+            flush: () => {
+                clearInterval(timer);
+            },
+            cancel: () => {
+                clearInterval(timer);
+            },
+        },
+        undefined,
+        // The readable side defaults to a high water mark of 0, under which desiredSize never
+        // rises above zero and the keep-alive check above would suppress every message.
+        { highWaterMark: 1 },
+    );
+};
