@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { SocketAddress } from "node:net";
 import { Readable } from "node:stream";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
@@ -25,6 +26,26 @@ describe("middleware:limit", () => {
         const res = await service.invoke(req);
 
         assert.equal(await consumers.text(res.body.readable), "ok");
+    });
+
+    it("preserves connectInfo when limiting the body", async () => {
+        const connectInfo = new SocketAddress({ address: "192.0.2.1", family: "ipv4", port: 1234 });
+        let seenConnectInfo: SocketAddress | undefined;
+
+        const inner: HttpService = {
+            invoke: async (req: HttpRequest) => {
+                seenConnectInfo = req.connectInfo;
+                return HttpResponse.builder().body(null);
+            },
+        };
+
+        const layer = new RequestBodyLimitLayer(10);
+        const service = layer.layer(inner);
+
+        const req = HttpRequest.builder().connectInfo(connectInfo).body("hello");
+        await service.invoke(req);
+
+        assert.equal(seenConnectInfo, connectInfo);
     });
 
     it("throws 413 immediately if content-length exceeds limit", async () => {

@@ -1,7 +1,7 @@
 import { Transform } from "node:stream";
 import zlib from "node:zlib";
 import { Body, HttpResponse, StatusCode } from "../http/index.js";
-import { HttpRequest } from "../http/request.js";
+import type { HttpRequest } from "../http/request.js";
 import type { HttpLayer } from "../layer/index.js";
 import type { HttpService } from "../service/index.js";
 import { AcceptEncoding } from "./compression-utils.js";
@@ -177,5 +177,5 @@ const invokeWithStream = async (
     req.headers.remove("content-encoding");
     req.headers.remove("content-length");
 
-    return inner.invoke(new HttpRequest(req.head, new Body(stream)));
+    return inner.invoke(req.withBody(new Body(stream)));
 };
