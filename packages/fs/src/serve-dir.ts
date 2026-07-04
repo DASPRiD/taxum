@@ -15,7 +15,7 @@ import { SetStatusLayer } from "@taxum/core/middleware/set-status";
 import type { HttpService } from "@taxum/core/service";
 import type { Range, Ranges } from "range-parser";
 import { type OpenFileOutput, openFile } from "./open-file.js";
-import { isErrnoException } from "./util.js";
+import { isErrnoException, isInvalidPathError } from "./util.js";
 /* node:coverage enable */
 
 /**
@@ -254,11 +254,20 @@ export class ServeDir implements HttpService {
         try {
             output = await openFile(this.variant, pathToFile, req, negotiatedEncoding, rangeHeader);
         } catch (error) {
+            if (isInvalidPathError(error)) {
+                return this.handleNotFound(req);
+            }
+
             if (!isErrnoException(error)) {
                 throw error;
             }
 
-            if (error.code === "ENOENT" || error.code === "ENOTDIR" || error.code === "EACCES") {
+            if (
+                error.code === "ENOENT" ||
+                error.code === "ENOTDIR" ||
+                error.code === "EACCES" ||
+                error.code === "ENAMETOOLONG"
+            ) {
                 return this.handleNotFound(req);
             }
 
@@ -460,7 +469,14 @@ export class ServeVariant {
         }
 
         const trimmedPath = requestedPath.replace(/^\/+/, "");
-        const decodedPath = decodeURIComponent(trimmedPath);
+        let decodedPath: string;
+
+        try {
+            decodedPath = decodeURIComponent(trimmedPath);
+        } catch {
+            return null;
+        }
+
         const parts = decodedPath.split(/[\\/]+/).filter(Boolean);
         let pathToFile = basePath;
 
