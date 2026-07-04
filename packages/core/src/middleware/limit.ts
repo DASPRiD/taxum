@@ -1,4 +1,4 @@
-import { Body, HttpRequest, type HttpResponse, StatusCode } from "../http/index.js";
+import { Body, type HttpRequest, type HttpResponse, StatusCode } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
 import type { HttpService } from "../service/index.js";
 import { ClientError } from "../util/index.js";
@@ -73,7 +73,7 @@ class RequestBodyLimit implements HttpService {
         });
         const readable = new Body(req.body.readable.pipeThrough(limitedBody));
 
-        return this.inner.invoke(new HttpRequest(req.head, readable, req.connectInfo));
+        return this.inner.invoke(req.withBody(readable));
     }
 }
 

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { SocketAddress } from "node:net";
 import { PassThrough } from "node:stream";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
@@ -40,6 +41,32 @@ describe("RequestDecompressionLayer", () => {
 
         assert.equal(res.status, StatusCode.OK);
         assert.equal(await consumers.text(res.body.readable), originalData);
+    });
+
+    it("preserves connectInfo when decompressing", async () => {
+        const connectInfo = new SocketAddress({ address: "192.0.2.1", family: "ipv4", port: 1234 });
+        let seenConnectInfo: SocketAddress | undefined;
+
+        const inner: HttpService = {
+            invoke: async (req: HttpRequest) => {
+                seenConnectInfo = req.connectInfo;
+                return HttpResponse.builder().body(null);
+            },
+        };
+
+        const layer = new RequestDecompressionLayer();
+        const service = layer.layer(inner);
+
+        const gzipStream = new PassThrough();
+        gzipStream.end(zlib.gzipSync(Buffer.from("hello")));
+
+        const req = HttpRequest.builder()
+            .header("content-encoding", "gzip")
+            .connectInfo(connectInfo)
+            .body(gzipStream);
+        await service.invoke(req);
+
+        assert.equal(seenConnectInfo, connectInfo);
     });
 
     it("decompresses deflate encoded request", async () => {
