@@ -177,6 +177,14 @@
             "taxum": "./src/service/index.ts",
             "default": "./dist/service/index.js"
         },
+        "./sse": {
+            "types": [
+                "./dist/sse/index.d.ts",
+                "./src/sse/index.ts"
+            ],
+            "taxum": "./src/sse/index.ts",
+            "default": "./dist/sse/index.js"
+        },
         "./util": {
             "types": [
                 "./dist/util/index.d.ts",
