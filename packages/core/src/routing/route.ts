@@ -49,19 +49,34 @@ export class Route implements HttpService {
                 res.body.sizeHint.lower !== 0
             ) {
                 getLoggerProxy().error("response to CONNECT with nonempty body");
-                res.body = Body.from(null);
+                discardBody(res);
             }
         } else if (topLevel) {
             setContentLength(res.headers, res.body.sizeHint);
 
             if (req.method.equals(Method.HEAD)) {
-                res.body = Body.from(null);
+                discardBody(res);
             }
         }
 
         return res;
     }
 }
+
+/**
+ * Replaces the response body with an empty one, cancelling the discarded body's stream.
+ *
+ * Cancellation releases the resources held by streaming bodies (e.g. runs an async generator's
+ * `finally` blocks), which JavaScript, unlike languages with destructors, doesn't do when the
+ * body is simply dropped.
+ */
+const discardBody = (res: HttpResponse): void => {
+    res.body.readable.cancel().catch(() => {
+        // Errors from a discarded body are of no interest.
+    });
+
+    res.body = Body.from(null);
+};
 
 const setContentLength = (headers: HeaderMap, sizeHint: SizeHint): void => {
     if (headers.containsKey("content-length")) {

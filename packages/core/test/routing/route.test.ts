@@ -1,9 +1,33 @@
 import assert from "node:assert/strict";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
+import { setTimeout as delay } from "node:timers/promises";
 import { HttpRequest, HttpResponse, StatusCode } from "../../src/http/index.js";
 import type { Handler } from "../../src/routing/index.js";
 import { Route } from "../../src/routing/route.js";
+
+const withTimeout = async (promise: Promise<void>, ms: number, message: string): Promise<void> =>
+    Promise.race([
+        promise,
+        delay(ms).then(() => {
+            throw new Error(message);
+        }),
+    ]);
+
+const makeEndlessBody = (): { stream: ReadableStream<Uint8Array>; cancellation: Promise<void> } => {
+    const { promise: cancellation, resolve: cancelled } = Promise.withResolvers<void>();
+
+    const stream = new ReadableStream<Uint8Array>({
+        pull: (controller) => {
+            controller.enqueue(new TextEncoder().encode("data"));
+        },
+        cancel: () => {
+            cancelled();
+        },
+    });
+
+    return { stream, cancellation };
+};
 
 describe("routing:route", () => {
     const routeFrom = (handler: Handler): Route => {
@@ -81,5 +105,35 @@ describe("routing:route", () => {
         const res = await route.invoke(req);
 
         assert.equal(await consumers.text(res.body.readable), "");
+    });
+
+    it("cancels the discarded streaming body for HEAD requests", async () => {
+        const { stream, cancellation } = makeEndlessBody();
+        const route = new Route({
+            invoke: async () => HttpResponse.builder().body(stream),
+        });
+
+        const req = HttpRequest.builder().method("HEAD").body(null);
+        const res = await route.invokeInner(req);
+
+        assert.equal(await consumers.text(res.body.readable), "");
+        await withTimeout(cancellation, 500, "discarded HEAD body was not cancelled");
+    });
+
+    it("cancels the discarded streaming body for CONNECT responses", async (t) => {
+        t.mock.method(console, "error", () => {
+            // Suppress console.error
+        });
+
+        const { stream, cancellation } = makeEndlessBody();
+        const route = new Route({
+            invoke: async () => HttpResponse.builder().header("content-length", "999").body(stream),
+        });
+
+        const req = HttpRequest.builder().method("CONNECT").body(null);
+        const res = await route.invoke(req);
+
+        assert.equal(await consumers.text(res.body.readable), "");
+        await withTimeout(cancellation, 500, "discarded CONNECT body was not cancelled");
     });
 });
