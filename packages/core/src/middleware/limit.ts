@@ -63,7 +63,7 @@ class RequestBodyLimit implements HttpService {
             transform: (chunk, controller) => {
                 bytesRead += chunk.byteLength;
 
-                if (bytesRead >= this.limit) {
+                if (bytesRead > this.limit) {
                     controller.error(new ContentTooLargeError(limit));
                     return;
                 }
