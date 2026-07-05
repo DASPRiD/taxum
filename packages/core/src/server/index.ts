@@ -25,9 +25,10 @@ import type { HttpService } from "../service/index.js";
  * @example
  * ```ts
  * import { extension } from "@taxum/core/extract";
+ * import { createExtractHandler } from "@taxum/core/routing";
  * import { DISCONNECT_SIGNAL } from "@taxum/core/server";
  *
- * const handler = createExtractHandler(extension(DISCONNECT_SIGNAL))((signal) => {
+ * const handler = createExtractHandler(extension(DISCONNECT_SIGNAL, true)).handler((signal) => {
  *     // ...
  * });
  * ```

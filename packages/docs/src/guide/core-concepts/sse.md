@@ -204,22 +204,33 @@ timeout.
 
 ## Client disconnects
 
-When the client disconnects, the event stream is cancelled automatically. For an async generator this runs its
-`finally` blocks, which is the place to release resources:
+When the client disconnects, the event stream is cancelled. To release resources on disconnect, listen on the
+`DISCONNECT_SIGNAL` extension rather than a generator's `finally` block. The signal aborts the moment the connection
+closes, so its listener always runs, whereas a `finally` is not guaranteed to run while the generator is waiting on its
+next event.
 
 ```ts
-async function* events(): AsyncGenerator<SseEvent> {
-    const subscription = pubsub.subscribe("news");
+import { extension } from "@taxum/core/extract";
+import { createExtractHandler } from "@taxum/core/routing";
+import { DISCONNECT_SIGNAL } from "@taxum/core/server";
+import { Sse, type SseEvent } from "@taxum/core/sse";
 
-    try {
-        for await (const message of subscription) {
-            yield { data: message };
+const handler = createExtractHandler(extension(DISCONNECT_SIGNAL, true)).handler(
+    (disconnectSignal) => {
+        const subscription = pubsub.subscribe("news");
+        disconnectSignal.addEventListener("abort", () => {
+            subscription.unsubscribe();
+        });
+
+        async function* events(): AsyncGenerator<SseEvent> {
+            for await (const message of subscription) {
+                yield { data: message };
+            }
         }
-    } finally {
-        subscription.unsubscribe();
-    }
-}
+
+        return new Sse(events());
+    },
+);
 ```
 
-If your producer performs work outside the generator, the `DISCONNECT_SIGNAL` extension provides the same information
-as an `AbortSignal`; see [Graceful Shutdown](/guide/core-concepts/graceful-shutdown#disconnect-signal).
+See [Graceful Shutdown](/guide/core-concepts/graceful-shutdown#disconnect-signal) for more on `DISCONNECT_SIGNAL`.
