@@ -18,24 +18,23 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import consumers from "node:stream/consumers";
 import { query } from "@taxum/core/extract";
-import { HttpRequest, jsonResponse } from "@taxum/core/http";
-import { extractHandler } from "@taxum/core/routing";
+import { HttpRequest, jsonResponse, StatusCode } from "@taxum/core/http";
+import { createExtractHandler } from "@taxum/core/routing";
 import { z } from "zod";
 
-const myHandler = extractHandler(
+const myHandler = createExtractHandler(
     query(z.object({id: z.string()})),
-    ({id}) => jsonResponse({id}),
-);
+).handler(({id}) => jsonResponse({id}));
 
 test("handler returns correct response", async () => {
     const req = HttpRequest.builder()
         .uri(new URL("http://localhost/?id=5"))
         .body(null);
 
-    const res = myHandler(req);
+    const res = await myHandler(req);
     assert.equal(res.status, StatusCode.OK);
-    
-    const body = await consumers.json(res.body.read());
+
+    const body = await consumers.json(res.body.readable);
     assert.deepEqual(body, { id: "5" });
 });
 ```
@@ -50,8 +49,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import consumers from "node:stream/consumers";
 import { query } from "@taxum/core/extract";
-import { HttpRequest, jsonResponse } from "@taxum/core/http";
-import { extractHandler, m, Router } from "@taxum/core/routing";
+import { HttpRequest, jsonResponse, StatusCode } from "@taxum/core/http";
+import { m, Router } from "@taxum/core/routing";
 import { z } from "zod";
 
 const router = new Router();
@@ -62,10 +61,10 @@ test("router returns health response", async () => {
         .uri(new URL("http://localhost/health"))
         .body(null);
 
-    const res = router.invoke(req);
+    const res = await router.invoke(req);
     assert.equal(res.status, StatusCode.OK);
 
-    const body = await consumers.text(res.body.read());
+    const body = await consumers.text(res.body.readable);
     assert.equal(body, "healthy");
 });
 ```

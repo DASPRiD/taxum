@@ -62,7 +62,7 @@ export default withMermaid(
                 "/guide/": [
                     {
                         text: "Introduction",
-                        link: "/guide/introduction",
+                        link: "/guide",
                     },
                     {
                         text: "Getting Started",

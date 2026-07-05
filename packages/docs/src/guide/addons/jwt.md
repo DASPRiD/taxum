@@ -46,7 +46,7 @@ const jwtLayer = new JwtLayer(createRemoteJWKSet(
         audience: "https://{yourApi}/"
     });
 
-const router = new Route()
+const router = new Router()
     .route("/protected", m.get(() => "protected"))
     .layer(jwtLayer)
     .route("/unprotected", m.get(() => "unprotected"));
@@ -55,17 +55,16 @@ const router = new Route()
 Protected routes have access to the JWT payload via an extension key:
 
 ```ts
-import { extractHandler } from "@taxum/core/routing";
+import { createExtractHandler } from "@taxum/core/routing";
 import { extension } from "@taxum/core/extract";
 import { JWT } from "@taxum/jwt";
 
-const myHandler = extractHandler(
+const myHandler = createExtractHandler(
     extension(JWT, true),
-    (jwt) => {
-        console.log(jwt.protectedHeader);
-        console.log(jwt.payload);
-    },
-)
+).handler((jwt) => {
+    console.log(jwt.protectedHeader);
+    console.log(jwt.payload);
+});
 ```
 
 You can also allow the JWT layer to pass through unauthorized requests. In that case the JWT extension will not be set
