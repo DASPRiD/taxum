@@ -55,6 +55,89 @@ describe("routing:route", () => {
         assert.equal(res.headers.get("content-length")?.value, "3");
     });
 
+    it("sets Content-Length: 0 for an empty body", async () => {
+        const route = routeFrom(() => "");
+
+        const req = HttpRequest.builder().body(null);
+        const res = await route.invokeInner(req);
+
+        assert.equal(res.headers.get("content-length")?.value, "0");
+    });
+
+    it("does not set Content-Length for an unknown-size body", async () => {
+        const stream = new ReadableStream<Uint8Array>({
+            start: (controller) => {
+                controller.enqueue(new TextEncoder().encode("x"));
+                controller.close();
+            },
+        });
+        const route = new Route({
+            invoke: async () => HttpResponse.builder().body(stream),
+        });
+
+        const req = HttpRequest.builder().body(null);
+        const res = await route.invokeInner(req);
+
+        assert.equal(res.headers.get("content-length"), null);
+        await res.body.readable.cancel();
+    });
+
+    it("keeps Content-Length but clears the body for HEAD", async () => {
+        const route = routeFrom(() => "abc");
+
+        const req = HttpRequest.builder().method("HEAD").body(null);
+        const res = await route.invokeInner(req);
+
+        assert.equal(res.headers.get("content-length")?.value, "3");
+        assert.equal(await consumers.text(res.body.readable), "");
+    });
+
+    it("strips framing headers and body on a 1xx response", async () => {
+        const route = routeFrom(() => [StatusCode.CONTINUE, "interim"]);
+
+        const req = HttpRequest.builder().body(null);
+        const res = await route.invokeInner(req);
+
+        assert.equal(res.headers.get("content-length"), null);
+        assert.equal(await consumers.text(res.body.readable), "");
+    });
+
+    it("strips framing headers and body on a 204 response", async () => {
+        const route = routeFrom(() => [StatusCode.NO_CONTENT, "unexpected"]);
+
+        const req = HttpRequest.builder().body(null);
+        const res = await route.invokeInner(req);
+
+        assert.equal(res.headers.get("content-length"), null);
+        assert.equal(res.headers.get("transfer-encoding"), null);
+        assert.equal(await consumers.text(res.body.readable), "");
+    });
+
+    it("removes a handler-set Content-Length on a 204 response", async () => {
+        const route = new Route({
+            invoke: async () =>
+                HttpResponse.builder()
+                    .status(StatusCode.NO_CONTENT)
+                    .header("content-length", "5")
+                    .body(null),
+        });
+
+        const req = HttpRequest.builder().body(null);
+        const res = await route.invokeInner(req);
+
+        assert.equal(res.headers.get("content-length"), null);
+    });
+
+    it("strips framing headers and body on a 304 response", async () => {
+        const route = routeFrom(() => [StatusCode.NOT_MODIFIED, "cached"]);
+
+        const req = HttpRequest.builder().body(null);
+        const res = await route.invokeInner(req);
+
+        assert.equal(res.headers.get("content-length"), null);
+        assert.equal(await consumers.text(res.body.readable), "");
+    });
+
     it("does not override existing Content-Length", async () => {
         const route = new Route({
             invoke: async () => HttpResponse.builder().header("content-length", "999").body("abc"),
