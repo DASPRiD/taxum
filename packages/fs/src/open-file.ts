@@ -1,6 +1,7 @@
 /* node:coverage disable: c8 gets confused by the module mocking */
 import type { Stats } from "node:fs";
 import fs from "node:fs/promises";
+import * as Path from "node:path";
 import { Encoding, type HeaderValue, type HttpRequest, Method } from "@taxum/core/http";
 import mime from "mime";
 import parseRange, { type Ranges } from "range-parser";
@@ -66,7 +67,7 @@ export const openFile = async (
     }
 
     if (req.method.equals(Method.HEAD)) {
-        const [stats, encoding] = await fileMetadataWithFallback(path, negotiatedEncodings);
+        const [stats, encoding] = await fileMetadataWithFallback(pathRef.path, negotiatedEncodings);
         const lastModified = stats.mtimeMs;
         const output = checkModifiedHeaders(lastModified, ifUnmodifiedSince, ifModifiedSince);
 
@@ -86,7 +87,7 @@ export const openFile = async (
         };
     }
 
-    const [file, encoding] = await openFileWithFallback(path, negotiatedEncodings);
+    const [file, encoding] = await openFileWithFallback(pathRef.path, negotiatedEncodings);
     const stats = await file.stat();
     const lastModified = stats.mtimeMs;
     const output = checkModifiedHeaders(lastModified, ifUnmodifiedSince, ifModifiedSince);
@@ -225,7 +226,7 @@ const maybeRedirectOrAppendPath = async (
     }
 
     if (uri.pathname.endsWith("/")) {
-        pathRef.path += "index.html";
+        pathRef.path = Path.join(pathRef.path, "index.html");
         return null;
     }
 
