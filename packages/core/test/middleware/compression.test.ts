@@ -123,6 +123,65 @@ describe("middleware/compression", () => {
         assert(!vary.includes("accept-encoding, accept-encoding"));
     });
 
+    it("does not duplicate Vary when accept-encoding is in a later vary entry", async () => {
+        const req = HttpRequest.builder().header("accept-encoding", "gzip").body(null);
+        const innerService = {
+            invoke: async () =>
+                HttpResponse.builder()
+                    .header("vary", "origin")
+                    .header("vary", "accept-encoding")
+                    .body(text),
+        };
+
+        const layer = new ResponseCompressionLayer().noDeflate().noBr().noZstd();
+        const service = layer.layer(innerService);
+
+        const res = await service.invoke(req);
+        const varyValues = res.headers.getAll("vary").map((value) => value.value.toLowerCase());
+
+        assert.deepEqual(varyValues, ["origin", "accept-encoding"]);
+    });
+
+    it("adds Vary header for a compressible response even when identity is negotiated", async () => {
+        const req = HttpRequest.builder().header("accept-encoding", "identity").body(null);
+        const layer = new ResponseCompressionLayer();
+        const service = layer.layer(dummyService);
+
+        const res = await service.invoke(req);
+
+        assert.equal(res.headers.get("content-encoding"), null);
+        const vary = res.headers.get("vary")?.value?.toLowerCase() ?? "";
+        assert(vary.includes("accept-encoding"));
+        assert.equal(await consumers.text(res.body.readable), text);
+    });
+
+    it("adds Vary header for a compressible response when accept-encoding is missing", async () => {
+        const req = HttpRequest.builder().body(null);
+        const layer = new ResponseCompressionLayer();
+        const service = layer.layer(dummyService);
+
+        const res = await service.invoke(req);
+
+        assert.equal(res.headers.get("content-encoding"), null);
+        const vary = res.headers.get("vary")?.value?.toLowerCase() ?? "";
+        assert(vary.includes("accept-encoding"));
+        assert.equal(await consumers.text(res.body.readable), text);
+    });
+
+    it("does not add Vary header for a non-compressible identity response", async () => {
+        const req = HttpRequest.builder().header("accept-encoding", "identity").body(null);
+        const innerService = {
+            invoke: async () =>
+                HttpResponse.builder().header("content-type", "application/grpc").body(text),
+        };
+        const layer = new ResponseCompressionLayer();
+        const service = layer.layer(innerService);
+
+        const res = await service.invoke(req);
+
+        assert.equal(res.headers.get("vary"), null);
+    });
+
     it("does not compress if content-encoding already present", async () => {
         const req = HttpRequest.builder().header("accept-encoding", "gzip").body(null);
         const innerService = {

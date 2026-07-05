@@ -83,6 +83,52 @@ describe("middleware:limit", () => {
         assert.equal(await consumers.text(res.body.readable), "hello");
     });
 
+    it("passes through a streamed body of exactly the limit", async () => {
+        const inner: HttpService = {
+            invoke: async (req) => {
+                const bodyText = await consumers.text(req.body.readable);
+                return HttpResponse.builder().body(bodyText);
+            },
+        };
+        const layer = new RequestBodyLimitLayer(5);
+        const service = layer.layer(inner);
+
+        const req = HttpRequest.builder()
+            .header("content-length", "5")
+            .body(Body.from(Buffer.from("hello")));
+
+        const res = await service.invoke(req);
+
+        assert.equal(await consumers.text(res.body.readable), "hello");
+    });
+
+    it("returns 413 if a streamed body exceeds the limit by one byte", async () => {
+        const inner: HttpService = {
+            invoke: async (req) => {
+                try {
+                    await consumers.text(req.body.readable);
+                    return HttpResponse.builder().body("should not reach here");
+                } catch (err) {
+                    if (isToHttpResponse(err)) {
+                        return err[TO_HTTP_RESPONSE]();
+                    }
+
+                    throw err;
+                }
+            },
+        };
+        const layer = new RequestBodyLimitLayer(5);
+        const service = layer.layer(inner);
+
+        const req = HttpRequest.builder()
+            .header("content-length", "5")
+            .body(Body.from(Buffer.from("hello!")));
+
+        const res = await service.invoke(req);
+
+        assert.equal(res.status.code, StatusCode.CONTENT_TOO_LARGE.code);
+    });
+
     it("returns 413 if stream emits more data than the limit", async () => {
         const inner: HttpService = {
             invoke: async (req) => {

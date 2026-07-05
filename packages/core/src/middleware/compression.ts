@@ -173,7 +173,22 @@ class ResponseCompression implements HttpService {
         const encoding = Encoding.fromHeaders(req.headers, this.accept);
         const res = await this.inner.invoke(req);
 
-        if (!this.shouldCompress(encoding, res)) {
+        if (!this.isCompressionCandidate(res)) {
+            return res;
+        }
+
+        const headers = res.headers;
+
+        const alreadyVaries = headers
+            .getAll("vary")
+            .some((value) => value.value.toLowerCase().includes("accept-encoding"));
+
+        if (!alreadyVaries) {
+            headers.append("vary", "accept-encoding");
+        }
+
+        if (encoding === Encoding.IDENTITY) {
+            // The response varies on accept-encoding, but no supported encoding was negotiated.
             return res;
         }
 
@@ -183,12 +198,6 @@ class ResponseCompression implements HttpService {
         if (!compressorBuilder) {
             // Should normally never happen, but just in case.
             return res;
-        }
-
-        const headers = res.headers;
-
-        if (!headers.get("vary")?.value.toLowerCase().includes("accept-encoding")) {
-            headers.append("vary", "accept-encoding");
         }
 
         headers.remove("accept-ranges");
@@ -201,12 +210,7 @@ class ResponseCompression implements HttpService {
         return new HttpResponse(res.status, headers, new Body(compressedStream));
     }
 
-    private shouldCompress(encoding: Encoding, res: HttpResponse): boolean {
-        if (encoding === Encoding.IDENTITY) {
-            // No compression supported.
-            return false;
-        }
-
+    private isCompressionCandidate(res: HttpResponse): boolean {
         if (
             res.headers.containsKey("content-encoding") ||
             res.headers.containsKey("content-range")
