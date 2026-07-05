@@ -185,6 +185,21 @@ describe("http:headers", () => {
             const inspected = util.inspect(map);
             assert.equal(inspected, "{ authorization: Sensitive }");
         });
+
+        it("toJSON keeps a __proto__ header as an own property without reparenting", () => {
+            const map = HeaderMap.from([["__proto__", "evil"]]);
+            const json = map.toJSON();
+
+            assert.equal(Object.getOwnPropertyDescriptor(json, "__proto__")?.value, "evil");
+            assert.equal(JSON.stringify(map), '{"__proto__":"evil"}');
+        });
+
+        it("inspect shows a __proto__ header without reparenting", () => {
+            const map = HeaderMap.from([["__proto__", "evil"]]);
+            const inspected = util.inspect(map);
+
+            assert.match(inspected, /__proto__/);
+        });
     });
 
     describe("HeaderValue", () => {

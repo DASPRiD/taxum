@@ -248,8 +248,17 @@ export class HeaderMap implements ToHttpResponseParts {
                 continue;
             }
 
-            result[name] =
-                exposed.length === 1 ? exposed[0].toJSON() : exposed.map((value) => value.toJSON());
+            // defineProperty rather than assignment so a header named `__proto__` becomes an
+            // own property instead of reparenting the result via the prototype setter.
+            Object.defineProperty(result, name, {
+                value:
+                    exposed.length === 1
+                        ? exposed[0].toJSON()
+                        : exposed.map((value) => value.toJSON()),
+                enumerable: true,
+                writable: true,
+                configurable: true,
+            });
         }
 
         return result;
@@ -263,7 +272,14 @@ export class HeaderMap implements ToHttpResponseParts {
         const result: Record<string, HeaderValue | HeaderValue[]> = {};
 
         for (const [key, values] of this.map) {
-            result[key] = values.length === 1 ? values[0] : values;
+            // defineProperty rather than assignment so a header named `__proto__` becomes an
+            // own property instead of reparenting the result via the prototype setter.
+            Object.defineProperty(result, key, {
+                value: values.length === 1 ? values[0] : values,
+                enumerable: true,
+                writable: true,
+                configurable: true,
+            });
         }
 
         return inspect(result, options);
