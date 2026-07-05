@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.3.0](https://github.com/DASPRiD/taxum/compare/core-v1.2.4...core-v1.3.0) (2026-07-05)
+
+
+### Features
+
+* **core:** add Server-Sent Events (SSE) support ([#50](https://github.com/DASPRiD/taxum/issues/50)) ([9a5c716](https://github.com/DASPRiD/taxum/commit/9a5c716da3ab8a4d624ceaabd036cb393683c5f2))
+* **core:** add spoofing-resistant trusted-hop client IP extraction ([#75](https://github.com/DASPRiD/taxum/issues/75)) ([b2106d6](https://github.com/DASPRiD/taxum/commit/b2106d630213a839aba04da226de47bd5b4347a7))
+* **core:** expose disconnect and shutdown signals to request handlers ([#58](https://github.com/DASPRiD/taxum/issues/58)) ([748e992](https://github.com/DASPRiD/taxum/commit/748e99214d9abc922c28c726603618c0ed19276a))
+* **core:** store connect info as request extension ([#59](https://github.com/DASPRiD/taxum/issues/59)) ([6a63776](https://github.com/DASPRiD/taxum/commit/6a63776540e28f7c72b7b4beb142756701f90ece))
+
+
+### Bug Fixes
+
+* **core:** arm the SSE keep-alive timer lazily on first read ([#73](https://github.com/DASPRiD/taxum/issues/73)) ([b188a79](https://github.com/DASPRiD/taxum/commit/b188a79d205ce26556d58067a50c5424915d2481))
+* **core:** bump nested-search-params to 1.0.2 ([#82](https://github.com/DASPRiD/taxum/issues/82)) ([5c178e8](https://github.com/DASPRiD/taxum/commit/5c178e895271b468539f16d54de96e0769ae47bc))
+* **core:** cancel a discarded leading response body in HttpResponse.from ([#72](https://github.com/DASPRiD/taxum/issues/72)) ([6d22221](https://github.com/DASPRiD/taxum/commit/6d22221dde39268c9f54092f6a586c0401b5b150))
+* **core:** cancel discarded response bodies for HEAD and CONNECT ([#60](https://github.com/DASPRiD/taxum/issues/60)) ([77e56b7](https://github.com/DASPRiD/taxum/commit/77e56b7284d7553f03cf2c2648ffc74a27bdc0ca))
+* **core:** close connections properly during graceful shutdown ([#55](https://github.com/DASPRiD/taxum/issues/55)) ([7150ff5](https://github.com/DASPRiD/taxum/commit/7150ff5651b7e6cc2764034bc151ef7075814014))
+* **core:** correct body-limit boundary and always vary on compression candidates ([#68](https://github.com/DASPRiD/taxum/issues/68)) ([02bf2d3](https://github.com/DASPRiD/taxum/commit/02bf2d3061328eb52359b81a236a1599a10b95e7))
+* **core:** correct framing for bodyless and empty-body responses ([#79](https://github.com/DASPRiD/taxum/issues/79)) ([8743419](https://github.com/DASPRiD/taxum/commit/8743419cba4c751c62a818c309147e95af5e3651))
+* **core:** keep route maps consistent on conflict and set Content-Length on fallback HEAD ([#69](https://github.com/DASPRiD/taxum/issues/69)) ([6d2073c](https://github.com/DASPRiD/taxum/commit/6d2073c6fa070f8a84eca180778bd2bc517b221c))
+* **core:** match a literal dot in the q-value pattern ([#78](https://github.com/DASPRiD/taxum/issues/78)) ([ea68d0b](https://github.com/DASPRiD/taxum/commit/ea68d0b3db4c975d750a5a5f273b3a138c7babfe))
+* **core:** preserve connectInfo when middleware rebuilds requests ([#57](https://github.com/DASPRiD/taxum/issues/57)) ([61660f2](https://github.com/DASPRiD/taxum/commit/61660f221d76fe3666750afcbe00a840ffd8854f))
+* **core:** preserve multiple values per key in HeaderMap.extend ([#63](https://github.com/DASPRiD/taxum/issues/63)) ([03ba5a6](https://github.com/DASPRiD/taxum/commit/03ba5a6bdeb5f7bf3b91017830a51c7ff14f958a))
+* **core:** prevent a __proto__ header from reparenting serialized output ([#77](https://github.com/DASPRiD/taxum/issues/77)) ([20fc5ab](https://github.com/DASPRiD/taxum/commit/20fc5aba726c4a4626f917235a1eb55cbf9eeb4e))
+* **core:** reject wildcard CORS rules with a credentials predicate ([#65](https://github.com/DASPRiD/taxum/issues/65)) ([3955814](https://github.com/DASPRiD/taxum/commit/395581432547c893829ec39fc267859b88dddcfb))
+* **core:** scope signal handlers and clean up listeners on serve() failure ([#70](https://github.com/DASPRiD/taxum/issues/70)) ([b75158d](https://github.com/DASPRiD/taxum/commit/b75158dc2e591e1081ca6e75016fcc75430e185a))
+* **core:** tolerate content-type parameters and malformed content-type in extractors ([#67](https://github.com/DASPRiD/taxum/issues/67)) ([5617591](https://github.com/DASPRiD/taxum/commit/561759172f49d1de3cb4302f86d7d03996cad397))
+
 ## [1.2.4](https://github.com/DASPRiD/taxum/compare/core-v1.2.3...core-v1.2.4) (2026-05-06)
 
 

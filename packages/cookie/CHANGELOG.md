@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.1.5](https://github.com/DASPRiD/taxum/compare/cookie-v1.1.4...cookie-v1.1.5) (2026-07-05)
+
+
+### Bug Fixes
+
+* **cookie:** accept a signed cookie with an empty value ([#80](https://github.com/DASPRiD/taxum/issues/80)) ([02227b6](https://github.com/DASPRiD/taxum/commit/02227b6bf168c7603f452dc6418f772e7123dac5))
+* **cookie:** bind the cookie name into the signed HMAC ([#81](https://github.com/DASPRiD/taxum/issues/81)) ([dab8dcf](https://github.com/DASPRiD/taxum/commit/dab8dcf055481efe45c6e8e0788b9588b641a3aa))
+* **cookie:** harden cookie parsing, signing, and encoding ([#64](https://github.com/DASPRiD/taxum/issues/64)) ([187f3ce](https://github.com/DASPRiD/taxum/commit/187f3ce92eb164f20bb01ce595cce96e660d7663))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 1.3.0
+
 ## [1.1.4](https://github.com/DASPRiD/taxum/compare/cookie-v1.1.3...cookie-v1.1.4) (2026-05-06)
 
 
