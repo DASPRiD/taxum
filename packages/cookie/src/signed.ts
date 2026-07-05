@@ -64,6 +64,7 @@ export class SignedJar {
 
     private sign(cookie: Cookie): Cookie {
         const hmac = createHmac("sha256", this.key);
+        hmac.update(cookie.name);
         hmac.update(cookie.value);
         const signature = hmac.digest("base64");
 
@@ -71,16 +72,17 @@ export class SignedJar {
     }
 
     private verify(cookie: Cookie): Cookie | null {
-        const value = this.verifyValue(cookie.value);
+        const value = this.verifyValue(cookie.name, cookie.value);
         return value !== null ? cookie.withValue(value) : null;
     }
 
-    private verifyValue(cookieValue: string): string | null {
+    private verifyValue(name: string, cookieValue: string): string | null {
         const signature = cookieValue.slice(0, BASE64_DIGEST_LEN);
         const value = cookieValue.slice(BASE64_DIGEST_LEN);
         const digest = Buffer.from(signature, "base64");
 
         const hmac = createHmac("sha256", this.key);
+        hmac.update(name);
         hmac.update(value);
         const actualDigest = hmac.digest();
 
