@@ -6,6 +6,7 @@ import {
     type HttpResponseLike,
     Method,
     type SizeHint,
+    StatusCode,
 } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
 import { getLoggerProxy } from "../logging/index.js";
@@ -52,10 +53,19 @@ export class Route implements HttpService {
                 discardBody(res);
             }
         } else if (topLevel) {
-            setContentLength(res.headers, res.body.sizeHint);
-
-            if (req.method.equals(Method.HEAD)) {
+            if (isBodyless(res.status)) {
+                // A 1xx, 204, or 304 response must not carry a body or its framing headers
+                // (RFC 9110 §8.6). Node strips the body but keeps a Content-Length we or the
+                // handler set, which would advertise a length the wire never delivers.
+                res.headers.remove("content-length");
+                res.headers.remove("transfer-encoding");
                 discardBody(res);
+            } else {
+                setContentLength(res.headers, res.body.sizeHint);
+
+                if (req.method.equals(Method.HEAD)) {
+                    discardBody(res);
+                }
             }
         }
 
@@ -78,6 +88,11 @@ const discardBody = (res: HttpResponse): void => {
     res.body = Body.from(null);
 };
 
+const isBodyless = (status: StatusCode): boolean =>
+    status.isInformational() ||
+    status.code === StatusCode.NO_CONTENT.code ||
+    status.code === StatusCode.NOT_MODIFIED.code;
+
 const setContentLength = (headers: HeaderMap, sizeHint: SizeHint): void => {
     if (headers.containsKey("content-length")) {
         return;
@@ -85,7 +100,7 @@ const setContentLength = (headers: HeaderMap, sizeHint: SizeHint): void => {
 
     const exactSize = sizeHint.exact();
 
-    if (!exactSize) {
+    if (exactSize === null) {
         return;
     }
 
