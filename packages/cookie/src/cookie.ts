@@ -37,6 +37,43 @@ export type CookieOptions = {
 };
 
 /**
+ * Decodes a percent-encoded cookie component.
+ *
+ * A component that fails to decode (an invalid percent sequence) is returned
+ * unchanged rather than throwing, so a single malformed cookie does not fail the
+ * whole request. This is more conservative than a per-escape lossy decode: the
+ * entire component is left raw when any escape is invalid, not just the bad
+ * bytes.
+ */
+const decodeComponent = (value: string): string => {
+    try {
+        return decodeURIComponent(value);
+    } catch {
+        return value;
+    }
+};
+
+/**
+ * Rejects a `Path` or `Domain` attribute value that could break out of the
+ * `Set-Cookie` line.
+ *
+ * These attributes are written verbatim, so a control character or a ";"
+ * would allow header or attribute injection. Name and value are safe because
+ * they are percent-encoded on {@link Cookie.encode}.
+ */
+const assertValidAttribute = (field: "path" | "domain", value: string): void => {
+    for (const character of value) {
+        const code = character.charCodeAt(0);
+
+        if (code <= 0x1f || code === 0x7f || character === ";") {
+            throw new TypeError(
+                `Cookie ${field} must not contain control characters or a ";" separator`,
+            );
+        }
+    }
+};
+
+/**
  * Represents an HTTP cookie.
  *
  * @example
@@ -64,6 +101,14 @@ export class Cookie {
      * You can additionally supply any of the standard cookie options.
      */
     public constructor(name: string, value = "", options?: CookieOptions) {
+        if (options?.path !== undefined) {
+            assertValidAttribute("path", options.path);
+        }
+
+        if (options?.domain !== undefined) {
+            assertValidAttribute("domain", options.domain);
+        }
+
         this.name = name;
         this.value = value;
         this.expires = options?.expires;
@@ -80,20 +125,20 @@ export class Cookie {
      * Parses a cookie string into a `Cookie` header.
      */
     public static parse(cookie: string): Cookie | null {
-        const nameValue = cookie.split("=", 2);
+        const separatorIndex = cookie.indexOf("=");
 
-        if (nameValue.length !== 2) {
+        if (separatorIndex === -1) {
             return null;
         }
 
-        const name = nameValue[0].trim();
-        const value = nameValue[1].trim();
+        const name = cookie.slice(0, separatorIndex).trim();
+        const value = cookie.slice(separatorIndex + 1).trim();
 
         if (name.length === 0) {
             return null;
         }
 
-        return new Cookie(decodeURIComponent(name), decodeURIComponent(value));
+        return new Cookie(decodeComponent(name), decodeComponent(value));
     }
 
     /**
@@ -172,7 +217,7 @@ export class Cookie {
                     unit: "seconds" as const,
                     relativeTo: Temporal.Now.zonedDateTimeISO(),
                 };
-                parameters.push(`Max-Age=${Math.max(0, this.maxAge.total(totalOf))}`);
+                parameters.push(`Max-Age=${Math.max(0, Math.floor(this.maxAge.total(totalOf)))}`);
             }
         }
 
