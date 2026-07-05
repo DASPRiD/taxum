@@ -28,13 +28,13 @@ describe("middleware:cors:index", () => {
             assert(layer["allowMethods_"].isWildcard());
             assert(layer["allowOrigin_"].isWildcard());
             assert(layer["exposeHeaders_"].isWildcard());
-            assert(!layer["allowCredentials_"].isTrue());
+            assert(!layer["allowCredentials_"].isPossiblyTrue());
         });
 
         it("veryPermissive preset sets expected defaults", () => {
             const layer = CorsLayer.veryPermissive();
 
-            assert(layer["allowCredentials_"].isTrue());
+            assert(layer["allowCredentials_"].isPossiblyTrue());
         });
 
         it("allowCredentials cannot be combined with wildcard headers", () => {
@@ -67,6 +67,24 @@ describe("middleware:cors:index", () => {
             assert.throws(() => {
                 layer.layer(dummyService);
             }, /Invalid CORS configuration: Cannot combine `access-control-allow-credentials: true` with `access-control-expose-headers: \*`/);
+        });
+
+        it("credentials predicate cannot be combined with wildcard origin", () => {
+            const layer = new CorsLayer().allowCredentials(() => true).allowOrigin(ANY);
+
+            assert.throws(() => {
+                layer.layer(dummyService);
+            }, /Invalid CORS configuration: Cannot combine `access-control-allow-credentials: true` with `access-control-allow-origin: \*`/);
+        });
+
+        it("credentials predicate is allowed with a specific origin", () => {
+            const layer = new CorsLayer()
+                .allowCredentials(() => true)
+                .allowOrigin("https://example.com");
+
+            assert.doesNotThrow(() => {
+                layer.layer(dummyService);
+            });
         });
     });
 

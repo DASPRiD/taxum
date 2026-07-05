@@ -54,10 +54,14 @@ export class AllowCredentials {
     }
 
     /**
+     * Returns whether the header could ever be emitted as `true`, which is the
+     * case for both a static `true` and a predicate (which may return `true`
+     * for some request).
+     *
      * @internal
      */
-    public isTrue(): boolean {
-        return this.inner === true;
+    public isPossiblyTrue(): boolean {
+        return this.inner !== false;
     }
 
     /**

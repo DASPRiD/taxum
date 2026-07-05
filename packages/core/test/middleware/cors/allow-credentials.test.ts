@@ -11,12 +11,12 @@ describe("middleware:cors:allow-credentials", () => {
 
     it("default returns no", () => {
         const ac = AllowCredentials.default();
-        assert.equal(ac.isTrue(), false);
+        assert.equal(ac.isPossiblyTrue(), false);
     });
 
     it("yes returns true", () => {
         const ac = AllowCredentials.yes();
-        assert.equal(ac.isTrue(), true);
+        assert.equal(ac.isPossiblyTrue(), true);
         assert.deepEqual(ac.toHeader(new HeaderValue("https://example.com"), parts), [
             "access-control-allow-credentials",
             new HeaderValue("true"),
@@ -28,7 +28,7 @@ describe("middleware:cors:allow-credentials", () => {
 
     it("no returns false", () => {
         const ac = AllowCredentials.no();
-        assert.equal(ac.isTrue(), false);
+        assert.equal(ac.isPossiblyTrue(), false);
         assert.equal(ac.toHeader(new HeaderValue("https://example.com"), parts), null);
 
         const fromAc = AllowCredentials.from(false);
@@ -39,7 +39,7 @@ describe("middleware:cors:allow-credentials", () => {
         const pred: AllowCredentialsPredicate = (origin) => origin === "https://allowed.com";
         const ac = AllowCredentials.predicate(pred);
 
-        assert.equal(ac.isTrue(), false);
+        assert.equal(ac.isPossiblyTrue(), true);
         assert.deepEqual(ac.toHeader(new HeaderValue("https://allowed.com"), parts), [
             "access-control-allow-credentials",
             new HeaderValue("true"),
