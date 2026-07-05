@@ -72,7 +72,7 @@ export class SignedJar {
 
     private verify(cookie: Cookie): Cookie | null {
         const value = this.verifyValue(cookie.value);
-        return value ? cookie.withValue(value) : null;
+        return value !== null ? cookie.withValue(value) : null;
     }
 
     private verifyValue(cookieValue: string): string | null {
