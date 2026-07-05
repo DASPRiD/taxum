@@ -139,41 +139,56 @@ export class Sse implements ToHttpResponse {
             return serialized;
         }
 
-        return serialized.pipeThrough(createKeepAliveTransform(this.keepAliveOptions));
+        return createKeepAliveStream(serialized, this.keepAliveOptions);
     }
 }
 
-const createKeepAliveTransform = (
+const createKeepAliveStream = (
+    source: ReadableStream<Uint8Array>,
     options: Required<SseKeepAliveOptions>,
-): TransformStream<Uint8Array, Uint8Array> => {
+): ReadableStream<Uint8Array> => {
     const keepAliveBytes = serializeSseEvent({ comment: options.comment });
-    let timer: ReturnType<typeof setInterval>;
+    const reader = source.getReader();
+    let timer: ReturnType<typeof setInterval> | undefined;
 
-    return new TransformStream<Uint8Array, Uint8Array>(
+    return new ReadableStream<Uint8Array>(
         {
-            start: (controller) => {
-                timer = setInterval(() => {
-                    // Skip when the consumer isn't keeping up: a buffered keep-alive serves no
-                    // purpose and would only grow the queue of a stalled connection.
-                    if ((controller.desiredSize ?? 0) > 0) {
-                        controller.enqueue(keepAliveBytes);
-                    }
-                }, options.interval);
-            },
-            transform: (chunk, controller) => {
-                controller.enqueue(chunk);
+            pull: async (controller) => {
+                if (timer === undefined) {
+                    // Arming on the first pull rather than at construction keeps the timer from
+                    // running until the body is actually read. A converted but never consumed
+                    // response is never pulled, so it leaves no interval behind.
+                    timer = setInterval(() => {
+                        // Only enqueue while the queue is drained (desiredSize is zero under a
+                        // high water mark of zero); a stalled consumer must not accumulate a
+                        // backlog of keep-alives.
+                        if ((controller.desiredSize ?? -1) >= 0) {
+                            controller.enqueue(keepAliveBytes);
+                        }
+                    }, options.interval);
+                }
+
+                const result = await reader.read().catch((error: unknown) => {
+                    clearInterval(timer);
+                    throw error;
+                });
+
+                if (result.done) {
+                    clearInterval(timer);
+                    controller.close();
+                    return;
+                }
+
+                controller.enqueue(result.value);
                 timer.refresh();
             },
-            flush: () => {
+            cancel: async (reason) => {
                 clearInterval(timer);
-            },
-            cancel: () => {
-                clearInterval(timer);
+                await reader.cancel(reason);
             },
         },
-        undefined,
-        // The readable side defaults to a high water mark of 0, under which desiredSize never
-        // rises above zero and the keep-alive check above would suppress every message.
-        { highWaterMark: 1 },
+        // A high water mark of zero keeps pull from firing until the consumer reads, which is
+        // what makes the keep-alive timer lazy.
+        { highWaterMark: 0 },
     );
 };
