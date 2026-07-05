@@ -1,7 +1,8 @@
 import consumers from "node:stream/consumers";
+import { MIMEType } from "node:util";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { parseSearchParams } from "nested-search-params";
-import { type HttpRequest, Method, StatusCode } from "../http/index.js";
+import { type HeaderMap, type HttpRequest, Method, StatusCode } from "../http/index.js";
 import { ClientError } from "../util/index.js";
 import { ValidationError } from "./error.js";
 import type { Extractor } from "./index.js";
@@ -75,9 +76,7 @@ export const form =
         if (req.method.equals(Method.GET) || req.method.equals(Method.HEAD)) {
             source = req.uri.searchParams;
         } else {
-            if (
-                req.head.headers.get("content-type")?.value !== "application/x-www-form-urlencoded"
-            ) {
+            if (!isFormContentType(req.head.headers)) {
                 throw new MissingFormDataContentTypeError();
             }
 
@@ -94,3 +93,21 @@ export const form =
 
         return parseResult.value;
     };
+
+const isFormContentType = (headers: HeaderMap): boolean => {
+    const contentType = headers.get("content-type");
+
+    if (!contentType) {
+        return false;
+    }
+
+    let mimeType: MIMEType;
+
+    try {
+        mimeType = new MIMEType(contentType.value);
+    } catch {
+        return false;
+    }
+
+    return mimeType.type === "application" && mimeType.subtype === "x-www-form-urlencoded";
+};

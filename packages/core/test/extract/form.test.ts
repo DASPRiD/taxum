@@ -35,8 +35,27 @@ describe("extract:form", () => {
         assert.deepEqual(result, { foo: "hi", bar: 123 });
     });
 
+    it("parses valid form body with content-type parameters (POST)", async () => {
+        const req = HttpRequest.builder()
+            .method("POST")
+            .header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+            .body("foo=hello&bar=42");
+
+        const result = await form(schema)(req);
+        assert.deepEqual(result, { foo: "hello", bar: 42 });
+    });
+
     it("throws on missing content-type for POST", async () => {
         const req = HttpRequest.builder().method("POST").body("foo=hello&bar=42");
+
+        await assert.rejects(async () => form(schema)(req), MissingFormDataContentTypeError);
+    });
+
+    it("throws on malformed content-type for POST", async () => {
+        const req = HttpRequest.builder()
+            .method("POST")
+            .header("Content-Type", "application")
+            .body("foo=hello&bar=42");
 
         await assert.rejects(async () => form(schema)(req), MissingFormDataContentTypeError);
     });
