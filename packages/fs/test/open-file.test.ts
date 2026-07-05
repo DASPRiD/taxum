@@ -250,6 +250,28 @@ describe("open-file", () => {
         await output.extent.file.close();
     });
 
+    it("does not strip a real extension when identity is negotiated (GET)", async () => {
+        const req = createReq("GET");
+        const negotiatedEncodings: [Encoding, number][] = [[Encoding.IDENTITY, 1]];
+        const missing = path.join(TEST_DIR, "unknown.txt");
+
+        await assert.rejects(
+            openFile(fileVariant, missing, req, negotiatedEncodings, null),
+            (error: unknown) => isErrnoException(error) && error.code === "ENOENT",
+        );
+    });
+
+    it("does not strip a real extension when identity is negotiated (HEAD)", async () => {
+        const req = createReq("HEAD");
+        const negotiatedEncodings: [Encoding, number][] = [[Encoding.IDENTITY, 1]];
+        const missing = path.join(TEST_DIR, "unknown.txt");
+
+        await assert.rejects(
+            openFile(fileVariant, missing, req, negotiatedEncodings, null),
+            (error: unknown) => isErrnoException(error) && error.code === "ENOENT",
+        );
+    });
+
     it("returns to HEAD with negotiated encoding fallback (gzip)", async () => {
         const req = createReq("HEAD");
         const negotiatedEncodings: [Encoding, number][] = [
