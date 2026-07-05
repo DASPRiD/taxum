@@ -195,6 +195,20 @@ export const serve = async (service: HttpService, config?: ServeConfig): Promise
         server.unref();
     }
 
+    const abortSignal = config?.abortSignal;
+
+    const detachShutdownListeners = (): void => {
+        abortSignal?.removeEventListener("abort", closeServer);
+
+        if (config?.catchCtrlC) {
+            // Remove only taxum's own handler by reference, leaving any handlers the
+            // application registered for these signals in place.
+            process.removeListener("SIGINT", closeServer);
+            process.removeListener("SIGQUIT", closeServer);
+            process.removeListener("SIGTERM", closeServer);
+        }
+    };
+
     const closeServer = (): void => {
         /* node:coverage ignore next 3 */
         if (closing) {
@@ -202,9 +216,7 @@ export const serve = async (service: HttpService, config?: ServeConfig): Promise
         }
 
         // It's important to clean up here so that Node.js will handle future signals.
-        process.removeAllListeners("SIGINT");
-        process.removeAllListeners("SIGQUIT");
-        process.removeAllListeners("SIGTERM");
+        detachShutdownListeners();
 
         closing = true;
         shutdownController.abort();
@@ -221,7 +233,7 @@ export const serve = async (service: HttpService, config?: ServeConfig): Promise
         }
     };
 
-    config?.abortSignal?.addEventListener("abort", closeServer);
+    abortSignal?.addEventListener("abort", closeServer);
 
     if (config?.catchCtrlC) {
         process.addListener("SIGINT", closeServer);
@@ -230,7 +242,12 @@ export const serve = async (service: HttpService, config?: ServeConfig): Promise
     }
 
     return new Promise<void>((resolve, reject) => {
-        server.on("error", reject);
+        server.on("error", (error) => {
+            // A failed listen() (e.g. EADDRINUSE) never reaches closeServer, so the shutdown
+            // listeners attached above would otherwise leak across retried serve() calls.
+            detachShutdownListeners();
+            reject(error);
+        });
 
         server.on("close", () => {
             resolve();
@@ -244,6 +261,12 @@ export const serve = async (service: HttpService, config?: ServeConfig): Promise
             );
 
             config?.onListen?.(address);
+
+            // An already-aborted signal never fires its "abort" event, so trigger the
+            // shutdown once the server is listening and can close cleanly.
+            if (abortSignal?.aborted) {
+                closeServer();
+            }
         });
     });
 };

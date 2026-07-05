@@ -192,6 +192,74 @@ describe("server:index", () => {
             await serve(service, config);
         });
 
+        it("leaves application-registered signal listeners intact after shutdown", async () => {
+            const appHandler = (): void => {
+                // Application's own SIGTERM handler; must survive taxum's shutdown.
+            };
+
+            process.addListener("SIGTERM", appHandler);
+
+            const service = makeMockService(() => noContentResponse[TO_HTTP_RESPONSE]());
+            const controller = new AbortController();
+
+            const config: ServeConfig = {
+                catchCtrlC: true,
+                abortSignal: controller.signal,
+                onListen: () => {
+                    controller.abort();
+                },
+            };
+
+            await withTimeout(serve(service, config), 2000, "serve() did not resolve");
+
+            const listeners = process.listeners("SIGTERM");
+            assert(listeners.includes(appHandler), "application SIGTERM handler must remain");
+            assert.equal(listeners.length, 1, "only the application handler should remain");
+        });
+
+        it("shuts down promptly when the abort signal is already aborted", async () => {
+            const service = makeMockService(() => noContentResponse[TO_HTTP_RESPONSE]());
+            const controller = new AbortController();
+            controller.abort();
+
+            const config: ServeConfig = {
+                abortSignal: controller.signal,
+            };
+
+            await withTimeout(
+                serve(service, config),
+                2000,
+                "serve() did not resolve for an already-aborted signal",
+            );
+        });
+
+        it("removes shutdown listeners when listen fails", async () => {
+            const blocker = net.createServer();
+            await new Promise<void>((resolve) => {
+                blocker.listen(0, resolve);
+            });
+            const { port } = blocker.address() as net.AddressInfo;
+
+            const service = makeMockService(() => noContentResponse[TO_HTTP_RESPONSE]());
+            const controller = new AbortController();
+
+            const config: ServeConfig = {
+                port,
+                catchCtrlC: true,
+                abortSignal: controller.signal,
+            };
+
+            await assert.rejects(
+                withTimeout(serve(service, config), 2000, "serve() did not reject"),
+            );
+
+            blocker.close();
+
+            assert.equal(process.listeners("SIGINT").length, 0, "SIGINT listener leaked");
+            assert.equal(process.listeners("SIGQUIT").length, 0, "SIGQUIT listener leaked");
+            assert.equal(process.listeners("SIGTERM").length, 0, "SIGTERM listener leaked");
+        });
+
         it("force-closes streaming connections at the shutdown deadline", async () => {
             const encoder = new TextEncoder();
 
