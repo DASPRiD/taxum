@@ -43,6 +43,15 @@ describe("signed", () => {
         assert.equal(signed.get("x"), null);
     });
 
+    it("verifies a signed cookie with an empty value", () => {
+        const { signed } = makeSignedJar();
+        signed.add(new Cookie("session", ""));
+
+        const verified = signed.get("session");
+        assert.notEqual(verified, null);
+        assert.equal(verified?.value, "");
+    });
+
     it("roundtrip with known key and pre-signed values", () => {
         const keyBytes = Uint8Array.from([
             89, 202, 200, 125, 230, 90, 197, 245, 166, 249, 34, 169, 135, 31, 20, 197, 94, 154, 254,
