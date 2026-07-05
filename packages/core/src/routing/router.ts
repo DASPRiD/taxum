@@ -185,7 +185,15 @@ export class Router implements HttpService {
                 return await this.pathRouter.invoke(req);
             } catch (error) {
                 if (error === ROUTE_NOT_FOUND) {
-                    return await this.catchAllFallback.route.invoke(req);
+                    const fallback = this.catchAllFallback;
+
+                    // A custom handler fallback is registered by axum as a
+                    // top-level method router, so it must run at top level to
+                    // set Content-Length and drop the body on HEAD like a normal
+                    // route. The default 404 fallback stays non-top-level.
+                    return fallback.isDefault
+                        ? await fallback.route.invoke(req)
+                        : await fallback.route.invokeInner(req);
                 }
 
                 /* node:coverage ignore next 2 */
