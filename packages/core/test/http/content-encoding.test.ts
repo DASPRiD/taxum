@@ -71,6 +71,8 @@ describe("http:content-encoding", () => {
             assert.equal(parseQValue("p=0.5"), null);
             assert.equal(parseQValue("q=abc"), null);
             assert.equal(parseQValue("q=0.1234"), null);
+            assert.equal(parseQValue("q=0x5"), null);
+            assert.equal(parseQValue("q=1a"), null);
         });
     });
 

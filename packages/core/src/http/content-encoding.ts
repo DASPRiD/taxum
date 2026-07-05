@@ -132,7 +132,7 @@ export const encodings = (
         }, []);
 };
 
-const qValueRegex = /^[01](?:.\d{0,3})?$/;
+const qValueRegex = /^[01](?:\.\d{0,3})?$/;
 
 /**
  * Parses a Q-value string from an input and returns its numerical
