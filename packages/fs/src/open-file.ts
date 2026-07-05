@@ -137,11 +137,11 @@ const openFileWithFallback = async (
             const file = await fs.open(pathRef.path, "r");
             return [file, encoding];
         } catch (error) {
-            if (!(encoding && isErrnoException(error) && error.code === "ENOENT")) {
+            if (!(encoding?.fileExtension && isErrnoException(error) && error.code === "ENOENT")) {
                 throw error;
             }
 
-            pathRef.path = pathRef.path.replace(/\.[a-z]+$/, "");
+            pathRef.path = pathRef.path.slice(0, -encoding.fileExtension.length);
             encodings = encodings.filter(([current]) => current !== encoding);
         }
     }
@@ -161,11 +161,11 @@ const fileMetadataWithFallback = async (
             const stats = await fs.stat(pathRef.path);
             return [stats, encoding];
         } catch (error) {
-            if (!(encoding && isErrnoException(error) && error.code === "ENOENT")) {
+            if (!(encoding?.fileExtension && isErrnoException(error) && error.code === "ENOENT")) {
                 throw error;
             }
 
-            pathRef.path = pathRef.path.replace(/\.[a-z]+$/, "");
+            pathRef.path = pathRef.path.slice(0, -encoding.fileExtension.length);
             encodings = encodings.filter(([current]) => current !== encoding);
         }
     }
@@ -203,7 +203,7 @@ const preferredEncoding = (
         return null;
     }
 
-    /* node:coverage ignore next 3: can never happen, just for safety */
+    // Identity carries no file extension, so the requested path is served unchanged.
     if (!preferredEncoding.fileExtension) {
         return preferredEncoding;
     }
