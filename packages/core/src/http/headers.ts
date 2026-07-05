@@ -215,13 +215,26 @@ export class HeaderMap implements ToHttpResponseParts {
     }
 
     /**
-     * Extends the map by inserting key-value pairs from the given iterable.
+     * Extends the map with the key-value pairs from the given iterable.
      *
-     * Values in the iterable will overwrite existing values for the same key.
+     * The first value seen for a given key replaces any existing values for
+     * that key; further values for the same key are appended. This mirrors
+     * Rust's `http::HeaderMap::extend`, so merging a source that holds multiple
+     * values under one key (such as several `Set-Cookie` headers) preserves all
+     * of them.
      */
     public extend(items: Iterable<HeaderEntry>): void {
-        for (const item of items) {
-            this.insert(item[0], item[1]);
+        const replaced = new Set<string>();
+
+        for (const [key, value] of items) {
+            const lowercaseKey = key.toLowerCase();
+
+            if (replaced.has(lowercaseKey)) {
+                this.append(key, value);
+            } else {
+                this.insert(key, value);
+                replaced.add(lowercaseKey);
+            }
         }
     }
 
