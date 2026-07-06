@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.6](https://github.com/DASPRiD/taxum/compare/fs-v1.1.5...fs-v1.1.6) (2026-07-05)
+
+
+### Bug Fixes
+
+* **fs:** keep a real extension when identity encoding is negotiated ([#76](https://github.com/DASPRiD/taxum/issues/76)) ([f7775a9](https://github.com/DASPRiD/taxum/commit/f7775a967232eaab10ef610f7d31001b42d6f330))
+* **fs:** serve the appended index file and return 404 for malformed paths ([#66](https://github.com/DASPRiD/taxum/issues/66)) ([2009d46](https://github.com/DASPRiD/taxum/commit/2009d46f91710f47b9cfef2c945d7c73905ad1d8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 1.3.0
+
 ## [1.1.5](https://github.com/DASPRiD/taxum/compare/fs-v1.1.4...fs-v1.1.5) (2026-05-06)
 
 
