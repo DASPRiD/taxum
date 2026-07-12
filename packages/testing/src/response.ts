@@ -417,6 +417,7 @@ const decodeSingle = async (raw: Buffer, encoding: string): Promise<Buffer> => {
         }
 
         case "zstd": {
+            /* node:coverage ignore next 3 */
             if (zstdDecompress === null) {
                 throw new Error("zstd decompression is not supported by this Node.js version");
             }

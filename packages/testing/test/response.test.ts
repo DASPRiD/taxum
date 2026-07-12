@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { brotliCompressSync, deflateSync, gzipSync } from "node:zlib";
+import zlib, { brotliCompressSync, deflateSync, gzipSync } from "node:zlib";
 import { HeaderMap, HeaderValue, HttpResponse, StatusCode } from "@taxum/core/http";
 import { TestResponse } from "../src/index.js";
 
@@ -105,6 +105,18 @@ describe("response", () => {
         );
 
         assert.equal(await res.text(), "brotli payload");
+    });
+
+    it("decompresses zstd bodies", {
+        skip: !("zstdCompressSync" in zlib) && "zstd is unavailable in this Node.js version",
+    }, async () => {
+        const res = TestResponse.from(
+            HttpResponse.builder()
+                .header("content-encoding", "zstd")
+                .body(zlib.zstdCompressSync("zstd payload")),
+        );
+
+        assert.equal(await res.text(), "zstd payload");
     });
 
     it("decodes chained encodings in reverse application order", async () => {

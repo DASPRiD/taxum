@@ -108,6 +108,12 @@ describe("sse", () => {
         assert.deepEqual(events, [{ data: "a" }, { data: "b" }]);
     });
 
+    it("ignores a trailing CR terminating an empty block", async () => {
+        const events = await collect(sseResponse("data: a\n\n\r"));
+
+        assert.deepEqual(events, [{ data: "a" }]);
+    });
+
     it("parses events split across arbitrary chunk boundaries", async () => {
         const wire = "event: update\r\ndata: first\n\ndata: second\r\r";
 

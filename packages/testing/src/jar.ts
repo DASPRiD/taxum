@@ -263,6 +263,7 @@ const resolvePath = (cookiePath: string | undefined, requestUri: URL): string =>
 const defaultPath = (requestUri: URL): string => {
     const path = requestUri.pathname;
 
+    /* node:coverage ignore next 3 */
     if (path === "" || !path.startsWith("/")) {
         return "/";
     }

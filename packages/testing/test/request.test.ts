@@ -225,6 +225,19 @@ describe("request", () => {
             assert.throws(() => request.header("x-late", "1"), /already been sent/);
         });
 
+        it("supports finally on the request itself", async () => {
+            let cleanedUp = false;
+
+            const res = await testClient(echoService({}))
+                .get("/")
+                .finally(() => {
+                    cleanedUp = true;
+                });
+
+            assert.equal(res.status, 200);
+            assert.equal(cleanedUp, true);
+        });
+
         it("supports catch and finally", async () => {
             const service: HttpService = {
                 invoke: () => {
@@ -266,6 +279,24 @@ describe("request", () => {
             const res = await testClient(router).head("/missing");
 
             assert.equal(res.status, 404);
+            assert.equal(await res.text(), "");
+        });
+
+        it("swallows body cancellation failures when discarding", async () => {
+            const stream = new ReadableStream<Uint8Array>({
+                start: (controller) => {
+                    controller.enqueue(new TextEncoder().encode("hidden"));
+                },
+                cancel: () => {
+                    throw new Error("cancel failed");
+                },
+            });
+            const service: HttpService = {
+                invoke: () => HttpResponse.builder().body(stream),
+            };
+
+            const res = await testClient(service).head("/");
+
             assert.equal(await res.text(), "");
         });
 

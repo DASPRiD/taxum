@@ -109,6 +109,26 @@ describe("jar", () => {
             assert.equal(jar.cookiesFor(uri("/")).length, 1);
         });
 
+        it("ignores malformed set-cookie headers", () => {
+            const jar = new TestCookieJar();
+            jar.ingest("", uri("/"));
+            jar.ingest("=value", uri("/"));
+            jar.ingest("; Secure", uri("/"));
+
+            assert.deepEqual([...jar], []);
+        });
+
+        it("purges cookies that expire while stored", async () => {
+            const jar = new TestCookieJar();
+            jar.set({ name: "shortlived", value: "1", maxAge: 0.001 });
+
+            await new Promise((resolve) => {
+                setTimeout(resolve, 10);
+            });
+
+            assert.equal(jar.get("shortlived"), null);
+        });
+
         it("removes cookies via a negative Max-Age", () => {
             const jar = new TestCookieJar();
             jar.ingest("sid=abc; Path=/", uri("/"));
