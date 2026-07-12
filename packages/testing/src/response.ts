@@ -28,7 +28,7 @@ export type SseEventsOptions = {
  * {@link !Headers} snapshot, so assertions work with any assertion library
  * without importing taxum types. The underlying {@link HttpResponse} remains
  * available via {@link TestResponse.inner} for asserting on extensions, the
- * {@link StatusCode}, or exact multi-value headers.
+ * `StatusCode`, or exact multi-value headers.
  *
  * Unlike fetch, the body readers are repeatable: the body is buffered on
  * first read, so `text()`, `json()`, and `arrayBuffer()` can be called any

@@ -19,25 +19,29 @@ import type { TestCookieJar } from "./jar.js";
 import { TestResponse } from "./response.js";
 
 /**
- * A single value accepted by {@link TestRequest.query} and
- * {@link TestRequest.form} records.
+ * A single value accepted by `query()` and
+ * `form()` records.
  */
 export type QueryValue = string | number | boolean;
 
 /**
- * Input accepted by {@link TestRequest.form}: a flat record (arrays become
+ * Input accepted by `form()`: a flat record (arrays become
  * repeated keys) or a {@link !URLSearchParams} instance.
  */
 export type FormInput = Record<string, QueryValue | QueryValue[]> | URLSearchParams;
 
 /**
- * Input accepted by {@link TestRequest.query}: everything {@link FormInput}
+ * Input accepted by `query()`: everything {@link FormInput}
  * allows, plus a raw query string for wire formats the flat encoding cannot
  * express (e.g. nested bracket syntax).
  */
 export type QueryInput = FormInput | string;
 
-type TestRequestPromise = {
+/**
+ * The promise surface of a {@link TestRequest}: awaiting sends the request
+ * and yields a {@link TestResponse}.
+ */
+export type TestRequestPromise = {
     readonly [Symbol.toStringTag]: string;
     then<TFulfilled = TestResponse, TRejected = never>(
         onFulfilled?: ((value: TestResponse) => TFulfilled | PromiseLike<TFulfilled>) | null,
@@ -49,7 +53,13 @@ type TestRequestPromise = {
     finally(onFinally?: (() => void) | null): Promise<TestResponse>;
 };
 
-type TestRequestBodySetters = {
+/**
+ * The body setters of a {@link TestRequest}.
+ *
+ * Only present while no body has been set: each returns
+ * `TestRequest<true>`, on which all three are gone.
+ */
+export type TestRequestBodySetters = {
     /**
      * Sets a JSON body, implying a `content-type` of `application/json`.
      */
@@ -65,7 +75,7 @@ type TestRequestBodySetters = {
      * Sets a raw body.
      *
      * No `content-type` is implied; set one via
-     * {@link TestRequest.header} if the handler needs it.
+     * `header()` if the handler needs it.
      */
     body(body: BodyLike): TestRequest<true>;
 };
@@ -86,7 +96,7 @@ export type TestRequest<BodySet extends boolean = false> = TestRequestPromise & 
      * Appends a header to the request.
      *
      * An explicit `content-type` header always wins over the one implied by
-     * {@link TestRequest.json} or {@link TestRequest.form}.
+     * `json()` or `form()`.
      */
     header(key: string, value: HeaderValueLike): TestRequest<BodySet>;
 
