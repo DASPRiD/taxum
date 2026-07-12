@@ -41,5 +41,8 @@
     },
     "devDependencies": {
         "@taxum/core": "workspace:*"
+    },
+    "dependencies": {
+        "set-cookie-parser": "^3.1.2"
     }
 }

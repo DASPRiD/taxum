@@ -1,6 +1,7 @@
 import type { SocketAddress } from "node:net";
 import { Extensions, Method } from "@taxum/core/http";
 import type { HttpService } from "@taxum/core/service";
+import { TestCookieJar } from "./jar.js";
 import {
     type ResolvedTestClientOptions,
     type TestRequest,
@@ -42,6 +43,17 @@ export type TestClientOptions = {
      * request extensions override these.
      */
     extensions?: Extensions;
+
+    /**
+     * Automatically captures `set-cookie` response headers into
+     * {@link TestClient.cookies}.
+     *
+     * Only capture is gated by this option: the jar always sends whatever
+     * it holds, and stays available for seeding and inspection. Note that
+     * `Secure` cookies are withheld unless `baseUri` uses `https`. Defaults
+     * to `false`.
+     */
+    saveCookies?: boolean;
 };
 
 /**
@@ -63,6 +75,15 @@ export type TestClientOptions = {
  * ```
  */
 export class TestClient {
+    /**
+     * The client's cookie jar.
+     *
+     * Cookies stored here accompany matching requests regardless of the
+     * `saveCookies` option; responses only populate it when `saveCookies`
+     * is enabled.
+     */
+    public readonly cookies = new TestCookieJar();
+
     private readonly service: HttpService;
     private readonly clientOptions: ResolvedTestClientOptions;
 
@@ -72,6 +93,8 @@ export class TestClient {
             baseUri: new URL(options?.baseUri ?? "http://localhost/"),
             clientIp: toSocketAddress(options?.clientIp ?? "127.0.0.1"),
             extensions: options?.extensions ?? new Extensions(),
+            cookies: this.cookies,
+            saveCookies: options?.saveCookies ?? false,
         };
     }
 

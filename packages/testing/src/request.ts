@@ -15,6 +15,7 @@ import {
 } from "@taxum/core/http";
 import { DISCONNECT_SIGNAL, SHUTDOWN_SIGNAL } from "@taxum/core/server";
 import type { HttpService } from "@taxum/core/service";
+import type { TestCookieJar } from "./jar.js";
 import { TestResponse } from "./response.js";
 
 /**
@@ -107,6 +108,9 @@ export type TestRequest<BodySet extends boolean = false> = TestRequestPromise & 
 
     /**
      * Adds a cookie to the request's `cookie` header.
+     *
+     * Sent in addition to any matching jar cookies; a duplicate name is
+     * emitted twice (jar first), which RFC 6265 permits.
      */
     cookie(name: string, value: string): TestRequest<BodySet>;
 
@@ -138,6 +142,8 @@ export type ResolvedTestClientOptions = {
     baseUri: URL;
     clientIp: SocketAddress;
     extensions: Extensions;
+    cookies: TestCookieJar;
+    saveCookies: boolean;
 };
 
 export class TestRequestBuilder implements TestRequest {
@@ -305,12 +311,16 @@ export class TestRequestBuilder implements TestRequest {
             }
         }
 
-        if (this.cookiePairs.length > 0) {
-            const values = [
-                ...headers.getAll("cookie").map((value) => value.value),
-                ...this.cookiePairs.map(([name, value]) => `${name}=${value}`),
-            ];
-            headers.insert("cookie", values.join("; "));
+        const cookieValues = [
+            ...this.clientOptions.cookies
+                .cookiesFor(this.uri)
+                .map((cookie) => `${cookie.name}=${cookie.value}`),
+            ...headers.getAll("cookie").map((value) => value.value),
+            ...this.cookiePairs.map(([name, value]) => `${name}=${value}`),
+        ];
+
+        if (cookieValues.length > 0) {
+            headers.insert("cookie", cookieValues.join("; "));
         }
 
         const extensions = new Extensions();
@@ -328,6 +338,13 @@ export class TestRequestBuilder implements TestRequest {
             .body(this.requestBody);
 
         const response = await this.service.invoke(request);
+
+        if (this.clientOptions.saveCookies) {
+            for (const setCookie of response.headers.getAll("set-cookie")) {
+                this.clientOptions.cookies.ingest(setCookie.value, this.uri);
+            }
+        }
+
         normalizeResponse(this.requestMethod, response);
         return TestResponse.from(response);
     }
