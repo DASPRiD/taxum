@@ -1,0 +1,45 @@
+{
+    "name": "@taxum/testing",
+    "description": "In-process test client for Taxum",
+    "version": "1.0.0",
+    "type": "module",
+    "author": "Ben Scholzen 'DASPRiD'",
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "node",
+        "typescript",
+        "server",
+        "http",
+        "testing",
+        "test-client"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DASPRiD/taxum.git"
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "test": "tsx -C taxum --test --test-reporter=spec",
+        "test:ci": "pnpm test",
+        "typecheck": "tsc --noEmit"
+    },
+    "files": [
+        "dist/**/*"
+    ],
+    "exports": {
+        ".": {
+            "types": [
+                "./dist/index.d.ts",
+                "./src/index.ts"
+            ],
+            "taxum": "./src/index.ts",
+            "default": "./dist/index.js"
+        }
+    },
+    "peerDependencies": {
+        "@taxum/core": "workspace:^"
+    },
+    "devDependencies": {
+        "@taxum/core": "workspace:*"
+    }
+}
