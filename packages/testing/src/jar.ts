@@ -89,6 +89,9 @@ export class TestCookieJar {
     public set(name: string, value: string): void;
     public set(cookie: SeedCookie): void;
     public set(cookieOrName: string | SeedCookie, value?: string): void {
+        // The overloads guarantee `value` is present with a string name; the fallback only
+        // guards untyped calls.
+        /* node:coverage ignore next 4 */
         const seed: SeedCookie =
             typeof cookieOrName === "string"
                 ? { name: cookieOrName, value: value ?? "" }

@@ -7,6 +7,8 @@ import type { SseEvent } from "@taxum/core/sse";
 const gunzip = promisify(zlib.gunzip);
 const inflate = promisify(zlib.inflate);
 const brotliDecompress = promisify(zlib.brotliDecompress);
+// The availability branch depends on the Node.js version running the tests.
+/* node:coverage ignore next */
 const zstdDecompress = "zstdDecompress" in zlib ? promisify(zlib.zstdDecompress) : null;
 
 /**
