@@ -137,12 +137,25 @@ describe("jar", () => {
             assert.equal(jar.get("sid"), null);
         });
 
-        it("returns the longest-path cookie from get() when names collide", () => {
+        it("throws from get() when names collide and no path is given", () => {
             const jar = new TestCookieJar();
             jar.ingest("s=outer; Path=/", uri("/"));
             jar.ingest("s=inner; Path=/a/b", uri("/"));
 
-            assert.equal(jar.get("s")?.value, "inner");
+            assert.throws(
+                () => jar.get("s"),
+                /Multiple cookies named "s" \(paths "\/", "\/a\/b"\)/,
+            );
+        });
+
+        it("returns the exact-path cookie from get() when a path is given", () => {
+            const jar = new TestCookieJar();
+            jar.ingest("s=outer; Path=/", uri("/"));
+            jar.ingest("s=inner; Path=/a/b", uri("/"));
+
+            assert.equal(jar.get("s", "/")?.value, "outer");
+            assert.equal(jar.get("s", "/a/b")?.value, "inner");
+            assert.equal(jar.get("s", "/other"), null);
         });
 
         it("removes cookies via Max-Age=0", () => {

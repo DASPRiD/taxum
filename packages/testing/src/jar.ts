@@ -108,24 +108,47 @@ export class TestCookieJar {
     /**
      * Returns the live cookie with the given name, or `null`.
      *
-     * When the same name exists at multiple paths, the cookie with the
-     * longest (most specific) path is returned.
+     * With `path` given, only the cookie whose `Path` attribute equals it
+     * exactly is returned (request-path matching is
+     * {@link TestCookieJar.cookiesFor}'s job).
+     *
+     * @throws {@link !Error} if the name exists at multiple paths and no
+     *         `path` was given; asserting against an arbitrary one of them
+     *         would make the test outcome a coin flip.
      */
-    public get(name: string): JarCookie | null {
+    public get(name: string, path?: string): JarCookie | null {
         this.purgeExpired();
 
-        let bestMatch: JarCookie | null = null;
+        const matches: JarCookie[] = [];
 
         for (const { cookie } of this.cookies.values()) {
-            if (
-                cookie.name === name &&
-                (bestMatch === null || cookie.path.length > bestMatch.path.length)
-            ) {
-                bestMatch = cookie;
+            if (cookie.name !== name) {
+                continue;
             }
+
+            if (path !== undefined) {
+                if (cookie.path === path) {
+                    return cookie;
+                }
+
+                continue;
+            }
+
+            matches.push(cookie);
         }
 
-        return bestMatch;
+        if (path !== undefined) {
+            return null;
+        }
+
+        if (matches.length > 1) {
+            const paths = matches.map((cookie) => `"${cookie.path}"`).join(", ");
+            throw new Error(
+                `Multiple cookies named "${name}" (paths ${paths}); pass a path to disambiguate`,
+            );
+        }
+
+        return matches[0] ?? null;
     }
 
     /**
