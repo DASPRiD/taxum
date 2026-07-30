@@ -28,3 +28,7 @@ component_management:
       name: JWT
       paths:
         - packages/jwt/**
+    - component_id: testing
+      name: Testing
+      paths:
+        - packages/testing/**

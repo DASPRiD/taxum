@@ -4,7 +4,8 @@
         "packages/cookie": {},
         "packages/core": {},
         "packages/fs": {},
-        "packages/jwt": {}
+        "packages/jwt": {},
+        "packages/testing": {}
     },
     "release-type": "node",
     "plugins": ["node-workspace"]

@@ -1,0 +1,12 @@
+{
+    "extends": ["@tsconfig/node24/tsconfig.json"],
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "declaration": true,
+        "sourceMap": true,
+        "outDir": "dist",
+        "stripInternal": true,
+        "types": ["node"]
+    },
+    "include": ["src/**/*", "test/**/*"]
+}

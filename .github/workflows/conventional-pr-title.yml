@@ -23,6 +23,7 @@ jobs:
             cookie
             fs
             jwt
+            testing
             examples
             docs
             deps
