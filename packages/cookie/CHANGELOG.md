@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.6](https://github.com/DASPRiD/taxum/compare/cookie-v1.1.5...cookie-v1.1.6) (2026-08-02)
+
+
+### Bug Fixes
+
+* **core:** reject asterisk-form request targets deliberately ([0b45383](https://github.com/DASPRiD/taxum/commit/0b4538376254ea3e117e2c17b1db8f6f4e5eb131))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @taxum/core bumped to 1.3.1
+
 ## [1.1.5](https://github.com/DASPRiD/taxum/compare/cookie-v1.1.4...cookie-v1.1.5) (2026-07-05)
 
 
