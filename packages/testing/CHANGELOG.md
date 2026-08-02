@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.1](https://github.com/DASPRiD/taxum/compare/testing-v1.0.0...testing-v1.0.1) (2026-08-02)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @taxum/core bumped to 1.3.1
+  * peerDependencies
+    * @taxum/core bumped to 1.3.1
+
 ## 1.0.0 (2026-07-30)
 
 

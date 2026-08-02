@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/DASPRiD/taxum/compare/core-v1.3.0...core-v1.3.1) (2026-08-02)
+
+
+### Bug Fixes
+
+* **core:** reject asterisk-form request targets deliberately ([0b45383](https://github.com/DASPRiD/taxum/commit/0b4538376254ea3e117e2c17b1db8f6f4e5eb131))
+
 ## [1.3.0](https://github.com/DASPRiD/taxum/compare/core-v1.2.4...core-v1.3.0) (2026-07-05)
 
 
