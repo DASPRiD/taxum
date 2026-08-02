@@ -13,9 +13,9 @@ import { CookieJar } from "./jar.js";
  * @example
  * ```ts
  * import { cookieJar, Cookie } from "@taxum/cookie";
- * import { extractHandler } from "@taxum/core/routing";
+ * import { createExtractHandler } from "@taxum/core/routing";
  *
- * const handler = extractHandler(cookieJar, (jar) => {
+ * const handler = createExtractHandler(cookieJar).handler((jar) => {
  *     jar.add(new Cookie("foo", "bar"));
  *
  *     return [jar, ""];

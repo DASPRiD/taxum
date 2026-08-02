@@ -396,7 +396,7 @@ export const notForContentTypePredicate =
  *   `image/`.
  * - They're Server-Sent Events (SSE) as determined by the `content-type`
  *   being `text/event-stream`.
- * - The response is less than 32
+ * - The response is smaller than 32 bytes.
  */
 export const DEFAULT_PREDICATE = andPredicate([
     sizeAbovePredicate(32),

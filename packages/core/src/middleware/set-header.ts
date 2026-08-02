@@ -209,7 +209,7 @@ class InsertHeaderMode {
     }
 
     public apply<T extends WithHeaders>(
-        hederName: string,
+        headerName: string,
         target: T,
         make: MakeHeaderValue<T>,
     ): void {
@@ -218,7 +218,7 @@ class InsertHeaderMode {
                 const value = makeValue(target, make);
 
                 if (value !== null) {
-                    target.headers.insert(hederName, value);
+                    target.headers.insert(headerName, value);
                 }
 
                 break;
@@ -228,21 +228,21 @@ class InsertHeaderMode {
                 const value = makeValue(target, make);
 
                 if (value !== null) {
-                    target.headers.append(hederName, value);
+                    target.headers.append(headerName, value);
                 }
 
                 break;
             }
 
             case "if_not_present": {
-                if (target.headers.containsKey(hederName)) {
+                if (target.headers.containsKey(headerName)) {
                     break;
                 }
 
                 const value = makeValue(target, make);
 
                 if (value !== null) {
-                    target.headers.insert(hederName, value);
+                    target.headers.insert(headerName, value);
                 }
 
                 break;

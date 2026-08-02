@@ -21,14 +21,14 @@ export class InvalidQueryDataError extends ValidationError {
  * @example
  * ```ts
  * import { query } from "@taxum/core/extract";
- * import { m, Router } from "@taxum/core/routing";
+ * import { createExtractHandler, m, Router } from "@taxum/core/routing";
  * import { z } from "zod";
  *
  * const paginationSchema = z.object({
  *     page: z.coerce.number().int().nonnegative(),
  * });
  *
- * const handler = handler([query(paginationSchema)], (pagination) => {
+ * const handler = createExtractHandler(query(paginationSchema)).handler((pagination) => {
  *     const page = pagination.page;
  *
  *     // ...

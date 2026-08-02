@@ -48,14 +48,14 @@ export class InvalidFormDataError extends ValidationError {
  * @example
  * ```ts
  * import { form } from "@taxum/core/extract";
- * import { m, Router } from "@taxum/core/routing";
+ * import { createExtractHandler, m, Router } from "@taxum/core/routing";
  * import { z } from "zod";
  *
  * const bodySchema = z.object({
  *     foo: z.string(),
  * });
  *
- * const handler = handler([form(bodySchema)], (body) => {
+ * const handler = createExtractHandler(form(bodySchema)).handler((body) => {
  *     const foo = body.foo;
  *
  *     // ...

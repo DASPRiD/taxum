@@ -12,11 +12,11 @@ import type { ExtensionKey, HttpRequest } from "../http/index.js";
  * ```ts
  * import { extension } from "@taxum/core/extract";
  * import { ExtensionKey } from "@taxum/core/http";
- * import { m, Router } from "@taxum/core/routing";
+ * import { createExtractHandler, m, Router } from "@taxum/core/routing";
  *
  * const MY_EXTENSION = new ExtensionKey<string>("My extension");
  *
- * const handler = handler([extension(MY_EXTENSION)], (extension) => {
+ * const handler = createExtractHandler(extension(MY_EXTENSION)).handler((value) => {
  *     // ...
  * });
  *

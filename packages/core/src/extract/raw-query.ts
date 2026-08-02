@@ -7,9 +7,9 @@ import type { Extractor } from "./index.js";
  * @example
  * ```ts
  * import { rawQuery } from "@taxum/core/extract";
- * import { m, Router } from "@taxum/core/routing";
+ * import { createExtractHandler, m, Router } from "@taxum/core/routing";
  *
- * const handler = handler([rawQuery], (query) => {
+ * const handler = createExtractHandler(rawQuery).handler((query) => {
  *     // ...
  * });
  *

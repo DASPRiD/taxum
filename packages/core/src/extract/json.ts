@@ -44,14 +44,14 @@ export class InvalidJsonError extends ValidationError {
  * @example
  * ```ts
  * import { json } from "@taxum/core/extract";
- * import { m, Router } from "@taxum/core/routing";
+ * import { createExtractHandler, m, Router } from "@taxum/core/routing";
  * import { z } from "zod";
  *
  * const bodySchema = z.object({
  *     foo: z.string(),
  * });
  *
- * const handler = handler([json(bodySchema)], (body) => {
+ * const handler = createExtractHandler(json(bodySchema)).handler((body) => {
  *     const foo = body.foo;
  *
  *     // ...

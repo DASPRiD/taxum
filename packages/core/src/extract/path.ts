@@ -25,10 +25,10 @@ export class InvalidPathParamsError extends ValidationError {
  * @example
  * ```ts
  * import { pathParam } from "@taxum/core/extract";
- * import { m, Router } from "@taxum/core/routing";
+ * import { createExtractHandler, m, Router } from "@taxum/core/routing";
  * import { z } from "zod";
  *
- * const handler = handler([pathParam(z.uuid())], ({id}) => {
+ * const handler = createExtractHandler(pathParam(z.uuid())).handler((id) => {
  *     // ...
  * });
  *
@@ -76,14 +76,14 @@ export const pathParam =
  * @example
  * ```ts
  * import { pathParams } from "@taxum/core/extract";
- * import { m, Router } from "@taxum/core/routing";
+ * import { createExtractHandler, m, Router } from "@taxum/core/routing";
  * import { z } from "zod";
  *
  * const pathParamsSchema = z.object({
  *     foo: z.string(),
  * });
  *
- * const handler = handler([pathParams(pathParamsSchema)], ({foo}) => {
+ * const handler = createExtractHandler(pathParams(pathParamsSchema)).handler(({ foo }) => {
  *     // ...
  * });
  *

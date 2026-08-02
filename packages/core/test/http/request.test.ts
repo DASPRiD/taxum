@@ -107,6 +107,17 @@ describe("http:request", () => {
             assert.equal(parts.method.value, "");
         });
 
+        it("fromIncomingMessage rejects an asterisk-form request target", () => {
+            const message = createIncomingMessage();
+            message.method = "OPTIONS";
+            message.url = "*";
+
+            assert.throws(
+                () => Parts.fromIncomingMessage(message, false),
+                /Asterisk-form request target is not supported/,
+            );
+        });
+
         it("fromIncomingMessage throws error on invalid host", () => {
             const message = createIncomingMessage({ headers: { host: "invalid@host" } });
 

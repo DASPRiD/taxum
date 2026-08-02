@@ -62,8 +62,17 @@ export class Parts {
      *
      * Otherwise, the protocol and host will be determined from the
      * `IncomingMessage`.
+     *
+     * biome-ignore lint/complexity/noExcessiveCognitiveComplexity: slightly over is fine
      */
     public static fromIncomingMessage(message: IncomingMessage, trustProxy: boolean): Parts {
+        if (message.url === "*") {
+            // The asterisk-form request target (`OPTIONS *`) cannot be represented by the
+            // WHATWG URL the request URI is built on, so it is rejected deliberately instead
+            // of leaving the rejection to the host-injection guard tripping over the `*`.
+            throw new Error("Asterisk-form request target is not supported");
+        }
+
         const headers = HeaderMap.fromIncomingMessage(message);
         const localProtocol =
             "encrypted" in message.socket && message.socket.encrypted === true ? "https" : "http";

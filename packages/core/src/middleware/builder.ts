@@ -170,7 +170,7 @@ export class ServiceBuilder<Out extends AnyService, In extends AnyService>
 
     /**
      * Intercept requests with oversized payloads and convert them into
-     * `4013 Payload Too Large` responses.
+     * `413 Payload Too Large` responses.
      *
      * @see {@link RequestBodyLimitLayer}
      */
@@ -202,7 +202,7 @@ export class ServiceBuilder<Out extends AnyService, In extends AnyService>
     /**
      * Mark headers as sensitive on responses.
      *
-     * @see {@link SetSensitiveRequestHeadersLayer}
+     * @see {@link SetSensitiveResponseHeadersLayer}
      */
     public sensitiveResponseHeaders(this: ServiceBuilder<Out, HttpService>, headers: string[]) {
         return this.withLayer(new SetSensitiveResponseHeadersLayer(headers));

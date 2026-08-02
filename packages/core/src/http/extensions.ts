@@ -29,6 +29,10 @@ export class ExtensionKey<T> {
         this.description = description;
     }
 
+    public toString(): string {
+        return this.description;
+    }
+
     public toJSON(): string {
         return this.description;
     }

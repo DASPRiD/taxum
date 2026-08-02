@@ -69,7 +69,8 @@ export type ServeConfig = {
     /**
      * Whether to trust proxy headers.
      *
-     * When set to true, `forwarded-for-*` headers will be considered.
+     * When set to true, the `x-forwarded-proto` and `x-forwarded-host` headers
+     * will be considered.
      */
     trustProxy?: boolean;
 
@@ -114,6 +115,9 @@ export type ServeConfig = {
  * HTTP2, you should create your own listener. In most cases this should not be
  * required, as TLS termination and HTTP2 are usually handled by a reverse proxy
  * in production.
+ *
+ * Requests using the asterisk-form request target (`OPTIONS *`) are not
+ * supported and are rejected with a `400 Bad Request` response.
  *
  * @example
  * ```ts

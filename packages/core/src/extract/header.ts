@@ -18,9 +18,9 @@ export class MissingHeaderError extends ClientError {
  * @example
  * ```ts
  * import { header } from "@taxum/core/extract";
- * import { m, Router } from "@taxum/core/routing";
+ * import { createExtractHandler, m, Router } from "@taxum/core/routing";
  *
- * const handler = handler([header("if-none-match")], (etag) => {
+ * const handler = createExtractHandler(header("if-none-match")).handler((etag) => {
  *     // ...
  * });
  *
