@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/DASPRiD/taxum/compare/core-v1.3.1...core-v1.3.2) (2026-10-02)
+
+
+### Bug Fixes
+
+* **core:** keep response extensions through cors and compression ([13e7aca](https://github.com/DASPRiD/taxum/commit/13e7aca375bd906dfcfee764b0772362ad376ed5))
+
 ## [1.3.1](https://github.com/DASPRiD/taxum/compare/core-v1.3.0...core-v1.3.1) (2026-08-02)
 
 
