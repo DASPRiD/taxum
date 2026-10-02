@@ -412,7 +412,7 @@ class Cors implements HttpService {
         }
 
         innerHeaders.extend(headers);
-        return new HttpResponse(res.status, innerHeaders, res.body);
+        return res;
     }
 }
 

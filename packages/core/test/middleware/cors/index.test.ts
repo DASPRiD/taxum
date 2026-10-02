@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import {
+    ExtensionKey,
     HeaderMap,
     HttpRequest,
     HttpResponse,
@@ -172,6 +173,24 @@ describe("middleware:cors:index", () => {
                 res.headers.get("access-control-allow-origin")?.value,
                 "https://example.com",
             );
+        });
+
+        it("keeps the extensions the inner service set", async () => {
+            // A layer outside this one reads them to decide what to do with
+            // the response, so losing them here disables it silently.
+            const key = new ExtensionKey<string>("test");
+            const service: HttpService = {
+                invoke: () => {
+                    const res = HttpResponse.builder().body(null);
+                    res.extensions.insert(key, "kept");
+                    return res;
+                },
+            };
+            const layer = CorsLayer.permissive().layer(service);
+
+            const res = await layer.invoke(makeRequest(Method.GET, "https://example.com"));
+
+            assert.equal(res.extensions.get(key), "kept");
         });
     });
 });

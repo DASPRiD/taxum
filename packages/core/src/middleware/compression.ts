@@ -1,7 +1,7 @@
 import { Transform } from "node:stream";
 import zlib, { type BrotliOptions, type ZlibOptions, type ZstdOptions } from "node:zlib";
 import { Body } from "../http/body.js";
-import { Encoding, type HttpRequest, HttpResponse } from "../http/index.js";
+import { Encoding, type HttpRequest, type HttpResponse } from "../http/index.js";
 import type { HttpLayer } from "../layer/index.js";
 import type { HttpService } from "../service/index.js";
 import { AcceptEncoding } from "./compression-utils.js";
@@ -206,8 +206,9 @@ class ResponseCompression implements HttpService {
 
         const compressor = compressorBuilder(this.compressionLevel);
         const compressedStream = compressor(res.body.readable);
+        res.body = new Body(compressedStream);
 
-        return new HttpResponse(res.status, headers, new Body(compressedStream));
+        return res;
     }
 
     private isCompressionCandidate(res: HttpResponse): boolean {

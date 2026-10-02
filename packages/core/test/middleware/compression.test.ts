@@ -2,7 +2,14 @@ import assert from "node:assert/strict";
 import consumers from "node:stream/consumers";
 import { describe, it } from "node:test";
 import zlib from "node:zlib";
-import { Body, HeaderMap, HttpRequest, HttpResponse, SizeHint } from "../../src/http/index.js";
+import {
+    Body,
+    ExtensionKey,
+    HeaderMap,
+    HttpRequest,
+    HttpResponse,
+    SizeHint,
+} from "../../src/http/index.js";
 import {
     andPredicate,
     type CompressionLevel,
@@ -79,6 +86,29 @@ describe("middleware/compression", () => {
         assert.equal(res.headers.get("content-encoding")?.value, "br");
         const decompressed = await decompressors.br(res);
         assert.equal(decompressed, text);
+    });
+
+    it("keeps the extensions the inner service set while compressing", async () => {
+        // Replacing the body must not replace the response: a layer outside
+        // this one reads them, and a compressed response is the common case.
+        const key = new ExtensionKey<string>("test");
+        const service = new ResponseCompressionLayer().layer({
+            invoke: () => {
+                const res = HttpResponse.builder()
+                    .status(200)
+                    .header("content-type", "text/plain")
+                    .body(text);
+                res.extensions.insert(key, "kept");
+                return res;
+            },
+        });
+
+        const res = await service.invoke(
+            HttpRequest.builder().header("accept-encoding", "gzip").body(null),
+        );
+
+        assert.equal(res.headers.get("content-encoding")?.value, "gzip");
+        assert.equal(res.extensions.get(key), "kept");
     });
 
     it("does not compress when Accept-Encoding header is missing", async () => {
