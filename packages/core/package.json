@@ -201,6 +201,6 @@
         "ts-pattern": "^5.9.0"
     },
     "devDependencies": {
-        "zod": "^4.4.3"
+        "zod": "^4.6.6"
     }
 }
